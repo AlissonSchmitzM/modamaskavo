@@ -40,7 +40,7 @@ const LoginScreen = ({navigation}) => {
           <Button
             mode="contained"
             style={styles.button}
-            onPress={() => console.log('Login Pressionado')}>
+            onPress={() => navigation.navigate('Main')}>
             Login
           </Button>
           <Button
