@@ -16,47 +16,39 @@ const LoginScreen = ({navigation}) => {
 
   return (
     <View style={styles.container}>
-      <ScrollView>
-        <View style={styles.loginContainer}>
-          <Image source={login} style={styles.login} />
-        </View>
-        <View style={styles.formContainer}>
-          <TextInput
-            label="Email"
-            style={styles.input}
-            mode="outlined"
-            onChangeText={text => {
-              setText(text);
-            }}
-            theme={{colors: {primary: '#000000'}}}
-          />
-          <TextInput
-            label="Senha"
-            style={styles.input}
-            mode="outlined"
-            secureTextEntry
-            theme={{colors: {primary: '#000000'}}}
-          />
-          <Button
-            mode="contained"
-            style={styles.button}
-            onPress={() => navigation.navigate('Main')}>
-            Login
-          </Button>
-          <Button
-            icon={() => <Icon name="google" size={20} color="#fff" />}
-            mode="contained"
-            style={styles.googleButton}
-            onPress={() => console.log('Login com Google')}>
-            Login com Google
-          </Button>
-          <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
-            <Text style={styles.signUpText}>
-              Não tem uma conta? Cadastre-se
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+      <Image source={login} style={styles.login} />
+      <TextInput
+        label="Email"
+        style={styles.input}
+        mode="outlined"
+        onChangeText={text => {
+          setText(text);
+        }}
+        theme={{colors: {primary: '#000000'}}}
+      />
+      <TextInput
+        label="Senha"
+        style={styles.input}
+        mode="outlined"
+        secureTextEntry
+        theme={{colors: {primary: '#000000'}}}
+      />
+      <Button
+        mode="contained"
+        style={styles.button}
+        onPress={() => navigation.navigate('Main')}>
+        Login
+      </Button>
+      <Button
+        icon={() => <Icon name="google" size={20} color="#fff" />}
+        mode="contained"
+        style={styles.googleButton}
+        onPress={() => console.log('Login com Google')}>
+        Login com Google
+      </Button>
+      <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
+        <Text style={styles.signUpText}>Não tem uma conta? Cadastre-se</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -66,18 +58,20 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
     backgroundColor: '#f5f5f5',
   },
   input: {
+    width: '90%',
     marginBottom: 15,
     backgroundColor: '#fff',
   },
   button: {
+    width: '90%',
     marginBottom: 10,
     backgroundColor: '#000000',
   },
   googleButton: {
+    width: '90%',
     backgroundColor: '#DB4437',
   },
   signUpText: {
@@ -85,16 +79,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   login: {
-    width: 350,
-    height: 350,
-  },
-  loginContainer: {
-    flex: 1,
-    marginVertical: 50,
-    alignItems: 'center',
-  },
-  formContainer: {
-    flex: 1,
+    width: '80%',
+    height: '40%',
+    marginBottom: 20,
   },
 });
 

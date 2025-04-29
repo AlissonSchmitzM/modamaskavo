@@ -1,9 +1,16 @@
 import React from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import {LoginScreen, SignUp, Home, Orders, Store, Profile} from '../screens';
+import {
+  LoginScreen,
+  SignUp,
+  Home,
+  Orders,
+  Store,
+  Profile,
+  WooCommerceProducts,
+} from '../screens';
 import Icon from 'react-native-vector-icons/Ionicons';
-
 const Stack = createNativeStackNavigator();
 
 const Tab = createBottomTabNavigator();
@@ -27,7 +34,7 @@ const TabNavigator = () => {
 
           return <Icon name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: 'black', // Set the active tab icon color to black
+        tabBarActiveTintColor: 'black',
         tabBarInactiveTintColor: 'gray',
         tabBarStyle: {
           backgroundColor: 'white',
@@ -59,7 +66,7 @@ const TabNavigator = () => {
 
 const MainStackNavigator = () => {
   return (
-    <Stack.Navigator initialRouteName="Main">
+    <Stack.Navigator initialRouteName="LoginScreen">
       <Stack.Screen
         name="LoginScreen"
         component={LoginScreen}
@@ -69,6 +76,11 @@ const MainStackNavigator = () => {
         name="SignUp"
         component={SignUp}
         options={{title: 'Cadastro de Usuário'}}
+      />
+      <Stack.Screen
+        name="WooCommerceProducts"
+        component={WooCommerceProducts}
+        options={{title: 'Produtos'}}
       />
       <Stack.Screen
         name="Main"
