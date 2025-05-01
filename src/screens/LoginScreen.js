@@ -6,50 +6,72 @@ import {
   TouchableOpacity,
   Image,
   ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import {TextInput, Button} from 'react-native-paper';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import {login} from '../imgs';
+import toastr, {SUCCESS, INFO, ERROR} from '../services/toastr';
+import Toast from 'react-native-toast-message';
+import {useNavigation} from '@react-navigation/native';
 
-const LoginScreen = ({navigation}) => {
+const LoginScreen = () => {
+  const navigation = useNavigation();
   const [text, setText] = useState('');
 
   return (
-    <View style={styles.container}>
-      <Image source={login} style={styles.login} />
-      <TextInput
-        label="Email"
-        style={styles.input}
-        mode="outlined"
-        onChangeText={text => {
-          setText(text);
-        }}
-        theme={{colors: {primary: '#000000'}}}
-      />
-      <TextInput
-        label="Senha"
-        style={styles.input}
-        mode="outlined"
-        secureTextEntry
-        theme={{colors: {primary: '#000000'}}}
-      />
-      <Button
-        mode="contained"
-        style={styles.button}
-        onPress={() => navigation.navigate('Main')}>
-        Login
-      </Button>
-      <Button
-        icon={() => <Icon name="google" size={20} color="#fff" />}
-        mode="contained"
-        style={styles.googleButton}
-        onPress={() => console.log('Login com Google')}>
-        Login com Google
-      </Button>
-      <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
-        <Text style={styles.signUpText}>Não tem uma conta? Cadastre-se</Text>
-      </TouchableOpacity>
-    </View>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={{flex: 1}}>
+      <View style={styles.container}>
+        <Toast />
+        <Image source={login} style={styles.login} />
+        <TextInput
+          label="Email"
+          returnKeyType="next"
+          keyboardType="email-address"
+          onSubmitEditing={() => {
+            this.Password.focus();
+          }}
+          style={styles.input}
+          mode="outlined"
+          onChangeText={text => {
+            setText(text);
+          }}
+          theme={{colors: {primary: '#000000'}}}
+        />
+        <TextInput
+          label="Senha"
+          ref={input => {
+            this.Password = input;
+          }}
+          returnKeyType="go"
+          style={styles.input}
+          mode="outlined"
+          secureTextEntry
+          theme={{colors: {primary: '#000000'}}}
+        />
+        <Button
+          mode="contained"
+          style={styles.button}
+          onPress={() => navigation.navigate('Main')}>
+          Login
+        </Button>
+        <Button
+          icon={() => <Icon name="google" size={20} color="#fff" />}
+          mode="contained"
+          style={styles.googleButton}
+          onPress={() =>
+            toastr.showToastTitle('Ocorreu um erro!', 'Erro ao logar', ERROR)
+          }>
+          Login com Google
+        </Button>
+        <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
+          <Text style={styles.signUpText}>Não tem uma conta? Cadastre-se</Text>
+        </TouchableOpacity>
+      </View>
+    </KeyboardAvoidingView>
   );
 };
 

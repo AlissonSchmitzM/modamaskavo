@@ -1,14 +1,12 @@
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import {
-  StatusBar,
-} from 'react-native';
+import {NavigationContainer} from '@react-navigation/native';
+import {StatusBar} from 'react-native';
 import MainStackNavigator from './src/navigator/Navigator';
 
 function App() {
   return (
-    <> 
-      <StatusBar barStyle={'light-content'} />
+    <>
+      <StatusBar backgroundColor="#000000FF" />
       <NavigationContainer>
         <MainStackNavigator />
       </NavigationContainer>
