@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "582893482320",
+    "project_id": "modamaskavo-876a9",
+    "storage_bucket": "modamaskavo-876a9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:582893482320:android:349e9792f290e84b593c55",
+        "android_client_info": {
+          "package_name": "com.modamaskavo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyASyxc0xhgXGlwldxywRKfamlAYr21WAyE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

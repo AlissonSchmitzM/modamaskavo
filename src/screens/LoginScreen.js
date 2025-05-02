@@ -32,7 +32,7 @@ const LoginScreen = () => {
           returnKeyType="next"
           keyboardType="email-address"
           onSubmitEditing={() => {
-            this.Password.focus();
+            //this.Password.focus();
           }}
           style={styles.input}
           mode="outlined"
@@ -44,7 +44,7 @@ const LoginScreen = () => {
         <TextInput
           label="Senha"
           ref={input => {
-            this.Password = input;
+            //this.Password = input;
           }}
           returnKeyType="go"
           style={styles.input}

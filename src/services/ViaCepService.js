@@ -16,18 +16,23 @@ const searchCityName = async (state, name) => {
   return citys;
 };
 
-const searchCityCEP = async cep => {
-  let city;
-  await axios
-    .get(`http://viacep.com.br/ws/${cep}/json/`)
-    .then(res => {
-      city = res.data.localidade;
-    })
-    .catch(err => {
-      console.log(`Erro ao recuperar os dados ${err}`);
-    });
+const searchAddressCompletedByCep = async cep => {
+  let addressCompleted;
+  try {
+    const response = await axios.get(`https://viacep.com.br/ws/${cep}/json/`);
+    // Criando um objeto com os dados do endereço
+    addressCompleted = {
+      logradouro: response.data.logradouro,
+      bairro: response.data.bairro,
+      localidade: response.data.localidade,
+      estado: response.data.estado,
+    };
+  } catch (err) {
+    console.log(`Erro ao recuperar os dados ${err}`);
+    return null;
+  }
 
-  return city;
+  return addressCompleted;
 };
 
-export default {searchCityName, searchCityCEP};
+export default {searchCityName, searchAddressCompletedByCep};
