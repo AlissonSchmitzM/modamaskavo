@@ -1,8 +1,12 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {TextInput} from 'react-native-paper';
 
 const PhoneInput = props => {
   const [value, setValue] = useState(props.value || '');
+
+  useEffect(() => {
+    setValue(props.value || '');
+  }, [props.value]);
 
   // Função para formatar número de celular conforme digitação
   const formatPhoneNumber = text => {

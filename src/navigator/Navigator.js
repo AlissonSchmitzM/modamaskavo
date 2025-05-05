@@ -11,6 +11,7 @@ import {
   WooCommerceProducts,
 } from '../screens';
 import Icon from 'react-native-vector-icons/Ionicons';
+import {View} from 'react-native';
 const Stack = createNativeStackNavigator();
 
 const Tab = createBottomTabNavigator();
@@ -75,7 +76,16 @@ const MainStackNavigator = () => {
       <Stack.Screen
         name="SignUp"
         component={SignUp}
-        options={{title: 'Cadastro de Usuário'}}
+        options={{
+          title: 'Cadastro de Usuário',
+          headerStyle: {
+            backgroundColor: '#000000', // Fundo preto
+          },
+          headerTintColor: '#ffffff', // Texto e botões em branco
+          headerTitleStyle: {
+            color: '#ffffff', // Garantindo que o título também seja branco
+          },
+        }}
       />
       <Stack.Screen
         name="WooCommerceProducts"
