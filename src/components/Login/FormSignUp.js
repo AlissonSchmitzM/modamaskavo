@@ -1,8 +1,8 @@
 import React, {useState, Component} from 'react';
 import {View, StyleSheet, Image, ScrollView, Text, Modal} from 'react-native';
 import {TextInput, Button, ActivityIndicator} from 'react-native-paper';
-import {signup} from '../imgs';
-import {CpfCnpjInput, PhoneInput, CepInput, LoadingOverlay} from '../common';
+import {signup} from '../../imgs';
+import {CpfCnpjInput, PhoneInput, CepInput, LoadingOverlay} from '../../common';
 import {connect} from 'react-redux';
 import {
   fetchAddressByCep,
@@ -19,10 +19,10 @@ import {
   modifyNumber,
   modifyComplement,
   createUser,
-} from '../store/actions/userActions';
-import toastr, {ERROR} from '../services/toastr';
+} from '../../store/actions/userActions';
+import toastr, {ERROR} from '../../services/toastr';
 import Toast from 'react-native-toast-message';
-import {colors} from '../styles/Styles';
+import {colors} from '../../styles/Styles';
 
 class SignUp extends Component {
   constructor(props) {

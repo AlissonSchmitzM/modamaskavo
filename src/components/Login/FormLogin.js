@@ -10,9 +10,10 @@ import {
 } from 'react-native';
 import {TextInput, Button} from 'react-native-paper';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import {login} from '../imgs';
-import toastr, {SUCCESS, INFO, ERROR} from '../services/toastr';
+import {login} from '../../imgs';
+import toastr, {SUCCESS, INFO, ERROR} from '../../services/toastr';
 import Toast from 'react-native-toast-message';
+import navigationService from '../../services/NavigatorService';
 
 class LoginScreen extends Component {
   constructor(props) {
@@ -57,7 +58,7 @@ class LoginScreen extends Component {
           <Button
             mode="contained"
             style={styles.button}
-            onPress={() => this.props.navigation.navigate('Main')}>
+            onPress={() => navigationService.navigate('Main')}>
             Login
           </Button>
           <Button
@@ -68,7 +69,7 @@ class LoginScreen extends Component {
             Login com Google
           </Button>
           <TouchableOpacity
-            onPress={() => this.props.navigation.navigate('SignUp')}>
+            onPress={() => navigationService.navigate('SignUp')}>
             <Text style={styles.signUpText}>
               Não tem uma conta? Cadastre-se
             </Text>

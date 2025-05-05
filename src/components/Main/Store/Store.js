@@ -1,7 +1,7 @@
 import React from 'react';
 import {View, Text, StyleSheet} from 'react-native';
 import LottieView from 'lottie-react-native';
-import {store_comming} from '../assets';
+import {store_comming} from '../../../assets';
 
 const Store = () => {
   return (

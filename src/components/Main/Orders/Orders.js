@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
 import {View, StyleSheet, ScrollView} from 'react-native';
 import {Text, RadioButton, TextInput} from 'react-native-paper';
-import {order} from '../assets';
+import {order} from '../../../assets';
 import LottieView from 'lottie-react-native';
 
 const Orders = () => {

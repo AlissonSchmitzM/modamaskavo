@@ -9,7 +9,7 @@ import {
   Store,
   Profile,
   WooCommerceProducts,
-} from '../screens';
+} from './components';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {View} from 'react-native';
 const Stack = createNativeStackNavigator();
