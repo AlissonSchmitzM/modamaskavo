@@ -19,8 +19,8 @@ const Profile = ({navigation}) => {
   // Função para lidar com o clique em um item
   const handlePress = item => {
     //Alert.alert('Item Clicado', `Você clicou em: ${item.title}`);
-    if (item.title === 'Meus Pedidos') {
-      navigation.navigate('Orders');
+    if (item.title === 'Informações Pessoais') {
+      navigation.navigate('FormProfile');
     }
   };
 

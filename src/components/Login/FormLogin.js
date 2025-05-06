@@ -4,6 +4,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  ActivityIndicator,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -14,17 +15,60 @@ import {login} from '../../imgs';
 import toastr, {SUCCESS, INFO, ERROR} from '../../services/toastr';
 import Toast from 'react-native-toast-message';
 import navigationService from '../../services/NavigatorService';
+import {connect} from 'react-redux';
+import {
+  modifyEmail,
+  modifyPassword,
+  authUserEmail,
+} from '../../store/actions/userActions';
+import {colors} from '../../styles/Styles';
 
-class LoginScreen extends Component {
+class FormLogin extends Component {
   constructor(props) {
     super(props);
-    this.state = {
-      email: '',
-      password: '',
-    };
 
     this.passwordRef = React.createRef();
+    this.btnLoginRef = React.createRef();
   }
+
+  renderBtnLogin() {
+    if (this.props.loginInProgress) {
+      return (
+        <ActivityIndicator
+          style={{marginBottom: 10}}
+          size="large"
+          color={colors.PRIMARY}
+        />
+      );
+    }
+    return (
+      <Button
+        ref={this.btnLoginRef}
+        mode="contained"
+        style={styles.button}
+        onPress={this.handleSubmit}>
+        Login
+      </Button>
+    );
+  }
+
+  validateFields() {
+    if (!this.props.email) {
+      toastr.showToast('Email inválido!', ERROR);
+      return false;
+    } else if (!this.props.password) {
+      toastr.showToast('Senha inválida!', ERROR);
+      return false;
+    }
+
+    return true;
+  }
+
+  handleSubmit = () => {
+    if (this.validateFields()) {
+      this.props.onAuthUserEmail(this.props);
+    }
+  };
 
   render() {
     return (
@@ -32,35 +76,31 @@ class LoginScreen extends Component {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{flex: 1}}>
         <View style={styles.container}>
-          <Toast />
           <Image source={login} style={styles.login} />
           <TextInput
             label="Email"
+            value={this.props.email}
             returnKeyType="next"
             keyboardType="email-address"
             onSubmitEditing={() => this.passwordRef.current?.focus()}
             style={styles.input}
+            onChangeText={text => this.props.onModifyEmail(text)}
             mode="outlined"
-            onChangeText={text => {
-              setText(text);
-            }}
             theme={{colors: {primary: '#000000'}}}
           />
           <TextInput
             label="Senha"
+            value={this.props.password}
             ref={this.passwordRef}
             returnKeyType="go"
             style={styles.input}
+            onSubmitEditing={this.handleSubmit}
+            onChangeText={text => this.props.onModifyPassword(text)}
             mode="outlined"
             secureTextEntry
             theme={{colors: {primary: '#000000'}}}
           />
-          <Button
-            mode="contained"
-            style={styles.button}
-            onPress={() => navigationService.navigate('Main')}>
-            Login
-          </Button>
+          {this.renderBtnLogin()}
           <Button
             icon={() => <Icon name="google" size={20} color="#fff" />}
             mode="contained"
@@ -69,12 +109,13 @@ class LoginScreen extends Component {
             Login com Google
           </Button>
           <TouchableOpacity
-            onPress={() => navigationService.navigate('SignUp')}>
+            onPress={() => navigationService.navigate('FormSignUp')}>
             <Text style={styles.signUpText}>
               Não tem uma conta? Cadastre-se
             </Text>
           </TouchableOpacity>
         </View>
+        <Toast />
       </KeyboardAvoidingView>
     );
   }
@@ -112,4 +153,16 @@ const styles = StyleSheet.create({
   },
 });
 
-export default LoginScreen;
+const mapDispatchToProps = dispatch => ({
+  onAuthUserEmail: user => dispatch(authUserEmail(user)),
+  onModifyEmail: email => dispatch(modifyEmail(email)),
+  onModifyPassword: password => dispatch(modifyPassword(password)),
+});
+
+const mapStateToProps = state => ({
+  email: state.userReducer.email,
+  password: state.userReducer.password,
+  loginInProgress: state.userReducer.loginInProgress,
+});
+
+export default connect(mapStateToProps, mapDispatchToProps)(FormLogin);

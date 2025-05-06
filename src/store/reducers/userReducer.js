@@ -17,12 +17,20 @@ import {
   MODIFY_CEP,
   MODIFY_NUMBER,
   MODIFY_COMPLEMENT,
+  LOGIN_IN_PROGRESS,
+  LOGIN_SUCCESS,
+  LOGIN_ERROR,
+  SAVE_PROFILE_IN_PROGRESS,
+  SAVE_PROFILE_SUCCESS,
+  SAVE_PROFILE_ERROR,
 } from '../actions/actionTypes';
 
 // Estado inicial
 const INITIAL_STATE = {
   loading: false,
   registrationInProgress: false,
+  loginInProgress: false,
+  saveProfileInProgress: false,
   name: '',
   email: '',
   password: '',
@@ -92,25 +100,21 @@ const userReducer = (state = INITIAL_STATE, action) => {
     case REGISTRATION_IN_PROGRESS:
       return {...state, registrationInProgress: true};
     case REGISTRATION_SUCCESS:
-      return {
-        ...state,
-        registrationInProgress: false,
-        name: '',
-        email: '',
-        password: '',
-        cpfcnpj: '',
-        phone: '',
-        cep: '',
-        address: '',
-        number: '',
-        complement: '',
-        neighborhood: '',
-        city: '',
-        state: '',
-        error: null,
-      };
+      return {...state, password: '', registrationInProgress: false};
     case REGISTRATION_ERROR:
       return {...state, registrationInProgress: false, error: action.payload};
+    case LOGIN_IN_PROGRESS:
+      return {...state, loginInProgress: true};
+    case LOGIN_SUCCESS:
+      return {...state, password: '', loginInProgress: false};
+    case LOGIN_ERROR:
+      return {...state, loginInProgress: false};
+    case SAVE_PROFILE_IN_PROGRESS:
+      return {...state, saveProfileInProgress: true};
+    case SAVE_PROFILE_ERROR:
+      return {...state, saveProfileInProgress: false};
+    case SAVE_PROFILE_SUCCESS:
+      return {...state, saveProfileInProgress: false};
     default:
       return state;
   }

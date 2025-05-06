@@ -1,9 +1,19 @@
-import LoginScreen from './Login/FormLogin.js';
-import SignUp from './Login/FormSignUp.js';
+import FormLogin from './Login/FormLogin.js';
+import FormSignUp from './Login/FormSignUp.js';
+import FormProfile from './Main/Profile/FormProfile/FormProfile.js';
 import Home from './Main/Home/Home.js';
 import Orders from './Main/Orders/Orders.js';
 import Store from './Main/Store/Store.js';
-import Profile from './Main/FormProfile/FormProfile.js';
+import Profile from './Main/Profile/Profile.js';
 import WooCommerceProducts from './Main/Home/WooCommerceProducts.js';
 
-export {LoginScreen, SignUp, Home, Orders, Store, Profile, WooCommerceProducts};
+export {
+  FormLogin,
+  FormSignUp,
+  FormProfile,
+  Home,
+  Orders,
+  Store,
+  Profile,
+  WooCommerceProducts,
+};

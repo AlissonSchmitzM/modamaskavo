@@ -2,7 +2,7 @@ import {StyleSheet} from 'react-native';
 
 export const colors = {
   PRIMARY: '#000000FF',
-  SECONDARY: '#7A7A7AFF',
+  SECONDARY: '#575656FF',
 };
 
 export const styleButton = StyleSheet.create({

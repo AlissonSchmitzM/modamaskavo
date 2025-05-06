@@ -2,8 +2,9 @@ import React from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {
-  LoginScreen,
-  SignUp,
+  FormLogin,
+  FormSignUp,
+  FormProfile,
   Home,
   Orders,
   Store,
@@ -67,15 +68,15 @@ const TabNavigator = () => {
 
 const MainStackNavigator = () => {
   return (
-    <Stack.Navigator initialRouteName="LoginScreen">
+    <Stack.Navigator initialRouteName="FormLogin">
       <Stack.Screen
-        name="LoginScreen"
-        component={LoginScreen}
+        name="FormLogin"
+        component={FormLogin}
         options={{headerShown: false}}
       />
       <Stack.Screen
-        name="SignUp"
-        component={SignUp}
+        name="FormSignUp"
+        component={FormSignUp}
         options={{
           title: 'Cadastro de Usuário',
           headerStyle: {
@@ -91,6 +92,11 @@ const MainStackNavigator = () => {
         name="WooCommerceProducts"
         component={WooCommerceProducts}
         options={{title: 'Produtos'}}
+      />
+      <Stack.Screen
+        name="FormProfile"
+        component={FormProfile}
+        options={{title: 'Perfil'}}
       />
       <Stack.Screen
         name="Main"
