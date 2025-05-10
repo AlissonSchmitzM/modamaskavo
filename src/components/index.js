@@ -6,6 +6,7 @@ import Orders from './Main/Orders/Orders.js';
 import Store from './Main/Store/Store.js';
 import Profile from './Main/Profile/Profile.js';
 import WooCommerceProducts from './Main/Home/WooCommerceProducts.js';
+import SplashScreen from './SplashScreen.js';
 
 export {
   FormLogin,
@@ -16,4 +17,5 @@ export {
   Store,
   Profile,
   WooCommerceProducts,
+  SplashScreen,
 };

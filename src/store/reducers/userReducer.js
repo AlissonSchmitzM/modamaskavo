@@ -17,12 +17,15 @@ import {
   MODIFY_CEP,
   MODIFY_NUMBER,
   MODIFY_COMPLEMENT,
+  MODIFY_PHOTO,
   LOGIN_IN_PROGRESS,
   LOGIN_SUCCESS,
   LOGIN_ERROR,
   SAVE_PROFILE_IN_PROGRESS,
   SAVE_PROFILE_SUCCESS,
   SAVE_PROFILE_ERROR,
+  DATA_USER,
+  SIGN_OUT,
 } from '../actions/actionTypes';
 
 // Estado inicial
@@ -31,6 +34,7 @@ const INITIAL_STATE = {
   registrationInProgress: false,
   loginInProgress: false,
   saveProfileInProgress: false,
+  photoModify: false,
   name: '',
   email: '',
   password: '',
@@ -54,7 +58,17 @@ const userReducer = (state = INITIAL_STATE, action) => {
     case FETCH_ADDRESS_REQUEST:
       return {...state, loading: true, error: null};
     case FETCH_ADDRESS_SUCCESS:
-      return {...state, loading: false, error: null, address: action.payload};
+      return {
+        ...state,
+        loading: false,
+        error: null,
+        address: {
+          logradouro: action.payload.logradouro,
+          neighborhood: action.payload.bairro,
+          city: action.payload.localidade,
+          state: action.payload.estado,
+        },
+      };
     case FETCH_ADDRESS_FAILURE:
       return {...state, loading: false, error: action.payload};
     case MODIFY_ADDRESS:
@@ -115,6 +129,38 @@ const userReducer = (state = INITIAL_STATE, action) => {
       return {...state, saveProfileInProgress: false};
     case SAVE_PROFILE_SUCCESS:
       return {...state, saveProfileInProgress: false};
+    case DATA_USER:
+      return {
+        ...state,
+        name: action.payload.name,
+        email: action.payload.email,
+        cpfcnpj: action.payload.cpfcnpj,
+        phone: action.payload.phone,
+        cep: action.payload.cep,
+        number: action.payload.number,
+        complement: action.payload.complement,
+        address: {
+          logradouro: action.payload.logradouro,
+          neighborhood: action.payload.neighborhood,
+          city: action.payload.city,
+          state: action.payload.state,
+        },
+        fileImgPath: action.payload.fileImgPath,
+        fileImgType: action.payload.fileImgType,
+        saveProfile: action.payload.saveProfile,
+      };
+    case MODIFY_PHOTO:
+      return {
+        ...state,
+        fileImgPath: action.payload.fileImgPath,
+        fileImgType: action.payload.fileImgType,
+        photoModify: true,
+      };
+    case SIGN_OUT:
+      return {
+        ...INITIAL_STATE,
+      };
+
     default:
       return state;
   }

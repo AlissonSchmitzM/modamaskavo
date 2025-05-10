@@ -1,64 +1,95 @@
-import {AsyncStorage} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const safeParse = value => {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+};
+
+const safeStringify = value => {
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return null;
+  }
+};
 
 const store = {
   /**
-   * Get a one or more value for a key or array of keys from AsyncStorage
+   * Get a value or an array of values by key(s) from AsyncStorage
    * @param {String|Array} key A key or array of keys
    * @return {Promise}
    */
-  get(key) {
+  async get(key) {
     if (!Array.isArray(key)) {
-      return AsyncStorage.getItem(key).then(value => JSON.parse(value));
+      const value = await AsyncStorage.getItem(key);
+      return safeParse(value);
     }
-    return AsyncStorage.multiGet(key).then(values =>
-      values.map(value => JSON.parse(value[1])),
-    );
+    const result = await AsyncStorage.multiGet(key);
+    return result.map(([_, value]) => safeParse(value));
   },
 
   /**
-   * Save a key value pair or a series of key value pairs to AsyncStorage.
-   * @param  {String|Array} key The key or an array of key/value pairs
-   * @param  {Any} value The value to save
+   * Save a key/value pair or array of key/value pairs to AsyncStorage.
+   * @param  {String|Array} key The key or array of [key, value] pairs
+   * @param  {Any} value The value to save (if key is string)
    * @return {Promise}
    */
-  save(key, value) {
+  async save(key, value) {
     if (!Array.isArray(key)) {
-      return AsyncStorage.setItem(key, JSON.stringify(value));
+      const jsonValue = safeStringify(value);
+      if (jsonValue !== null) {
+        return AsyncStorage.setItem(key, jsonValue);
+      }
+      return;
     }
-    const pairs = key.map(pair => [pair[0], JSON.stringify(pair[1])]);
+
+    const pairs = key
+      .map(([k, v]) => [k, safeStringify(v)])
+      .filter(([_, v]) => v !== null);
+
     return AsyncStorage.multiSet(pairs);
   },
 
   /**
-   * Updates the value in the store for a given key in AsyncStorage.
-   * If the value is a string it will be replaced.
-   * If the value is an object it will be deep merged.
-   * @param  {String} key The key
-   * @param  {Value} value The value to update with
+   * Update a value for a key. Replaces primitive or deep merges if object.
+   * @param  {String} key
+   * @param  {Any} value
    * @return {Promise}
    */
-  update(key, value) {
-    return AsyncStorage.get(key).then(() =>
-      AsyncStorage.setItem(key, JSON.stringify(value)),
-    );
+  async update(key, value) {
+    const current = await this.get(key);
+
+    let updatedValue;
+    if (
+      typeof current === 'object' &&
+      current !== null &&
+      typeof value === 'object'
+    ) {
+      updatedValue = {...current, ...value};
+    } else {
+      updatedValue = value;
+    }
+
+    return this.save(key, updatedValue);
   },
 
   /**
-   * Delete the value for a given key in AsyncStorage.
-   * @param  {String|Array} key The key or an array of keys to be deleted
+   * Delete a key or array of keys from AsyncStorage
+   * @param  {String|Array} key
    * @return {Promise}
    */
   delete(key) {
-    if (Array.isArray(key)) {
-      return AsyncStorage.multiRemove(key);
-    }
-    return AsyncStorage.removeItem(key);
+    return Array.isArray(key)
+      ? AsyncStorage.multiRemove(key)
+      : AsyncStorage.removeItem(key);
   },
 
   /**
-   * Get all keys in AsyncStorage.
-   * @return {Promise} A promise which when it resolves
-   * gets passed the saved keys in AsyncStorage.
+   * Get all keys stored in AsyncStorage
+   * @return {Promise<Array>}
    */
   keys() {
     return AsyncStorage.getAllKeys();

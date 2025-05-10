@@ -10,6 +10,7 @@ import {
   Store,
   Profile,
   WooCommerceProducts,
+  SplashScreen,
 } from './components';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {View} from 'react-native';
@@ -68,7 +69,7 @@ const TabNavigator = () => {
 
 const MainStackNavigator = () => {
   return (
-    <Stack.Navigator initialRouteName="FormLogin">
+    <Stack.Navigator initialRouteName="SplashScreen">
       <Stack.Screen
         name="FormLogin"
         component={FormLogin}
@@ -96,7 +97,21 @@ const MainStackNavigator = () => {
       <Stack.Screen
         name="FormProfile"
         component={FormProfile}
-        options={{title: 'Perfil'}}
+        options={{
+          title: 'Perfil',
+          headerStyle: {
+            backgroundColor: '#000000', // Fundo preto
+          },
+          headerTintColor: '#ffffff', // Texto e botões em branco
+          headerTitleStyle: {
+            color: '#ffffff', // Garantindo que o título também seja branco
+          },
+        }}
+      />
+      <Stack.Screen
+        name="SplashScreen"
+        component={SplashScreen}
+        options={{headerShown: false}}
       />
       <Stack.Screen
         name="Main"

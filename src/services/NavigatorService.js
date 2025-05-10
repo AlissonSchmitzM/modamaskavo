@@ -37,10 +37,32 @@ function goBack() {
   }
 }
 
+// Função para obter a rota anterior
+function getPreviousRoute() {
+  if (navigationRef.isReady()) {
+    const state = navigationRef.getState();
+    if (state.routes.length > 1) {
+      const currentRouteIndex = state.index;
+      if (currentRouteIndex > 0) {
+        return state.routes[currentRouteIndex - 1];
+      }
+    }
+    return null; // Retorna null se não houver rota anterior
+  }
+  return null;
+}
+
+// Função para obter o nome da rota anterior
+function getPreviousRouteName() {
+  const previousRoute = getPreviousRoute();
+  return previousRoute ? previousRoute.name : null;
+}
+
 export default {
   navigate,
   navigateWithParams,
   reset,
   goBack,
   navigationRef,
+  getPreviousRouteName,
 };
