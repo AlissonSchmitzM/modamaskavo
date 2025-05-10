@@ -1,4 +1,4 @@
-import React, {useState, Component} from 'react';
+import React, {Component} from 'react';
 import {
   View,
   StyleSheet,
@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
   PermissionsAndroid,
   Platform,
-  Alert,
+  Appearance,
 } from 'react-native';
 import {
   TextInput,
@@ -45,14 +45,12 @@ import {
   saveProfileUser,
   readDataUser,
   modifyPhoto,
-  // Você precisará adicionar estas ações para gerenciar a imagem do perfil
-  //updateProfileImage,
 } from '../../../../store/actions/userActions';
 import toastr, {ERROR} from '../../../../services/toastr';
 import Toast from 'react-native-toast-message';
 import {colors} from '../../../../styles/Styles';
 import styles from './Styles';
-// Importe a biblioteca para seleção de imagens (você precisará instalá-la)
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 
 class FormProfile extends Component {
@@ -61,11 +59,21 @@ class FormProfile extends Component {
 
     this.state = {
       visible: false,
-      menuVisible: false, // Estado para controlar a visibilidade do menu de imagem
-      imageMenuVisible: false, // Estado para o menu personalizado
+      menuVisible: false,
+      imageMenuVisible: false,
     };
 
     this.btnRegisterRef = React.createRef();
+    this.nameRef = React.createRef();
+    this.cpfcnpjRef = React.createRef();
+    this.celularRef = React.createRef();
+    this.cepRef = React.createRef();
+    this.enderecoRef = React.createRef();
+    this.numeroRef = React.createRef();
+    this.complementoRef = React.createRef();
+    this.bairroRef = React.createRef();
+    this.cidadeRef = React.createRef();
+    this.estadoRef = React.createRef();
   }
 
   componentDidMount() {
@@ -244,11 +252,8 @@ class FormProfile extends Component {
         ref={this.btnRegisterRef}
         mode="contained"
         style={styles.button}
-        onPress={() => {
-          if (this.validateFields()) {
-            this.props.onSaveProfileUser(this.props);
-          }
-        }}>
+        textColor="#FFF"
+        onPress={this.handleSubmit}>
         Salvar
       </Button>
     );
@@ -287,188 +292,257 @@ class FormProfile extends Component {
     return true;
   }
 
+  handleSubmit = () => {
+    if (this.validateFields()) {
+      this.props.onSaveProfileUser(this.props);
+    }
+  };
+
   render() {
     const {address, loading} = this.props;
     const {imageMenuVisible} = this.state;
 
     return (
       <PaperProvider>
-        <View style={{flex: 1}}>
-          <ScrollView contentContainerStyle={styles.scrollContainer}>
-            <View style={styles.container}>
-              <View style={styles.containerAvatar}>
-                {this.props.fileImgPath ? (
-                  <Avatar.Image
-                    size={100}
-                    source={{uri: this.props.fileImgPath}}
-                  />
-                ) : (
-                  <Avatar.Text
-                    color="#FFF"
-                    backgroundColor={colors.SECONDARY}
-                    size={100}
-                    label={this.props.name.charAt(0)}
-                  />
-                )}
-                <View style={styles.containerAvatarIcon}>
-                  <IconButton
-                    icon="pencil"
-                    size={14}
-                    iconColor="white"
-                    onPress={this.openImageMenu}
-                    style={{margin: 0, padding: 0}}
-                  />
+        <KeyboardAwareScrollView
+          style={{flex: 1}}
+          extraScrollHeight={100}
+          enableOnAndroid={true}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}>
+          <View style={{flex: 1}}>
+            <ScrollView
+              contentContainerStyle={styles.scrollContainer}
+              keyboardShouldPersistTaps="handled"
+              automaticallyAdjustKeyboardInsets={true}
+              keyboardDismissMode="on-drag"
+              showsVerticalScrollIndicator={false}>
+              <View style={styles.container}>
+                <View style={styles.containerAvatar}>
+                  {this.props.fileImgPath ? (
+                    <Avatar.Image
+                      size={100}
+                      source={{uri: this.props.fileImgPath}}
+                    />
+                  ) : (
+                    <Avatar.Text
+                      color="#FFF"
+                      backgroundColor={colors.SECONDARY}
+                      size={100}
+                      label={this.props.name.charAt(0)}
+                    />
+                  )}
+                  <View style={styles.containerAvatarIcon}>
+                    <IconButton
+                      icon="pencil"
+                      size={14}
+                      iconColor="white"
+                      onPress={this.openImageMenu}
+                      style={{margin: 0, padding: 0}}
+                    />
+                  </View>
                 </View>
+                <View>
+                  <Text style={{fontSize: 16, color: colors.SECONDARY}}>
+                    {this.props.email}
+                  </Text>
+                </View>
+                <TextInput
+                  autoFocus
+                  label="Nome"
+                  style={styles.input}
+                  value={this.props.name}
+                  textColor="#000"
+                  returnKeyType="next"
+                  onSubmitEditing={() => this.cpfcnpjRef.current?.focus()}
+                  onChangeText={text => this.props.onModifyName(text)}
+                  mode="outlined"
+                  theme={{
+                    colors: {primary: '#000000', onSurfaceVariant: '#999999'},
+                  }}
+                />
+                <CpfCnpjInput
+                  ref={this.cpfcnpjRef}
+                  returnKeyType="next"
+                  onSubmitEditing={() => this.celularRef.current?.focus()}
+                  style={styles.input}
+                  value={this.props.cpfcnpj}
+                  onChangeText={(formattedText, cleanText) => {
+                    this.props.onModifyCpfCnpj(formattedText);
+                  }}
+                />
+                <PhoneInput
+                  ref={this.celularRef}
+                  returnKeyType="next"
+                  onSubmitEditing={() => this.cepRef.current?.focus()}
+                  style={styles.input}
+                  value={this.props.phone}
+                  onChangeText={(formattedText, cleanText) => {
+                    this.props.onModifyPhone(formattedText);
+                  }}
+                />
+                <CepInput
+                  ref={this.cepRef}
+                  returnKeyType="go"
+                  style={styles.input}
+                  value={this.props.cep}
+                  onChangeText={(formattedText, cleanText) => {
+                    this.props.onModifyCep(formattedText);
+                  }}
+                  onCompleteCep={cep => this.handleCompleteCep(cep)}
+                />
+                <TextInput
+                  ref={this.enderecoRef}
+                  returnKeyType="next"
+                  onSubmitEditing={() => this.numeroRef.current?.focus()}
+                  label="Endereço"
+                  style={styles.input}
+                  value={address.logradouro}
+                  textColor="#000"
+                  onChangeText={text => this.props.onModifyAddress(text)}
+                  mode="outlined"
+                  theme={{
+                    colors: {primary: '#000000', onSurfaceVariant: '#999999'},
+                  }}
+                />
+                <TextInput
+                  ref={this.numeroRef}
+                  returnKeyType="next"
+                  onSubmitEditing={() => this.complementoRef.current?.focus()}
+                  label="Número"
+                  style={styles.input}
+                  value={this.props.number}
+                  textColor="#000"
+                  onChangeText={text => this.props.onModifyNumber(text)}
+                  mode="outlined"
+                  keyboardType="numeric"
+                  theme={{
+                    colors: {primary: '#000000', onSurfaceVariant: '#999999'},
+                  }}
+                />
+                <TextInput
+                  ref={this.complementoRef}
+                  returnKeyType="next"
+                  onSubmitEditing={() => this.bairroRef.current?.focus()}
+                  label="Complemento (opcional)"
+                  style={styles.input}
+                  value={this.props.complement}
+                  textColor="#000"
+                  onChangeText={text => this.props.onModifyComplement(text)}
+                  mode="outlined"
+                  theme={{
+                    colors: {primary: '#000000', onSurfaceVariant: '#999999'},
+                  }}
+                />
+                <TextInput
+                  ref={this.bairroRef}
+                  returnKeyType="next"
+                  onSubmitEditing={() => this.cidadeRef.current?.focus()}
+                  label="Bairro"
+                  style={styles.input}
+                  value={address.neighborhood}
+                  textColor="#000"
+                  onChangeText={text => this.props.onModifyNeighborhood(text)}
+                  mode="outlined"
+                  theme={{
+                    colors: {primary: '#000000', onSurfaceVariant: '#999999'},
+                  }}
+                />
+                <TextInput
+                  ref={this.cidadeRef}
+                  returnKeyType="next"
+                  onSubmitEditing={() => this.estadoRef.current?.focus()}
+                  label="Cidade"
+                  style={styles.input}
+                  value={address.city}
+                  textColor="#000"
+                  onChangeText={text => this.props.onModifyCity(text)}
+                  mode="outlined"
+                  theme={{
+                    colors: {primary: '#000000', onSurfaceVariant: '#999999'},
+                  }}
+                />
+                <TextInput
+                  ref={this.estadoRef}
+                  returnKeyType="go"
+                  onSubmitEditing={this.handleSubmit}
+                  label="Estado"
+                  style={styles.input}
+                  value={address.state}
+                  textColor="#000"
+                  onChangeText={text => this.props.onModifyState(text)}
+                  mode="outlined"
+                  theme={{
+                    colors: {primary: '#000000', onSurfaceVariant: '#999999'},
+                  }}
+                />
+                {this.renderBtnRegister()}
               </View>
-              <View>
-                <Text style={{fontSize: 16, color: colors.SECONDARY}}>
-                  {this.props.email}
-                </Text>
-              </View>
-              <TextInput
-                autoFocus
-                label="Nome"
-                style={styles.input}
-                value={this.props.name}
-                onChangeText={text => this.props.onModifyName(text)}
-                mode="outlined"
-                theme={{colors: {primary: '#000000'}}}
-              />
-              <CpfCnpjInput
-                style={styles.input}
-                value={this.props.cpfcnpj}
-                onChangeText={(formattedText, cleanText) => {
-                  this.props.onModifyCpfCnpj(formattedText);
-                }}
-              />
-              <PhoneInput
-                style={styles.input}
-                value={this.props.phone}
-                onChangeText={(formattedText, cleanText) => {
-                  this.props.onModifyPhone(formattedText);
-                }}
-              />
-              <CepInput
-                style={styles.input}
-                value={this.props.cep}
-                onChangeText={(formattedText, cleanText) => {
-                  this.props.onModifyCep(formattedText);
-                }}
-                onCompleteCep={cep => this.handleCompleteCep(cep)}
-              />
-              <TextInput
-                label="Endereço"
-                style={styles.input}
-                value={address.logradouro}
-                onChangeText={text => this.props.onModifyAddress(text)}
-                mode="outlined"
-                theme={{colors: {primary: '#000000'}}}
-              />
-              <TextInput
-                label="Número"
-                style={styles.input}
-                value={this.props.number}
-                onChangeText={text => this.props.onModifyNumber(text)}
-                mode="outlined"
-                keyboardType="numeric"
-                theme={{colors: {primary: '#000000'}}}
-              />
-              <TextInput
-                label="Complemento (opcional)"
-                style={styles.input}
-                value={this.props.complement}
-                onChangeText={text => this.props.onModifyComplement(text)}
-                mode="outlined"
-                theme={{colors: {primary: '#000000'}}}
-              />
-              <TextInput
-                label="Bairro"
-                style={styles.input}
-                value={address.neighborhood}
-                onChangeText={text => this.props.onModifyNeighborhood(text)}
-                mode="outlined"
-                theme={{colors: {primary: '#000000'}}}
-              />
-              <TextInput
-                label="Cidade"
-                style={styles.input}
-                value={address.city}
-                onChangeText={text => this.props.onModifyCity(text)}
-                mode="outlined"
-                theme={{colors: {primary: '#000000'}}}
-              />
-              <TextInput
-                label="Estado"
-                style={styles.input}
-                value={address.state}
-                onChangeText={text => this.props.onModifyState(text)}
-                mode="outlined"
-                theme={{colors: {primary: '#000000'}}}
-              />
-              {this.renderBtnRegister()}
-            </View>
-          </ScrollView>
+            </ScrollView>
 
-          {/* Menu personalizado para seleção de imagem */}
-          <Portal>
-            <Modal
-              visible={imageMenuVisible}
-              transparent={true}
-              animationType="fade"
-              onRequestClose={this.closeImageMenu}
-              onDismiss={this.closeImageMenu}>
-              <TouchableOpacity
-                style={imageMenuStyles.modalOverlay}
-                activeOpacity={1}
-                onPress={this.closeImageMenu}>
-                <Surface style={imageMenuStyles.menuContainer}>
-                  <TouchableOpacity
-                    style={imageMenuStyles.menuItem}
-                    onPress={this.handleCamera}>
-                    <IconButton
-                      icon="camera"
-                      size={30}
-                      iconColor={colors.SECONDARY}
-                    />
-                    <Text style={imageMenuStyles.menuText}>Câmera</Text>
-                  </TouchableOpacity>
+            {/* Menu personalizado para seleção de imagem */}
+            <Portal>
+              <Modal
+                visible={imageMenuVisible}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={this.closeImageMenu}
+                onDismiss={this.closeImageMenu}>
+                <TouchableOpacity
+                  style={imageMenuStyles.modalOverlay}
+                  activeOpacity={1}
+                  onPress={this.closeImageMenu}>
+                  <Surface style={imageMenuStyles.menuContainer}>
+                    <TouchableOpacity
+                      style={imageMenuStyles.menuItem}
+                      onPress={this.handleCamera}>
+                      <IconButton
+                        icon="camera"
+                        size={30}
+                        iconColor={colors.SECONDARY}
+                      />
+                      <Text style={imageMenuStyles.menuText}>Câmera</Text>
+                    </TouchableOpacity>
 
-                  <Divider style={imageMenuStyles.divider} />
+                    <Divider style={imageMenuStyles.divider} />
 
-                  <TouchableOpacity
-                    style={imageMenuStyles.menuItem}
-                    onPress={this.handleGallery}>
-                    <IconButton
-                      icon="image"
-                      size={30}
-                      iconColor={colors.SECONDARY}
-                    />
-                    <Text style={imageMenuStyles.menuText}>Galeria</Text>
-                  </TouchableOpacity>
+                    <TouchableOpacity
+                      style={imageMenuStyles.menuItem}
+                      onPress={this.handleGallery}>
+                      <IconButton
+                        icon="image"
+                        size={30}
+                        iconColor={colors.SECONDARY}
+                      />
+                      <Text style={imageMenuStyles.menuText}>Galeria</Text>
+                    </TouchableOpacity>
 
-                  <Divider style={imageMenuStyles.divider} />
+                    <Divider style={imageMenuStyles.divider} />
 
-                  <TouchableOpacity
-                    style={imageMenuStyles.menuItem}
-                    onPress={this.closeImageMenu}>
-                    <IconButton icon="close" size={30} iconColor="#FF3B30" />
-                    <Text
-                      style={[imageMenuStyles.menuText, {color: '#FF3B30'}]}>
-                      Cancelar
-                    </Text>
-                  </TouchableOpacity>
-                </Surface>
-              </TouchableOpacity>
-            </Modal>
-          </Portal>
-
-          <Toast />
-          {loading && <LoadingOverlay message="Buscando endereço..." />}
-        </View>
+                    <TouchableOpacity
+                      style={imageMenuStyles.menuItem}
+                      onPress={this.closeImageMenu}>
+                      <IconButton icon="close" size={30} iconColor="#FF3B30" />
+                      <Text
+                        style={[imageMenuStyles.menuText, {color: '#FF3B30'}]}>
+                        Cancelar
+                      </Text>
+                    </TouchableOpacity>
+                  </Surface>
+                </TouchableOpacity>
+              </Modal>
+            </Portal>
+            {loading && <LoadingOverlay message="Buscando endereço..." />}
+          </View>
+        </KeyboardAwareScrollView>
+        <Toast />
       </PaperProvider>
     );
   }
 }
+
+const colorScheme = Appearance.getColorScheme();
+const isDarkMode = colorScheme === 'dark';
 
 // Estilos para o menu de seleção de imagem
 const imageMenuStyles = StyleSheet.create({
@@ -492,6 +566,7 @@ const imageMenuStyles = StyleSheet.create({
   menuText: {
     fontSize: 16,
     marginLeft: 8,
+    color: isDarkMode ? '#ADADADFF' : '#000',
   },
   divider: {
     height: 1,

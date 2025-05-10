@@ -68,9 +68,12 @@ const CpfCnpjInput = props => {
       value={value}
       onChangeText={handleChange}
       keyboardType="numeric"
+      textColor="#000"
       mode="outlined"
       maxLength={18} // Tamanho máximo para CNPJ formatado
-      theme={{colors: {primary: '#000000'}}}
+      theme={{
+        colors: {primary: '#000000', onSurfaceVariant: '#999999'},
+      }}
       {...otherProps} // Repassa todas as outras props
     />
   );

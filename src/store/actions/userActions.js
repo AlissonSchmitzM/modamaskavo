@@ -2,7 +2,7 @@ import toastr, {SUCCESS, ERROR} from '../../services/toastr';
 import b64 from 'base-64';
 import auth from '@react-native-firebase/auth';
 import database from '@react-native-firebase/database';
-import storage from '@react-native-firebase/database';
+import storage from '@react-native-firebase/storage';
 import navigationService from '../../services/NavigatorService';
 import store from '../../services/AsyncStorage';
 
@@ -260,7 +260,7 @@ export const saveProfileUser = dataUser => dispatch => {
     const storagePath = `photos_profile/${fileName}`;
 
     // Referência para o arquivo no Firebase Storage
-    const reference = storage.ref(storagePath);
+    const reference = storage().ref(storagePath);
     console.log('reference', reference);
 
     // Caminho do arquivo local

@@ -46,6 +46,7 @@ class FormLogin extends Component {
         ref={this.btnLoginRef}
         mode="contained"
         style={styles.button}
+        textColor="#FFF"
         onPress={this.handleSubmit}>
         Login
       </Button>
@@ -74,6 +75,7 @@ class FormLogin extends Component {
     return (
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 40}
         style={{flex: 1}}>
         <View style={styles.container}>
           <Image source={login} style={styles.login} />
@@ -84,9 +86,12 @@ class FormLogin extends Component {
             keyboardType="email-address"
             onSubmitEditing={() => this.passwordRef.current?.focus()}
             style={styles.input}
+            textColor="#000"
             onChangeText={text => this.props.onModifyEmail(text)}
             mode="outlined"
-            theme={{colors: {primary: '#000000'}}}
+            theme={{
+              colors: {primary: '#000000', onSurfaceVariant: '#999999'},
+            }}
           />
           <TextInput
             label="Senha"
@@ -94,17 +99,21 @@ class FormLogin extends Component {
             ref={this.passwordRef}
             returnKeyType="go"
             style={styles.input}
+            textColor="#000"
             onSubmitEditing={this.handleSubmit}
             onChangeText={text => this.props.onModifyPassword(text)}
             mode="outlined"
             secureTextEntry
-            theme={{colors: {primary: '#000000'}}}
+            theme={{
+              colors: {primary: '#000000', onSurfaceVariant: '#999999'},
+            }}
           />
           {this.renderBtnLogin()}
           <Button
-            icon={() => <Icon name="google" size={20} color="#fff" />}
+            icon={() => <Icon name="google" size={20} color="#FFF" />}
             mode="contained"
             style={styles.googleButton}
+            textColor="#FFF"
             onPress={() => toastr.showToast('Ocorreu um erro!', ERROR)}>
             Login com Google
           </Button>
@@ -126,12 +135,12 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#F5F5F5',
   },
   input: {
     width: '90%',
     marginBottom: 15,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFF',
   },
   button: {
     width: '90%',

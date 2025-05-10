@@ -69,6 +69,7 @@ class FormSignUp extends Component {
     return (
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 40}
         style={{flex: 1}}>
         <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
           <View style={styles.container}>
@@ -81,9 +82,12 @@ class FormSignUp extends Component {
               onSubmitEditing={() => this.emailRef.current?.focus()}
               style={styles.input}
               value={this.props.name}
+              textColor="#000"
               onChangeText={text => this.props.onModifyName(text)}
               mode="outlined"
-              theme={{colors: {primary: '#000000'}}}
+              theme={{
+                colors: {primary: '#000000', onSurfaceVariant: '#999999'},
+              }}
             />
             <TextInput
               ref={this.emailRef}
@@ -93,9 +97,12 @@ class FormSignUp extends Component {
               onSubmitEditing={() => this.passwordRef.current?.focus()}
               style={styles.input}
               value={this.props.email}
+              textColor="#000"
               onChangeText={text => this.props.onModifyEmail(text)}
               mode="outlined"
-              theme={{colors: {primary: '#000000'}}}
+              theme={{
+                colors: {primary: '#000000', onSurfaceVariant: '#999999'},
+              }}
             />
             <TextInput
               ref={this.passwordRef}
@@ -104,9 +111,12 @@ class FormSignUp extends Component {
               style={styles.input}
               onSubmitEditing={this.handleSubmit}
               value={this.props.password}
+              textColor="#000"
               onChangeText={text => this.props.onModifyPassword(text)}
               mode="outlined"
-              theme={{colors: {primary: '#000000'}}}
+              theme={{
+                colors: {primary: '#000000', onSurfaceVariant: '#999999'},
+              }}
               secureTextEntry
             />
             {this.renderBtnRegister()}

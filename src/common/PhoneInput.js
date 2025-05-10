@@ -57,9 +57,12 @@ const PhoneInput = props => {
       onChangeText={handleChange}
       keyboardType="numeric"
       mode="outlined"
+      textColor="#000"
       placeholder={props.placeholder || '(XX) XXXXX-XXXX'}
       maxLength={15} // Tamanho máximo para número formatado
-      theme={{colors: {primary: '#000000'}}}
+      theme={{
+        colors: {primary: '#000000', onSurfaceVariant: '#999999'},
+      }}
       {...otherProps} // Repassa todas as outras props
     />
   );

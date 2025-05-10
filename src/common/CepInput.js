@@ -75,9 +75,12 @@ const CepInput = props => {
       keyboardType="numeric"
       style={[style]} // Mantém o estilo passado como prop
       mode="outlined"
+      textColor="#000"
       placeholder="XXXXX-XXX"
       maxLength={9} // Tamanho máximo para CEP formatado (5 dígitos + hífen + 3 dígitos)
-      theme={{colors: {primary: '#000000'}}}
+      theme={{
+        colors: {primary: '#000000', onSurfaceVariant: '#999999'},
+      }}
       {...otherProps} // Repassa todas as outras props
     />
   );
