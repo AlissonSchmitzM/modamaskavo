@@ -1,15 +1,16 @@
 import React from 'react';
 import {View, Text, StyleSheet, Button} from 'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';
 
 const Home = ({navigation}) => {
   return (
-    <View>
+    <SafeAreaView style={{flex: 1}}>
       <Text style={styles.title}>Home</Text>
       <Button
         title="Ir para produtos"
         onPress={() => navigation.navigate('WooCommerceProducts')}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 

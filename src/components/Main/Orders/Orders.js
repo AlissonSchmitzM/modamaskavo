@@ -3,56 +3,63 @@ import {View, StyleSheet, ScrollView} from 'react-native';
 import {Text, RadioButton, TextInput} from 'react-native-paper';
 import {order} from '../../../assets';
 import LottieView from 'lottie-react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';
 
 const Orders = () => {
   const [selectedOption, setSelectedOption] = useState('exclusive');
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Pedidos</Text>
-        <LottieView source={order} autoPlay loop style={styles.lottie} />
-      </View>
-      <View style={styles.content}>
-        <RadioButton.Group
-          onValueChange={value => setSelectedOption(value)}
-          value={selectedOption}>
-          <View style={styles.radioGroup}>
-            <RadioButton.Item
-              color="#000"
-              label="Peças Exclusivas"
-              value="exclusive"
-            />
-            <RadioButton.Item color="#000" label="Uniformes" value="uniform" />
-          </View>
-        </RadioButton.Group>
+    <SafeAreaView style={{flex: 1}}>
+      <ScrollView style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Pedidos</Text>
+          <LottieView source={order} autoPlay loop style={styles.lottie} />
+        </View>
+        <View style={styles.content}>
+          <RadioButton.Group
+            onValueChange={value => setSelectedOption(value)}
+            value={selectedOption}>
+            <View style={styles.radioGroup}>
+              <RadioButton.Item
+                color="#000"
+                label="Peças Exclusivas"
+                value="exclusive"
+              />
+              <RadioButton.Item
+                color="#000"
+                label="Uniformes"
+                value="uniform"
+              />
+            </View>
+          </RadioButton.Group>
 
-        {selectedOption === 'exclusive' && (
-          <View style={styles.inputsContainer}>
-            {Array.from({length: 9}).map((_, index) => (
+          {selectedOption === 'exclusive' && (
+            <View style={styles.inputsContainer}>
+              {Array.from({length: 9}).map((_, index) => (
+                <TextInput
+                  key={index}
+                  label="Nome"
+                  style={styles.input}
+                  mode="outlined"
+                  theme={{colors: {primary: '#000000'}}}
+                />
+              ))}
+            </View>
+          )}
+
+          {selectedOption === 'uniform' && (
+            <View style={styles.inputsContainer}>
               <TextInput
-                key={index}
-                label="Nome"
+                label="TESTE"
                 style={styles.input}
                 mode="outlined"
                 theme={{colors: {primary: '#000000'}}}
               />
-            ))}
-          </View>
-        )}
-
-        {selectedOption === 'uniform' && (
-          <View style={styles.inputsContainer}>
-            <TextInput
-              label="TESTE"
-              style={styles.input}
-              mode="outlined"
-              theme={{colors: {primary: '#000000'}}}
-            />
-          </View>
-        )}
-      </View>
-    </ScrollView>
+            </View>
+          )}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
@@ -68,7 +75,6 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginTop: 20,
   },
   lottie: {
     width: 400,

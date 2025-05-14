@@ -21,6 +21,9 @@ import {
   LOGIN_IN_PROGRESS,
   LOGIN_SUCCESS,
   LOGIN_ERROR,
+  LOGIN_GOOGLE_IN_PROGRESS,
+  LOGIN_GOOGLE_SUCCESS,
+  LOGIN_GOOGLE_ERROR,
   SAVE_PROFILE_IN_PROGRESS,
   SAVE_PROFILE_SUCCESS,
   SAVE_PROFILE_ERROR,
@@ -34,6 +37,7 @@ const INITIAL_STATE = {
   registrationInProgress: false,
   loginInProgress: false,
   saveProfileInProgress: false,
+  loginGoogleInProgress: false,
   photoModify: false,
   name: '',
   email: '',
@@ -123,6 +127,12 @@ const userReducer = (state = INITIAL_STATE, action) => {
       return {...state, password: '', loginInProgress: false};
     case LOGIN_ERROR:
       return {...state, loginInProgress: false};
+    case LOGIN_GOOGLE_IN_PROGRESS:
+      return {...state, loginGoogleInProgress: true};
+    case LOGIN_GOOGLE_SUCCESS:
+      return {...state, loginGoogleInProgress: false};
+    case LOGIN_GOOGLE_ERROR:
+      return {...state, loginGoogleInProgress: false};
     case SAVE_PROFILE_IN_PROGRESS:
       return {...state, saveProfileInProgress: true};
     case SAVE_PROFILE_ERROR:

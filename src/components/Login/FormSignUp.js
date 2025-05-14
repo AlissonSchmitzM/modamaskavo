@@ -17,6 +17,7 @@ import {
 } from '../../store/actions/userActions';
 import toastr, {ERROR} from '../../services/toastr';
 import Toast from 'react-native-toast-message';
+import {SafeAreaView} from 'react-native-safe-area-context';
 import {colors} from '../../styles/Styles';
 
 class FormSignUp extends Component {
@@ -67,63 +68,66 @@ class FormSignUp extends Component {
 
   render() {
     return (
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 40}
-        style={{flex: 1}}>
-        <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
-          <View style={styles.container}>
-            <Image source={signup} style={styles.signup} />
-            <TextInput
-              autoFocus
-              ref={this.nameRef}
-              label="Nome"
-              returnKeyType="next"
-              onSubmitEditing={() => this.emailRef.current?.focus()}
-              style={styles.input}
-              value={this.props.name}
-              textColor="#000"
-              onChangeText={text => this.props.onModifyName(text)}
-              mode="outlined"
-              theme={{
-                colors: {primary: '#000000', onSurfaceVariant: '#999999'},
-              }}
-            />
-            <TextInput
-              ref={this.emailRef}
-              label="Email"
-              returnKeyType="next"
-              keyboardType="email-address"
-              onSubmitEditing={() => this.passwordRef.current?.focus()}
-              style={styles.input}
-              value={this.props.email}
-              textColor="#000"
-              onChangeText={text => this.props.onModifyEmail(text)}
-              mode="outlined"
-              theme={{
-                colors: {primary: '#000000', onSurfaceVariant: '#999999'},
-              }}
-            />
-            <TextInput
-              ref={this.passwordRef}
-              label="Senha"
-              returnKeyType="go"
-              style={styles.input}
-              onSubmitEditing={this.handleSubmit}
-              value={this.props.password}
-              textColor="#000"
-              onChangeText={text => this.props.onModifyPassword(text)}
-              mode="outlined"
-              theme={{
-                colors: {primary: '#000000', onSurfaceVariant: '#999999'},
-              }}
-              secureTextEntry
-            />
-            {this.renderBtnRegister()}
+      <SafeAreaView style={{flex: 1}}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 40}
+          style={{flex: 1}}>
+          <View
+            style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+            <View style={styles.container}>
+              <Image source={signup} style={styles.signup} />
+              <TextInput
+                autoFocus
+                ref={this.nameRef}
+                label="Nome"
+                returnKeyType="next"
+                onSubmitEditing={() => this.emailRef.current?.focus()}
+                style={styles.input}
+                value={this.props.name}
+                textColor="#000"
+                onChangeText={text => this.props.onModifyName(text)}
+                mode="outlined"
+                theme={{
+                  colors: {primary: '#000000', onSurfaceVariant: '#999999'},
+                }}
+              />
+              <TextInput
+                ref={this.emailRef}
+                label="Email"
+                returnKeyType="next"
+                keyboardType="email-address"
+                onSubmitEditing={() => this.passwordRef.current?.focus()}
+                style={styles.input}
+                value={this.props.email}
+                textColor="#000"
+                onChangeText={text => this.props.onModifyEmail(text)}
+                mode="outlined"
+                theme={{
+                  colors: {primary: '#000000', onSurfaceVariant: '#999999'},
+                }}
+              />
+              <TextInput
+                ref={this.passwordRef}
+                label="Senha"
+                returnKeyType="go"
+                style={styles.input}
+                onSubmitEditing={this.handleSubmit}
+                value={this.props.password}
+                textColor="#000"
+                onChangeText={text => this.props.onModifyPassword(text)}
+                mode="outlined"
+                theme={{
+                  colors: {primary: '#000000', onSurfaceVariant: '#999999'},
+                }}
+                secureTextEntry
+              />
+              {this.renderBtnRegister()}
+            </View>
+            <Toast />
           </View>
-          <Toast />
-        </View>
-      </KeyboardAvoidingView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
     );
   }
 }

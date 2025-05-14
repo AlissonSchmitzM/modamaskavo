@@ -5,6 +5,7 @@ import database from '@react-native-firebase/database';
 import storage from '@react-native-firebase/storage';
 import navigationService from '../../services/NavigatorService';
 import store from '../../services/AsyncStorage';
+import {GoogleSignin} from '@react-native-google-signin/google-signin';
 
 import {
   FETCH_ADDRESS_REQUEST,
@@ -34,15 +35,29 @@ import {
   SAVE_PROFILE_ERROR,
   DATA_USER,
   SIGN_OUT,
+  LOGIN_GOOGLE_IN_PROGRESS,
+  LOGIN_GOOGLE_ERROR,
+  LOGIN_GOOGLE_SUCCESS,
 } from './actionTypes';
 
 export const signOut = () => dispatch => {
+  const {currentUser} = auth();
+
   auth()
     .signOut()
     .then(() => {
       store.save('userLogged', false);
       store.save('emailUserLogged', null);
-      navigationService.navigate('FormLogin');
+
+      const isLoggedGoogle = currentUser.providerData.some(
+        provider => provider.providerId === 'google.com',
+      );
+
+      if (isLoggedGoogle) {
+        GoogleSignin.signOut();
+      }
+
+      navigationService.reset('FormLogin');
       dispatch({type: SIGN_OUT});
     })
     .catch(() => toastr.showToast('Problema ao sair da conta.', ERROR));
@@ -69,14 +84,13 @@ export const fetchAddressByCep = cep => {
     try {
       const ViaCepService = require('../../services/ViaCepService').default;
       const address = await ViaCepService.searchAddressCompletedByCep(cep);
-      console.log('address', address);
+
       if (!address.estado !== undefined && address.localidade !== undefined) {
         dispatch(fetchAddressSuccess(address));
       } else {
         dispatch(fetchAddressFailure('CEP não encontrado'));
       }
     } catch (error) {
-      console.log(error);
       dispatch(fetchAddressFailure(error.message || 'Erro ao buscar endereço'));
     }
   };
@@ -133,7 +147,7 @@ const loginUserSuccess = dispatch => {
 
       dispatch(
         {type: LOGIN_SUCCESS},
-        navigationService.navigate(saveProfile ? 'Main' : 'FormProfile'),
+        navigationService.reset(saveProfile ? 'Main' : 'FormProfile'),
       );
     })
     .catch(() =>
@@ -145,7 +159,7 @@ const loginUserEmailError = (err, dispatch) => {
   let message;
   switch (err.code) {
     case 'auth/invalid-email':
-      message = 'E-mail inválido!';
+      message = 'Email inválido!';
       break;
     case 'auth/wrong-password':
       message = 'Senha inválida!';
@@ -156,11 +170,118 @@ const loginUserEmailError = (err, dispatch) => {
     case 'auth/network-request-failed':
       message = 'Sem conexão com a internet.';
       break;
+    case 'auth/invalid-credential':
+      message = 'Email/Senha inválida!';
+      break;
     default:
       message = err.code;
   }
 
   dispatch({type: LOGIN_ERROR}, toastr.showToast(message, ERROR));
+};
+
+export const authUserGoogle = () => async dispatch => {
+  dispatch({type: LOGIN_GOOGLE_IN_PROGRESS});
+
+  GoogleSignin.signIn()
+    .then(async res => {
+      // Obter tokens explicitamente
+      const data = await GoogleSignin.getTokens();
+
+      // Criar credencial para o Firebase
+      const googleCredential = auth.GoogleAuthProvider.credential(
+        data.idToken,
+        data.accessToken,
+      );
+
+      // Login no Firebase
+      const userCredential = await auth().signInWithCredential(
+        googleCredential,
+      );
+
+      // Extrair informações do usuário Google
+      const {name, email, photo} = res.data.user;
+      const emailB64 = b64.encode(email);
+
+      // Verificar se é a primeira vez do usuário no Realtime Database
+      const userSnapshot = await database()
+        .ref(`/users/${emailB64}`)
+        .once('value');
+
+      // Variável para armazenar a URL da foto no storage
+      let photoURL = photo;
+
+      if (!userSnapshot.exists()) {
+        console.log('Novo usuário! Salvando informações...');
+
+        // Se houver foto, baixar e salvar no storage
+        if (photo) {
+          try {
+            // Baixar a imagem
+            const response = await fetch(photo);
+            const blob = await response.blob();
+
+            const fileName = `${emailB64}.jpg`;
+            // Caminho do arquivo no Firebase Storage
+            const storagePath = `photos_profile/${fileName}`;
+
+            // Referência para o storage
+            const storageRef = storage().ref(storagePath).put(blob);
+
+            // Obter a URL da imagem salva
+            photoURL = await storageRef.getDownloadURL();
+            console.log('Foto salva com sucesso:', photoURL);
+          } catch (error) {
+            console.error('Erro ao salvar a foto:', error);
+            // Se falhar, mantém a URL original
+          }
+        }
+
+        database().ref(`/users/${emailB64}`).set({
+          name,
+          email,
+          fileImgPath: null,
+          saveProfile: false,
+          createdAt: new Date().toISOString(),
+        });
+      }
+
+      // Manter a atualização no Realtime Database conforme seu código original
+      await database().ref(`/users/${emailB64}`).update({
+        email,
+        fileImgPath: photoURL,
+        fileImgType: 'image/jpg',
+      });
+
+      console.log('Usuário atualizado no Realtime Database');
+
+      // Chamar função de sucesso
+      loginUserSuccess(dispatch);
+    })
+    .catch(err => {
+      loginUserGoogleError(err, dispatch);
+    });
+};
+
+const loginUserGoogleError = (err, dispatch) => {
+  let message;
+  switch (err.code) {
+    case '7':
+      message = 'Sem conexão com a internet.';
+      break;
+    case 'getTokens':
+      message = 'Login cancelado.';
+      break;
+    default:
+      message = err.code;
+  }
+
+  dispatch(
+    {type: LOGIN_GOOGLE_ERROR},
+    err.code === '12501'
+      ? toastr.showToast(message)
+      : toastr.showToast(message, ERROR),
+  );
 };
 
 const registrationError = (err, dispatch) => {
@@ -244,14 +365,15 @@ export const saveProfileUser = dataUser => dispatch => {
       .then(() => {
         saveProfileUserSuccess(dispatch);
 
-        if (navigationService.getPreviousRouteName() === 'FormLogin') {
+        if (
+          navigationService.getPreviousRouteName() === 'FormLogin' ||
+          !navigationService.getPreviousRouteName()
+        ) {
           navigationService.reset('Main');
         }
       })
       .catch(err => saveProfileUserError(err, dispatch));
   } else {
-    // Se houver modificação na foto, faça upload da imagem primeiro
-    console.log(fileImgPath);
     // Determinar a extensão do arquivo
     const fileExtension = fileImgType.split('/')[1] || 'jpg';
     const fileName = `${emailB64}.${fileExtension}`;
@@ -261,11 +383,9 @@ export const saveProfileUser = dataUser => dispatch => {
 
     // Referência para o arquivo no Firebase Storage
     const reference = storage().ref(storagePath);
-    console.log('reference', reference);
 
     // Caminho do arquivo local
     const uploadPath = fileImgPath;
-    console.log('fileImgPath', fileImgPath);
 
     // Upload do arquivo para o Firebase Storage com tratamento de erros melhorado
     reference
@@ -276,7 +396,6 @@ export const saveProfileUser = dataUser => dispatch => {
         return reference.getDownloadURL();
       })
       .then(downloadURL => {
-        console.log('URL de download obtida:', downloadURL);
         // Adicionar a URL da imagem aos dados do usuário
         userData.fileImgPath = downloadURL;
         userData.fileImgType = fileImgType;
@@ -286,10 +405,12 @@ export const saveProfileUser = dataUser => dispatch => {
         return database().ref(`/users/${emailB64}`).set(userData);
       })
       .then(() => {
-        console.log('Perfil salvo com sucesso');
         saveProfileUserSuccess(dispatch);
 
-        if (navigationService.getPreviousRouteName() === 'FormLogin') {
+        if (
+          navigationService.getPreviousRouteName() === 'FormLogin' ||
+          !navigationService.getPreviousRouteName()
+        ) {
           navigationService.reset('Main');
         }
       })

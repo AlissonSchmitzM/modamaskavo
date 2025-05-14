@@ -2,8 +2,10 @@ import React, {Component} from 'react';
 import {View, Image, StyleSheet, Text} from 'react-native';
 import navigationService from '../services/NavigatorService';
 import store from '../services/AsyncStorage';
-import database from '@react-native-firebase/database';
+import {getDatabase, ref, get} from '@react-native-firebase/database';
 import b64 from 'base-64';
+import toastr, {ERROR} from '../services/toastr';
+import {GoogleSignin} from '@react-native-google-signin/google-signin';
 
 export default class SplashScreen extends Component {
   constructor(props) {
@@ -11,23 +13,28 @@ export default class SplashScreen extends Component {
     this.state = {
       isUserLogged: false,
       checkCompleted: false,
+      saveProfile: false,
     };
   }
 
   componentDidMount() {
-    // Inicia a verificação de login
-    this.checkUserLogin();
+    // Configurar Google Sign-In
+    this.configureGoogleSignin();
 
-    // Define o timer para a splash screen
-    this.timer = setTimeout(() => {
-      this.navigateBasedOnLogin();
-    }, 3000);
+    // Remova o timer fixo e apenas chame a verificação de login
+    this.checkUserLogin();
   }
 
-  componentWillUnmount() {
-    // Limpa o timer quando o componente é desmontado
-    if (this.timer) {
-      clearTimeout(this.timer);
+  async configureGoogleSignin() {
+    try {
+      await GoogleSignin.hasPlayServices();
+      GoogleSignin.configure({
+        webClientId:
+          '582893482320-l3ch1sjuirvr57qm5boll0lsfjs1nmrd.apps.googleusercontent.com',
+        offlineAccess: true,
+      });
+    } catch (error) {
+      toastr.showToast(`Erro na configuração Google Sign-In: ${error}`, ERROR);
     }
   }
 
@@ -36,33 +43,53 @@ export default class SplashScreen extends Component {
       const isUserLoggedd = await store.get('userLogged');
       this.setState({
         isUserLogged: isUserLoggedd !== null && isUserLoggedd === true,
-        checkCompleted: true,
       });
 
       const emailUserLogged = await store.get('emailUserLogged');
       if (emailUserLogged) {
         const emailB64 = b64.encode(emailUserLogged);
-        database()
-          .ref(`/users/${emailB64}/saveProfile`)
-          .once('value')
-          .then(async snapshot => {
-            const saveProfile = await snapshot.val();
 
-            this.setState({
-              isUserLogged: saveProfile,
+        try {
+          // Usando a API modular do Firebase
+          const db = getDatabase();
+          const profileRef = ref(db, `/users/${emailB64}/saveProfile`);
+          const snapshot = await get(profileRef);
+
+          const saveProfile = snapshot.val();
+
+          // Agora que temos todos os dados, atualizamos o estado e navegamos
+          this.setState(
+            {
+              saveProfile,
               checkCompleted: true,
-            });
-          })
-          .catch(() =>
-            toastr.showToast(
-              'Problema ao carregar informação do usuário.',
-              ERROR,
-            ),
+            },
+            () => {
+              // Usando um pequeno delay apenas para garantir que a splash screen seja exibida
+              setTimeout(() => {
+                this.navigateBasedOnLogin();
+              }, 3000); // Mantém os 2 segundos mínimos de exibição da splash
+            },
           );
+        } catch (error) {
+          toastr.showToast(`Erro ao buscar perfil: ${error}`, ERROR);
+          this.setState({checkCompleted: true}, () =>
+            this.navigateBasedOnLogin(),
+          );
+        }
+      } else {
+        this.setState({checkCompleted: true}, () => {
+          setTimeout(() => {
+            this.navigateBasedOnLogin();
+          }, 3000);
+        });
       }
     } catch (error) {
-      console.error('Erro ao verificar login:', error);
-      this.setState({checkCompleted: true});
+      toastr.showToast(`Erro ao verificar login: ${error}`, ERROR);
+      this.setState({checkCompleted: true}, () => {
+        setTimeout(() => {
+          this.navigateBasedOnLogin();
+        }, 3000);
+      });
     }
   }
 
@@ -70,9 +97,13 @@ export default class SplashScreen extends Component {
     // Se a verificação foi concluída, navega com base no resultado
     if (this.state.checkCompleted) {
       if (this.state.isUserLogged) {
-        navigationService.navigate('Main');
+        if (this.state.saveProfile) {
+          navigationService.reset('Main');
+        } else {
+          navigationService.reset('FormProfile');
+        }
       } else {
-        navigationService.navigate('FormLogin');
+        navigationService.reset('FormLogin');
       }
     } else {
       // Se a verificação ainda não foi concluída, tenta novamente em 100ms
@@ -87,7 +118,7 @@ export default class SplashScreen extends Component {
           source={require('../imgs/logo.png')}
           style={styles.splashImage}
         />
-        <Text style={styles.splashText}> 2025 Maskavo</Text>
+        <Text style={styles.splashText}>© 2025 Maskavo</Text>
         <Text style={styles.splashText}>v1.0.0</Text>
       </View>
     );

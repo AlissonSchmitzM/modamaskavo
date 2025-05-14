@@ -20,7 +20,9 @@ import {
   modifyEmail,
   modifyPassword,
   authUserEmail,
+  authUserGoogle,
 } from '../../store/actions/userActions';
+import {SafeAreaView} from 'react-native-safe-area-context';
 import {colors} from '../../styles/Styles';
 
 class FormLogin extends Component {
@@ -53,6 +55,22 @@ class FormLogin extends Component {
     );
   }
 
+  renderBtnGoogle() {
+    if (this.props.loginGoogleInProgress) {
+      return <ActivityIndicator size="large" color="#FF0000" />;
+    }
+    return (
+      <Button
+        icon={() => <Icon name="google" size={20} color="#FFF" />}
+        mode="contained"
+        style={styles.googleButton}
+        textColor="#FFF"
+        onPress={() => this.props.onAuthUserGoogle()}>
+        Login com Google
+      </Button>
+    );
+  }
+
   validateFields() {
     if (!this.props.email) {
       toastr.showToast('Email inválido!', ERROR);
@@ -73,59 +91,54 @@ class FormLogin extends Component {
 
   render() {
     return (
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 40}
-        style={{flex: 1}}>
-        <View style={styles.container}>
-          <Image source={login} style={styles.login} />
-          <TextInput
-            label="Email"
-            value={this.props.email}
-            returnKeyType="next"
-            keyboardType="email-address"
-            onSubmitEditing={() => this.passwordRef.current?.focus()}
-            style={styles.input}
-            textColor="#000"
-            onChangeText={text => this.props.onModifyEmail(text)}
-            mode="outlined"
-            theme={{
-              colors: {primary: '#000000', onSurfaceVariant: '#999999'},
-            }}
-          />
-          <TextInput
-            label="Senha"
-            value={this.props.password}
-            ref={this.passwordRef}
-            returnKeyType="go"
-            style={styles.input}
-            textColor="#000"
-            onSubmitEditing={this.handleSubmit}
-            onChangeText={text => this.props.onModifyPassword(text)}
-            mode="outlined"
-            secureTextEntry
-            theme={{
-              colors: {primary: '#000000', onSurfaceVariant: '#999999'},
-            }}
-          />
-          {this.renderBtnLogin()}
-          <Button
-            icon={() => <Icon name="google" size={20} color="#FFF" />}
-            mode="contained"
-            style={styles.googleButton}
-            textColor="#FFF"
-            onPress={() => toastr.showToast('Ocorreu um erro!', ERROR)}>
-            Login com Google
-          </Button>
-          <TouchableOpacity
-            onPress={() => navigationService.navigate('FormSignUp')}>
-            <Text style={styles.signUpText}>
-              Não tem uma conta? Cadastre-se
-            </Text>
-          </TouchableOpacity>
-        </View>
-        <Toast />
-      </KeyboardAvoidingView>
+      <SafeAreaView style={{flex: 1}}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 40}
+          style={{flex: 1}}>
+          <View style={styles.container}>
+            <Image source={login} style={styles.login} />
+            <TextInput
+              label="Email"
+              value={this.props.email}
+              returnKeyType="next"
+              keyboardType="email-address"
+              onSubmitEditing={() => this.passwordRef.current?.focus()}
+              style={styles.input}
+              textColor="#000"
+              onChangeText={text => this.props.onModifyEmail(text)}
+              mode="outlined"
+              theme={{
+                colors: {primary: '#000000', onSurfaceVariant: '#999999'},
+              }}
+            />
+            <TextInput
+              label="Senha"
+              value={this.props.password}
+              ref={this.passwordRef}
+              returnKeyType="go"
+              style={styles.input}
+              textColor="#000"
+              onSubmitEditing={this.handleSubmit}
+              onChangeText={text => this.props.onModifyPassword(text)}
+              mode="outlined"
+              secureTextEntry
+              theme={{
+                colors: {primary: '#000000', onSurfaceVariant: '#999999'},
+              }}
+            />
+            {this.renderBtnLogin()}
+            {this.renderBtnGoogle()}
+            <TouchableOpacity
+              onPress={() => navigationService.navigate('FormSignUp')}>
+              <Text style={styles.signUpText}>
+                Não tem uma conta? Cadastre-se
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <Toast />
+        </KeyboardAvoidingView>
+      </SafeAreaView>
     );
   }
 }
@@ -166,12 +179,14 @@ const mapDispatchToProps = dispatch => ({
   onAuthUserEmail: user => dispatch(authUserEmail(user)),
   onModifyEmail: email => dispatch(modifyEmail(email)),
   onModifyPassword: password => dispatch(modifyPassword(password)),
+  onAuthUserGoogle: () => dispatch(authUserGoogle()),
 });
 
 const mapStateToProps = state => ({
   email: state.userReducer.email,
   password: state.userReducer.password,
   loginInProgress: state.userReducer.loginInProgress,
+  loginGoogleInProgress: state.userReducer.loginGoogleInProgress,
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(FormLogin);

@@ -11,6 +11,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import {signOut} from '../../../store/actions/userActions';
 import {connect} from 'react-redux';
 import navigation from '../../../services/NavigatorService';
+import {SafeAreaView} from 'react-native-safe-area-context';
 
 const data = [
   {id: '1', title: 'Informações Pessoais', icon: 'person-circle-outline'},
@@ -33,26 +34,28 @@ class Profile extends Component {
 
   render() {
     return (
-      <FlatList
-        data={data}
-        keyExtractor={item => item.id}
-        renderItem={({item}) => (
-          <TouchableOpacity
-            style={styles.item}
-            onPress={() => this.handlePress(item)}>
-            <View style={styles.iconText}>
-              <Icon
-                name={item.icon}
-                size={20}
-                color="#000"
-                style={styles.icon}
-              />
-              <Text style={styles.title}>{item.title}</Text>
-            </View>
-            <Icon name="chevron-forward" size={20} color="#000" />
-          </TouchableOpacity>
-        )}
-      />
+      <SafeAreaView style={{flex: 1}}>
+        <FlatList
+          data={data}
+          keyExtractor={item => item.id}
+          renderItem={({item}) => (
+            <TouchableOpacity
+              style={styles.item}
+              onPress={() => this.handlePress(item)}>
+              <View style={styles.iconText}>
+                <Icon
+                  name={item.icon}
+                  size={20}
+                  color="#000"
+                  style={styles.icon}
+                />
+                <Text style={styles.title}>{item.title}</Text>
+              </View>
+              <Icon name="chevron-forward" size={20} color="#000" />
+            </TouchableOpacity>
+          )}
+        />
+      </SafeAreaView>
     );
   }
 }

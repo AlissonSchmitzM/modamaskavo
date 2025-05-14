@@ -2,6 +2,15 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CFBundleURLTypes</key>
+	<array>
+	<dict>
+		<key>CFBundleURLSchemes</key>
+		<array>
+		<string>com.googleusercontent.apps.329619581456-4ei6k7ru6m641i88gfovpkugs3sjjrk9.apps.googleusercontent.com</string>
+		</array>
+	</dict>
+	</array>
     <!-- Permissão para câmera -->
     <key>NSCameraUsageDescription</key>
     <string>Este aplicativo precisa de acesso à câmera para tirar fotos para seu perfil.</string>

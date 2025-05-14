@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "582893482320",
+    "firebase_url": "https://modamaskavo-876a9-default-rtdb.firebaseio.com",
     "project_id": "modamaskavo-876a9",
     "storage_bucket": "modamaskavo-876a9.firebasestorage.app"
   },
@@ -12,7 +13,20 @@
           "package_name": "com.modamaskavo"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "582893482320-msrk5649gnsg9818rh8s5etpcdbu4ab1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.modamaskavo",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "582893482320-l3ch1sjuirvr57qm5boll0lsfjs1nmrd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyASyxc0xhgXGlwldxywRKfamlAYr21WAyE"
@@ -20,7 +34,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "582893482320-9913hvf8qigu2fhs7hdc296m75fvhvic.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "582893482320-v104stujbu1bd7auqied8b46bpjcpflu.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "modamaskavo"
+              }
+            }
+          ]
         }
       }
     }
