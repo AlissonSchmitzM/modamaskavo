@@ -18,10 +18,8 @@ export default class SplashScreen extends Component {
   }
 
   componentDidMount() {
-    // Configurar Google Sign-In
     this.configureGoogleSignin();
 
-    // Remova o timer fixo e apenas chame a verificação de login
     this.checkUserLogin();
   }
 
@@ -51,23 +49,21 @@ export default class SplashScreen extends Component {
 
         try {
           // Usando a API modular do Firebase
-          const db = getDatabase();
-          const profileRef = ref(db, `/users/${emailB64}/saveProfile`);
-          const snapshot = await get(profileRef);
+          const snapshot = await get(
+            ref(getDatabase(), `/users/${emailB64}/saveProfile`),
+          );
 
           const saveProfile = snapshot.val();
 
-          // Agora que temos todos os dados, atualizamos o estado e navegamos
           this.setState(
             {
               saveProfile,
               checkCompleted: true,
             },
             () => {
-              // Usando um pequeno delay apenas para garantir que a splash screen seja exibida
               setTimeout(() => {
                 this.navigateBasedOnLogin();
-              }, 3000); // Mantém os 2 segundos mínimos de exibição da splash
+              }, 3000);
             },
           );
         } catch (error) {
@@ -94,7 +90,6 @@ export default class SplashScreen extends Component {
   }
 
   navigateBasedOnLogin() {
-    // Se a verificação foi concluída, navega com base no resultado
     if (this.state.checkCompleted) {
       if (this.state.isUserLogged) {
         if (this.state.saveProfile) {
@@ -106,7 +101,6 @@ export default class SplashScreen extends Component {
         navigationService.reset('FormLogin');
       }
     } else {
-      // Se a verificação ainda não foi concluída, tenta novamente em 100ms
       setTimeout(() => this.navigateBasedOnLogin(), 100);
     }
   }

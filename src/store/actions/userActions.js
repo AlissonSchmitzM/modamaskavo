@@ -1,7 +1,7 @@
 import toastr, {SUCCESS, ERROR} from '../../services/toastr';
 import b64 from 'base-64';
-import auth from '@react-native-firebase/auth';
-import database from '@react-native-firebase/database';
+import {getAuth, GoogleAuthProvider} from '@react-native-firebase/auth';
+import {getDatabase, ref, set} from '@react-native-firebase/database';
 import storage from '@react-native-firebase/storage';
 import navigationService from '../../services/NavigatorService';
 import store from '../../services/AsyncStorage';
@@ -41,9 +41,9 @@ import {
 } from './actionTypes';
 
 export const signOut = () => dispatch => {
-  const {currentUser} = auth();
+  const {currentUser} = getAuth();
 
-  auth()
+  getAuth()
     .signOut()
     .then(() => {
       store.save('userLogged', false);
@@ -63,7 +63,6 @@ export const signOut = () => dispatch => {
     .catch(() => toastr.showToast('Problema ao sair da conta.', ERROR));
 };
 
-// Action creators simples
 export const fetchAddressRequest = () => dispatch => {
   dispatch({type: FETCH_ADDRESS_REQUEST});
 };
@@ -76,7 +75,6 @@ export const fetchAddressFailure = error => dispatch => {
   dispatch({type: FETCH_ADDRESS_FAILURE, payload: error});
 };
 
-// Action creator thunk para buscar o endereço
 export const fetchAddressByCep = cep => {
   return async dispatch => {
     dispatch(fetchAddressRequest());
@@ -101,21 +99,18 @@ export const createUser =
   dispatch => {
     dispatch({type: REGISTRATION_IN_PROGRESS});
 
-    auth()
+    getAuth()
       .createUserWithEmailAndPassword(email, password)
       .then(() => {
         const emailB64 = b64.encode(email);
 
-        database()
-          .ref(`/users/${emailB64}`)
-          .set({
-            name,
-            email,
-            fileImgPath: null,
-            saveProfile: false,
-            createdAt: new Date().toISOString(),
-          })
-          .then(() => registrationSuccess(dispatch));
+        set(ref(getDatabase(), `/users/${emailB64}`), {
+          name,
+          email,
+          fileImgPath: null,
+          saveProfile: false,
+          createdAt: new Date().toISOString(),
+        }).then(() => registrationSuccess(dispatch));
       })
       .catch(error => {
         registrationError(error, dispatch);
@@ -127,7 +122,7 @@ export const authUserEmail =
   dispatch => {
     dispatch({type: LOGIN_IN_PROGRESS});
 
-    auth()
+    getAuth()
       .signInWithEmailAndPassword(email, password)
       .then(() => loginUserSuccess(dispatch))
       .catch(err => loginUserEmailError(err, dispatch));
@@ -136,10 +131,10 @@ export const authUserEmail =
 const loginUserSuccess = dispatch => {
   store.save('userLogged', true);
 
-  const {currentUser} = auth();
+  const {currentUser} = getAuth();
   const userEmailB64 = b64.encode(currentUser.email);
 
-  database()
+  getDatabase()
     .ref(`/users/${userEmailB64}/saveProfile`)
     .once('value')
     .then(async snapshot => {
@@ -185,59 +180,44 @@ export const authUserGoogle = () => async dispatch => {
 
   GoogleSignin.signIn()
     .then(async res => {
-      // Obter tokens explicitamente
       const data = await GoogleSignin.getTokens();
 
-      // Criar credencial para o Firebase
-      const googleCredential = auth.GoogleAuthProvider.credential(
+      const googleCredential = GoogleAuthProvider.credential(
         data.idToken,
         data.accessToken,
       );
 
-      // Login no Firebase
-      const userCredential = await auth().signInWithCredential(
+      const userCredential = await getAuth().signInWithCredential(
         googleCredential,
       );
 
-      // Extrair informações do usuário Google
       const {name, email, photo} = res.data.user;
       const emailB64 = b64.encode(email);
 
-      // Verificar se é a primeira vez do usuário no Realtime Database
-      const userSnapshot = await database()
+      const userSnapshot = await getDatabase()
         .ref(`/users/${emailB64}`)
         .once('value');
 
-      // Variável para armazenar a URL da foto no storage
       let photoURL = photo;
 
       if (!userSnapshot.exists()) {
-        console.log('Novo usuário! Salvando informações...');
-
-        // Se houver foto, baixar e salvar no storage
         if (photo) {
           try {
-            // Baixar a imagem
             const response = await fetch(photo);
             const blob = await response.blob();
 
             const fileName = `${emailB64}.jpg`;
-            // Caminho do arquivo no Firebase Storage
             const storagePath = `photos_profile/${fileName}`;
 
-            // Referência para o storage
             const storageRef = storage().ref(storagePath).put(blob);
 
-            // Obter a URL da imagem salva
             photoURL = await storageRef.getDownloadURL();
-            console.log('Foto salva com sucesso:', photoURL);
           } catch (error) {
             console.error('Erro ao salvar a foto:', error);
-            // Se falhar, mantém a URL original
           }
         }
 
-        database().ref(`/users/${emailB64}`).set({
+        getDatabase().ref(`/users/${emailB64}`).set({
           name,
           email,
           fileImgPath: null,
@@ -246,16 +226,12 @@ export const authUserGoogle = () => async dispatch => {
         });
       }
 
-      // Manter a atualização no Realtime Database conforme seu código original
-      await database().ref(`/users/${emailB64}`).update({
+      await getDatabase().ref(`/users/${emailB64}`).update({
         email,
         fileImgPath: photoURL,
         fileImgType: 'image/jpg',
       });
 
-      console.log('Usuário atualizado no Realtime Database');
-
-      // Chamar função de sucesso
       loginUserSuccess(dispatch);
     })
     .catch(err => {
@@ -306,7 +282,6 @@ const registrationError = (err, dispatch) => {
 };
 
 export const registrationSuccess = dispatch => {
-  // TODO: create welcome window
   dispatch(
     {type: REGISTRATION_SUCCESS},
     toastr.showToast('Usuário cadastrado com sucesso!', SUCCESS),
@@ -332,7 +307,6 @@ export const saveProfileUser = dataUser => dispatch => {
 
   const emailB64 = b64.encode(email);
 
-  // Dados do usuário para salvar no banco
   const userData = {
     name,
     email,
@@ -348,18 +322,15 @@ export const saveProfileUser = dataUser => dispatch => {
     saveProfile: true,
   };
 
-  // Verificar se o usuário está autenticado
-  const currentUser = auth().currentUser;
+  const currentUser = getAuth().currentUser;
   if (!currentUser) {
-    // Se não estiver autenticado, tentar autenticar anonimamente ou redirecionar para login
     console.error('Usuário não autenticado');
     saveProfileUserError(new Error('Usuário não autenticado'), dispatch);
     return;
   }
 
-  // Se não houver modificação na foto, apenas atualize os dados
   if (!photoModify) {
-    database()
+    getDatabase()
       .ref(`/users/${emailB64}`)
       .update(userData)
       .then(() => {
@@ -374,35 +345,26 @@ export const saveProfileUser = dataUser => dispatch => {
       })
       .catch(err => saveProfileUserError(err, dispatch));
   } else {
-    // Determinar a extensão do arquivo
     const fileExtension = fileImgType.split('/')[1] || 'jpg';
     const fileName = `${emailB64}.${fileExtension}`;
 
-    // Caminho do arquivo no Firebase Storage
     const storagePath = `photos_profile/${fileName}`;
 
-    // Referência para o arquivo no Firebase Storage
     const reference = storage().ref(storagePath);
 
-    // Caminho do arquivo local
     const uploadPath = fileImgPath;
 
-    // Upload do arquivo para o Firebase Storage com tratamento de erros melhorado
     reference
       .putFile(uploadPath)
       .then(snapshot => {
         console.log('Upload concluído:', snapshot);
-        // Obter a URL de download após o upload
         return reference.getDownloadURL();
       })
       .then(downloadURL => {
-        // Adicionar a URL da imagem aos dados do usuário
         userData.fileImgPath = downloadURL;
         userData.fileImgType = fileImgType;
 
-        console.log('Salvando dados do usuário no banco...');
-        // Salvar todos os dados do usuário no banco
-        return database().ref(`/users/${emailB64}`).set(userData);
+        return getDatabase().ref(`/users/${emailB64}`).set(userData);
       })
       .then(() => {
         saveProfileUserSuccess(dispatch);
@@ -441,7 +403,7 @@ const saveProfileUserError = (err, dispatch) => {
 };
 
 export const readDataUser = () => async dispatch => {
-  const {currentUser} = auth();
+  const {currentUser} = getAuth();
   const emailUserLogged = await store.get('emailUserLogged');
 
   if (emailUserLogged === null) {
@@ -457,7 +419,7 @@ export const readDataUser = () => async dispatch => {
 
   const userEmailB64 = b64.encode(userEmail);
 
-  database()
+  getDatabase()
     .ref(`/users/${userEmailB64}`)
     .once('value')
     .then(async snapshot => {

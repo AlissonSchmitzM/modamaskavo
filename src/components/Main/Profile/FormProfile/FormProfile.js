@@ -28,7 +28,7 @@ import {
   PhoneInput,
   CepInput,
   LoadingOverlay,
-} from '../../../../common';
+} from '../../../common';
 import {connect} from 'react-redux';
 import {
   fetchAddressByCep,
