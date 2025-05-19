@@ -29,8 +29,20 @@ class FormLogin extends Component {
   constructor(props) {
     super(props);
 
+    this.state = {
+      icon: 'eye-off',
+      iconPassword: true,
+    };
+
     this.passwordRef = React.createRef();
     this.btnLoginRef = React.createRef();
+  }
+
+  changeIcon() {
+    this.setState(prevState => ({
+      icon: prevState.icon === 'eye' ? 'eye-off' : 'eye',
+      iconPassword: !prevState.iconPassword,
+    }));
   }
 
   renderBtnLogin() {
@@ -122,7 +134,13 @@ class FormLogin extends Component {
               onSubmitEditing={this.handleSubmit}
               onChangeText={text => this.props.onModifyPassword(text)}
               mode="outlined"
-              secureTextEntry
+              secureTextEntry={this.state.iconPassword}
+              right={
+                <TextInput.Icon
+                  icon={this.state.icon}
+                  onPress={() => this.changeIcon()}
+                />
+              }
               theme={{
                 colors: {primary: '#000000', onSurfaceVariant: '#999999'},
               }}

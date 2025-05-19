@@ -43,7 +43,6 @@ import {
   modifyNumber,
   modifyComplement,
   saveProfileUser,
-  readDataUser,
   modifyPhoto,
 } from '../../../../store/actions/userActions';
 import toastr, {ERROR} from '../../../../services/toastr';
@@ -76,10 +75,6 @@ class FormProfile extends Component {
     this.bairroRef = React.createRef();
     this.cidadeRef = React.createRef();
     this.estadoRef = React.createRef();
-  }
-
-  componentDidMount() {
-    this.props.onReadDataUser();
   }
 
   isGoogleUser = () => {
@@ -601,7 +596,6 @@ const imageMenuStyles = StyleSheet.create({
 
 const mapDispatchToProps = dispatch => ({
   onSaveProfileUser: user => dispatch(saveProfileUser(user)),
-  onReadDataUser: () => dispatch(readDataUser()),
   onFetchAddressByCep: cep => dispatch(fetchAddressByCep(cep)),
   onModifyAddress: logradouro => dispatch(modifyAddress(logradouro)),
   onModifyNeighborhood: neighborhood =>

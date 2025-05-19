@@ -24,10 +24,22 @@ class FormSignUp extends Component {
   constructor(props) {
     super(props);
 
+    this.state = {
+      icon: 'eye-off',
+      iconPassword: true,
+    };
+
     this.btnRegisterRef = React.createRef();
     this.nameRef = React.createRef();
     this.emailRef = React.createRef();
     this.passwordRef = React.createRef();
+  }
+
+  changeIcon() {
+    this.setState(prevState => ({
+      icon: prevState.icon === 'eye' ? 'eye-off' : 'eye',
+      iconPassword: !prevState.iconPassword,
+    }));
   }
 
   renderBtnRegister() {
@@ -71,7 +83,7 @@ class FormSignUp extends Component {
       <SafeAreaView style={{flex: 1}}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 40}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 80}
           style={{flex: 1}}>
           <View
             style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
@@ -120,7 +132,13 @@ class FormSignUp extends Component {
                 theme={{
                   colors: {primary: '#000000', onSurfaceVariant: '#999999'},
                 }}
-                secureTextEntry
+                secureTextEntry={this.state.iconPassword}
+                right={
+                  <TextInput.Icon
+                    icon={this.state.icon}
+                    onPress={() => this.changeIcon()}
+                  />
+                }
               />
               {this.renderBtnRegister()}
             </View>
