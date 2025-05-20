@@ -147,6 +147,13 @@ export const createOrder = data => (dispatch, getState) => {
             // Adicionar informação sobre os logos na mensagem
             message += `\n\n📎 *${logoURLs.length} arquivo(s) de logo foram enviados e estão disponíveis no aplicativo.*`;
 
+            // Adicionar cada logo com seu nome e link
+            logoURLs.forEach((logo, index) => {
+              message += `\n📌 Logo ${index + 1} - ${logo.fileName}: ${
+                logo.url
+              }`;
+            });
+
             Linking.openURL(
               `whatsapp://send?phone=${phone_orders}&text=${encodeURIComponent(
                 message,

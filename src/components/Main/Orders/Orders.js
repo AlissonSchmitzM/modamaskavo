@@ -36,6 +36,7 @@ import {
   modifyType,
 } from '../../../store/actions/orderActions';
 import {readDataUser} from '../../../store/actions/userActions';
+import toastr, {ERROR, toastConfig} from '../../../services/toastr';
 
 class Orders extends Component {
   constructor(props) {
@@ -54,6 +55,10 @@ class Orders extends Component {
     };
 
     this.inputRef = React.createRef();
+    this.segmentRef = React.createRef();
+    this.tamRef = React.createRef();
+    this.descriptionRef = React.createRef();
+    this.amountPiecesRef = React.createRef();
     this.btnRegisterRef = React.createRef();
   }
 
@@ -74,6 +79,42 @@ class Orders extends Component {
         Enviar
       </Button>
     );
+  }
+
+  validateFieldsExclusive() {
+    if (!this.props.segment) {
+      toastr.showToast('Segmento é obrigatório!', ERROR);
+      return false;
+    } else if (!this.props.tam) {
+      toastr.showToast('Tamanho é obrigatório!', ERROR);
+      return false;
+    } else if (!this.props.description) {
+      toastr.showToast('Descrição é obrigatório!', ERROR);
+      return false;
+    }
+
+    return true;
+  }
+
+  validateFieldsUniform() {
+    if (!this.props.segment) {
+      toastr.showToast('Segmento é obrigatório!', ERROR);
+      return false;
+    } else if (!this.props.amountPieces) {
+      toastr.showToast('Quantidade de peças é obrigatória!', ERROR);
+      return false;
+    } else if (this.state.selectedLogos.length === 0) {
+      toastr.showToast(
+        'É necessário selecionar ao menos 1 arquivo para logo!',
+        ERROR,
+      );
+      return false;
+    } else if (!this.props.description) {
+      toastr.showToast('Descrição é obrigatório!', ERROR);
+      return false;
+    }
+
+    return true;
   }
 
   // Equivalent to useEffect when showDropdown changes
@@ -114,13 +155,16 @@ class Orders extends Component {
 
   handleSubmit = () => {
     if (this.state.selectedOption === 'uniform') {
-      this.props.onCreateOrder({
-        ...this.props,
-        selectedLogos: this.state.selectedLogos, // Passa os arquivos selecionados
-      });
-      console.log('this.state.selectedLogos', this.state.selectedLogos);
+      if (this.validateFieldsUniform()) {
+        this.props.onCreateOrder({
+          ...this.props,
+          selectedLogos: this.state.selectedLogos, // Passa os arquivos selecionados
+        });
+      }
     } else {
-      this.props.onCreateOrder(this.props);
+      if (this.validateFieldsExclusive()) {
+        this.props.onCreateOrder(this.props);
+      }
     }
   };
 
@@ -233,6 +277,15 @@ class Orders extends Component {
               <View style={styles.inputsContainer}>
                 <TextInput
                   label="Segmento"
+                  ref={this.segmentRef}
+                  returnKeyType="next"
+                  onSubmitEditing={() => {
+                    if (selectedOption === 'exclusive') {
+                      this.setShowDropdown(true);
+                    } else {
+                      this.amountPiecesRef.current?.focus();
+                    }
+                  }}
                   style={styles.input}
                   mode="outlined"
                   value={this.props.segment}
@@ -252,6 +305,7 @@ class Orders extends Component {
                         onPress={() => this.setShowDropdown(true)}>
                         <TextInput
                           label="Tamanho"
+                          ref={this.tamRef}
                           style={styles.input}
                           mode="outlined"
                           theme={{colors: {primary: '#000000'}}}
@@ -275,6 +329,9 @@ class Orders extends Component {
                   <>
                     <TextInput
                       label="Quantidade de Peças"
+                      ref={this.amountPiecesRef}
+                      returnKeyType="next"
+                      onSubmitEditing={this.pickLogoFiles}
                       style={styles.input}
                       mode="outlined"
                       onChangeText={text =>
@@ -376,7 +433,7 @@ class Orders extends Component {
             </TouchableOpacity>
           </Modal>
         </KeyboardAvoidingView>
-        <Toast />
+        <Toast config={toastConfig} />
       </SafeAreaView>
     );
   }

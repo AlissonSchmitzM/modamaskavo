@@ -15,7 +15,7 @@ import {
   modifyPassword,
   createUser,
 } from '../../store/actions/userActions';
-import toastr, {ERROR} from '../../services/toastr';
+import toastr, {ERROR, toastConfig} from '../../services/toastr';
 import Toast from 'react-native-toast-message';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {colors} from '../../styles/Styles';
@@ -142,9 +142,9 @@ class FormSignUp extends Component {
               />
               {this.renderBtnRegister()}
             </View>
-            <Toast />
           </View>
         </KeyboardAvoidingView>
+        <Toast config={toastConfig} />
       </SafeAreaView>
     );
   }

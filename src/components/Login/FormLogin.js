@@ -12,7 +12,7 @@ import {
 import {TextInput, Button} from 'react-native-paper';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import {login} from '../../imgs';
-import toastr, {SUCCESS, INFO, ERROR} from '../../services/toastr';
+import toastr, {ERROR, toastConfig} from '../../services/toastr';
 import Toast from 'react-native-toast-message';
 import navigationService from '../../services/NavigatorService';
 import {connect} from 'react-redux';
@@ -154,8 +154,8 @@ class FormLogin extends Component {
               </Text>
             </TouchableOpacity>
           </View>
-          <Toast />
         </KeyboardAvoidingView>
+        <Toast config={toastConfig} />
       </SafeAreaView>
     );
   }
