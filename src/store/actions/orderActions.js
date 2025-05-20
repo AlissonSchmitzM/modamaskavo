@@ -14,6 +14,7 @@ import {
   MODIFY_AMOUNT_PIECES,
 } from './actionTypes';
 import {PENDENTE} from '../../components/Main/Orders/Situacoes';
+import NavigatorService from '../../services/NavigatorService';
 
 export const createOrder = data => (dispatch, getState) => {
   dispatch({type: ORDER_REGISTRATION_IN_PROGRESS});
@@ -176,6 +177,7 @@ export const orderSaveSuccess = dispatch => {
   dispatch(
     {type: ORDER_REGISTRATION_SUCCESS},
     toastr.showToast('Pedido enviado com sucesso!', SUCCESS),
+    NavigatorService.navigate('OrdersInProgress'),
   );
 };
 

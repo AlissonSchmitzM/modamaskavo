@@ -3,6 +3,7 @@ import FormSignUp from './Login/FormSignUp.js';
 import FormProfile from './Main/Profile/FormProfile/FormProfile.js';
 import Home from './Main/Home/Home.js';
 import Orders from './Main/Orders/Orders.js';
+import OrdersInProgress from './Main/Orders/OrdersInProgress/OrdersInProgress.js';
 import Store from './Main/Store/Store.js';
 import Profile from './Main/Profile/Profile.js';
 import WooCommerceProducts from './Main/Home/WooCommerceProducts.js';
@@ -14,6 +15,7 @@ export {
   FormProfile,
   Home,
   Orders,
+  OrdersInProgress,
   Store,
   Profile,
   WooCommerceProducts,

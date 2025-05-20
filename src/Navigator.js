@@ -7,6 +7,7 @@ import {
   FormProfile,
   Home,
   Orders,
+  OrdersInProgress,
   Store,
   Profile,
   WooCommerceProducts,
@@ -107,6 +108,11 @@ const MainStackNavigator = () => {
             color: '#ffffff', // Garantindo que o título também seja branco
           },
         }}
+      />
+      <Stack.Screen
+        name="OrdersInProgress"
+        component={OrdersInProgress}
+        options={{title: 'Pedido Enviado', headerShown: false}}
       />
       <Stack.Screen
         name="SplashScreen"

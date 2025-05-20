@@ -247,7 +247,6 @@ class Orders extends Component {
           keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 40}
           style={{flex: 1}}>
           <ScrollView
-            contentContainerStyle={styles.scrollContainer}
             keyboardShouldPersistTaps="handled"
             automaticallyAdjustKeyboardInsets={true}
             keyboardDismissMode="on-drag"
