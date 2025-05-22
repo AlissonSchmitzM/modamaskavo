@@ -272,13 +272,17 @@ class FormProfile extends Component {
   }
 
   validateFields() {
+    console.log('this.props.cpfcnpj.length', this.props.cpfcnpj.length);
     if (!this.props.name) {
       toastr.showToast('Nome é obrigatório!', ERROR);
       return false;
-    } else if (!this.props.cpfcnpj) {
+    } else if (
+      !this.props.cpfcnpj ||
+      (this.props.cpfcnpj.length !== 14 && this.props.cpfcnpj.length !== 18)
+    ) {
       toastr.showToast('CPF/CNPJ inválido!', ERROR);
       return false;
-    } else if (!this.props.phone) {
+    } else if (!this.props.phone || this.props.phone.length < 15) {
       toastr.showToast('Telefone inválido!', ERROR);
       return false;
     } else if (!this.props.cep) {

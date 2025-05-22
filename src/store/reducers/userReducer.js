@@ -39,6 +39,7 @@ const INITIAL_STATE = {
   saveProfileInProgress: false,
   loginGoogleInProgress: false,
   photoModify: false,
+  admin: false,
   name: '',
   email: '',
   password: '',
@@ -158,6 +159,7 @@ const userReducer = (state = INITIAL_STATE, action) => {
         fileImgPath: action.payload.fileImgPath,
         fileImgType: action.payload.fileImgType,
         saveProfile: action.payload.saveProfile,
+        admin: action.payload.admin,
       };
     case MODIFY_PHOTO:
       return {

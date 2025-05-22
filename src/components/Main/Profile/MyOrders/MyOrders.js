@@ -45,7 +45,6 @@ class MyOrders extends Component {
   }
 
   renderItem(item) {
-    console.log('sas', item[0]);
     try {
       const orderId = item[1];
       const userEmail = item[0];
