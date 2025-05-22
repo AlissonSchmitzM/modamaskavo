@@ -3,6 +3,7 @@ import {View, Text, StyleSheet, Button} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {readDataUser} from '../../../store/actions/userActions';
 import {connect} from 'react-redux';
+import {readDataOrders} from '../../../store/actions/orderActions';
 
 class Home extends Component {
   constructor(props) {
@@ -11,6 +12,7 @@ class Home extends Component {
 
   componentDidMount() {
     this.props.onReadDataUser();
+    this.props.onReadDataOrders();
   }
 
   render() {
@@ -19,7 +21,8 @@ class Home extends Component {
         <Text style={styles.title}>Home</Text>
         <Button
           title="Ir para produtos"
-          onPress={() => this.props.navigation.navigate('WooCommerceProducts')}
+          //onPress={() => this.props.navigation.navigate('WooCommerceProducts')}
+          onPress={() => console.log(this.props.orders)}
         />
       </SafeAreaView>
     );
@@ -36,6 +39,11 @@ const styles = StyleSheet.create({
 
 const mapDispatchToProps = dispatch => ({
   onReadDataUser: () => dispatch(readDataUser()),
+  onReadDataOrders: () => dispatch(readDataOrders()),
 });
 
-export default connect(null, mapDispatchToProps)(Home);
+const mapStateToProps = state => ({
+  orders: state.orderReducer.orders,
+});
+
+export default connect(mapStateToProps, mapDispatchToProps)(Home);

@@ -7,6 +7,7 @@ import {
   MODIFY_DESCRIPTION,
   MODIFY_TYPE,
   MODIFY_AMOUNT_PIECES,
+  DATA_ORDERS,
 } from '../actions/actionTypes';
 
 const INITIAL_STATE = {
@@ -17,6 +18,7 @@ const INITIAL_STATE = {
   description: '',
   amountPieces: '',
   logos: '',
+  orders: {},
 };
 
 const orderReducer = (state = INITIAL_STATE, action) => {
@@ -24,9 +26,19 @@ const orderReducer = (state = INITIAL_STATE, action) => {
     case ORDER_REGISTRATION_IN_PROGRESS:
       return {...state, registerOrderInProgress: true};
     case ORDER_REGISTRATION_SUCCESS:
-      return {...state, registerOrderInProgress: false};
+      return {
+        ...state,
+        segment: '',
+        tam: '',
+        description: '',
+        amountPieces: '',
+        logos: '',
+        registerOrderInProgress: false,
+      };
     case ORDER_REGISTRATION_ERROR:
       return {...state, registerOrderInProgress: false};
+    case DATA_ORDERS:
+      return {...state, orders: action.payload};
     case MODIFY_TYPE:
       return {...state, type: action.payload};
     case MODIFY_SEGMENT:

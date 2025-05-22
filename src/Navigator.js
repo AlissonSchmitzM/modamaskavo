@@ -12,6 +12,7 @@ import {
   Profile,
   WooCommerceProducts,
   SplashScreen,
+  MyOrders,
 } from './components';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {View} from 'react-native';
@@ -113,6 +114,20 @@ const MainStackNavigator = () => {
         name="OrdersInProgress"
         component={OrdersInProgress}
         options={{title: 'Pedido Enviado', headerShown: false}}
+      />
+      <Stack.Screen
+        name="MyOrders"
+        component={MyOrders}
+        options={{
+          title: 'Meus Pedidos',
+          headerStyle: {
+            backgroundColor: '#000000', // Fundo preto
+          },
+          headerTintColor: '#ffffff', // Texto e botões em branco
+          headerTitleStyle: {
+            color: '#ffffff', // Garantindo que o título também seja branco
+          },
+        }}
       />
       <Stack.Screen
         name="SplashScreen"

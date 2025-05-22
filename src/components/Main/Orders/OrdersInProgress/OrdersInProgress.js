@@ -58,7 +58,10 @@ export default class OrdersInProgress extends Component {
                 mode="contained"
                 style={styles.button}
                 textColor="#FFF"
-                onPress={this.handleSubmit}>
+                onPress={() => {
+                  NavigatorService.navigate('MyOrders');
+                  NavigatorService.resetPreviousRoute();
+                }}>
                 Acompanhar Pedidos
               </Button>
             </View>

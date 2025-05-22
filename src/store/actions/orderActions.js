@@ -12,9 +12,12 @@ import {
   MODIFY_DESCRIPTION,
   MODIFY_TYPE,
   MODIFY_AMOUNT_PIECES,
+  DATA_ORDERS,
 } from './actionTypes';
 import {PENDENTE} from '../../components/Main/Orders/Situacoes';
 import NavigatorService from '../../services/NavigatorService';
+import store from '../../services/AsyncStorage';
+import {getAuth} from '@react-native-firebase/auth';
 
 export const createOrder = data => (dispatch, getState) => {
   dispatch({type: ORDER_REGISTRATION_IN_PROGRESS});
@@ -69,7 +72,7 @@ export const createOrder = data => (dispatch, getState) => {
             segment,
             tam,
             description,
-            situation: PENDENTE,
+            situation: PENDENTE.description,
             createdAt: new Date().toISOString(),
           })
           .then(() => {
@@ -138,7 +141,7 @@ export const createOrder = data => (dispatch, getState) => {
               amountPieces,
               description,
               logos: logoURLs, // Salvar os URLs dos logos
-              situation: PENDENTE,
+              situation: PENDENTE.description,
               createdAt: new Date().toISOString(),
             });
           })
@@ -170,6 +173,31 @@ export const createOrder = data => (dispatch, getState) => {
             orderSaveError(error, dispatch);
           });
       }
+    });
+};
+
+export const readDataOrders = () => async dispatch => {
+  const {currentUser} = getAuth();
+  const emailUserLogged = await store.get('emailUserLogged');
+
+  if (emailUserLogged === null) {
+    store.save('emailUserLogged', currentUser.email);
+  }
+
+  let userEmail;
+  if (emailUserLogged !== null) {
+    userEmail = emailUserLogged;
+  } else if (currentUser !== null) {
+    userEmail = currentUser.email;
+  }
+
+  const userEmailB64 = b64.encode(userEmail);
+
+  getDatabase()
+    .ref(`/orders/${userEmailB64}`)
+    .on('value', async snapshot => {
+      const orders = await snapshot.val();
+      dispatch({type: DATA_ORDERS, payload: orders});
     });
 };
 

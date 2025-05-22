@@ -6,6 +6,7 @@ import Orders from './Main/Orders/Orders.js';
 import OrdersInProgress from './Main/Orders/OrdersInProgress/OrdersInProgress.js';
 import Store from './Main/Store/Store.js';
 import Profile from './Main/Profile/Profile.js';
+import MyOrders from './Main/Profile/MyOrders/MyOrders.js';
 import WooCommerceProducts from './Main/Home/WooCommerceProducts.js';
 import SplashScreen from './SplashScreen.js';
 
@@ -18,6 +19,7 @@ export {
   OrdersInProgress,
   Store,
   Profile,
+  MyOrders,
   WooCommerceProducts,
   SplashScreen,
 };

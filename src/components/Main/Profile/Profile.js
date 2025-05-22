@@ -27,6 +27,8 @@ class Profile extends Component {
   handlePress = item => {
     if (item.title === 'Informações Pessoais') {
       navigation.navigate('FormProfile');
+    } else if (item.title === 'Meus Pedidos') {
+      navigation.navigate('MyOrders');
     } else if (item.title === 'Finalizar Sessão') {
       this.props.onSignout();
     }

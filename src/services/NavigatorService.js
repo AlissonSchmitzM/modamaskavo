@@ -52,6 +52,32 @@ function getPreviousRoute() {
   return null;
 }
 
+function resetPreviousRoute() {
+  if (navigationRef.isReady()) {
+    const state = navigationRef.getState();
+    if (state.routes.length > 1) {
+      const currentRouteIndex = state.index;
+
+      if (currentRouteIndex > 0) {
+        // Cria um novo array de rotas excluindo a rota anterior
+        const newRoutes = [...state.routes];
+        newRoutes.splice(currentRouteIndex - 1, 1);
+
+        // Ajusta o índice atual (será decrementado em 1 porque removemos a rota anterior)
+        const newIndex = currentRouteIndex - 1;
+
+        // Aplica a ação de reset com as novas rotas
+        navigationRef.dispatch(
+          CommonActions.reset({
+            index: newIndex,
+            routes: newRoutes,
+          }),
+        );
+      }
+    }
+  }
+}
+
 // Função para obter o nome da rota anterior
 function getPreviousRouteName() {
   const previousRoute = getPreviousRoute();
@@ -65,4 +91,5 @@ export default {
   goBack,
   navigationRef,
   getPreviousRouteName,
+  resetPreviousRoute,
 };
