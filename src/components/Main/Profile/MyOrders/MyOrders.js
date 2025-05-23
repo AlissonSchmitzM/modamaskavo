@@ -1,18 +1,87 @@
 import React, {Component} from 'react';
-import {View, ScrollView, SafeAreaView} from 'react-native';
-import {Card, Text, Divider} from 'react-native-paper';
+import {
+  View,
+  ScrollView,
+  SafeAreaView,
+  ActivityIndicator,
+  StyleSheet,
+} from 'react-native';
+import {
+  SafeAreaProvider,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
+import {Card, Text, Divider, Button} from 'react-native-paper';
 import {connect} from 'react-redux';
 import {
-  getColorByDescription,
   getLottieByDescription,
   getLottieHeightByDescription,
 } from '../../Orders/Situacoes';
 import LottieView from 'lottie-react-native';
+import {without_orders} from '../../../../assets';
+
+const ITEMS_PER_PAGE = 10;
+const PAGINATION_CONTAINER_HEIGHT = 60; // Altura do container de paginação
+
+// Componente wrapper funcional para usar o hook useSafeAreaInsets
+const MyOrdersWithSafeArea = props => {
+  const insets = useSafeAreaInsets();
+  return <MyOrders {...props} safeAreaInsets={insets} />;
+};
 
 class MyOrders extends Component {
   constructor(props) {
     super(props);
+    this.state = {
+      currentPage: 1,
+      loading: false,
+      allRows: [],
+    };
   }
+
+  componentDidMount() {
+    this.processOrderData();
+  }
+
+  componentDidUpdate(prevProps) {
+    // Atualiza os dados se os pedidos mudarem
+    if (prevProps.orders !== this.props.orders) {
+      this.processOrderData();
+    }
+  }
+
+  // Processa todos os dados de pedidos e armazena no estado
+  processOrderData = () => {
+    const rows = [];
+    try {
+      if (!this.props.orders) return;
+
+      const userIds = Object.keys(this.props.orders);
+
+      // Para cada ID de usuário
+      for (let i = 0; i < userIds.length; i++) {
+        const userId = userIds[i];
+        const orderIds = Object.keys(this.props.orders[userId]);
+        const orderData = this.props.orders[userId];
+
+        // Pegamos apenas o primeiro pedido para cada usuário
+        if (orderIds.length > 0) {
+          rows.push([
+            userId,
+            orderIds[0],
+            orderData.createdAt ? new Date(orderData.createdAt).getTime() : 0,
+          ]);
+        }
+      }
+
+      // Ordena por data (mais recente primeiro)
+      rows.sort((a, b) => b[2] - a[2]);
+
+      this.setState({allRows: rows, currentPage: 1});
+    } catch (error) {
+      console.error('Erro ao processar pedidos:', error);
+      this.setState({allRows: []});
+    }
+  };
 
   // Função para verificar se um valor é um objeto complexo
   isComplexObject(value) {
@@ -95,7 +164,6 @@ class MyOrders extends Component {
             margin: 8,
             borderColor: '#000',
             backgroundColor: '#F0EDEDFF',
-            //backgroundColor: getColorByDescription(currentItem.situation),
           }}
           key={`${userEmail}-${orderId}`}>
           <Card.Content>
@@ -207,65 +275,184 @@ class MyOrders extends Component {
     }
   }
 
+  // Carrega mais itens (próxima página)
+  loadMoreItems = () => {
+    this.setState(prevState => ({
+      currentPage: prevState.currentPage + 1,
+      loading: false,
+    }));
+  };
+
+  // Volta para a página anterior
+  loadPreviousItems = () => {
+    if (this.state.currentPage > 1) {
+      this.setState(prevState => ({
+        currentPage: prevState.currentPage - 1,
+      }));
+    }
+  };
+
   render() {
-    if (!this.props.orders) {
-      return (
-        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-          <Text>Nenhum pedido encontrado</Text>
-        </View>
-      );
-    }
+    const {allRows, currentPage, loading} = this.state;
+    const {safeAreaInsets} = this.props;
 
-    const rows = [];
-    try {
-      const userIds = Object.keys(this.props.orders);
-
-      // Para cada ID de usuário
-      for (let i = 0; i < userIds.length; i++) {
-        const userId = userIds[i];
-        const orderIds = Object.keys(this.props.orders[userId]);
-        const orderData = this.props.orders[userId];
-
-        // Pegamos apenas o primeiro pedido para cada usuário
-        if (orderIds.length > 0) {
-          rows.push([
-            userId,
-            orderIds[0],
-            orderData.createdAt ? new Date(orderData.createdAt).getTime() : 0,
-          ]);
-        }
-
-        //Ordena por data
-        rows.sort((a, b) => b[2] - a[2]);
-      }
-    } catch (error) {
-      console.error('Erro ao processar pedidos:', error);
-    }
-
-    if (rows.length === 0) {
+    // Se não há pedidos
+    if (!this.props.orders || allRows.length === 0) {
       return (
         <SafeAreaView
           style={{
             flex: 1,
             justifyContent: 'center',
             alignItems: 'center',
-            padding: 20,
+            marginBottom: 100,
           }}>
-          <Text>Você ainda não tem pedidos</Text>
+          <LottieView
+            source={without_orders}
+            autoPlay
+            loop
+            style={{width: '100%', height: 150, marginBottom: 10}}
+          />
+          <Text style={{fontSize: 20, fontWeight: 'bold'}}>
+            Você ainda não tem pedidos
+          </Text>
         </SafeAreaView>
       );
     }
 
+    // Calcula os índices de início e fim para a página atual
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+
+    // Obtém apenas os itens para a página atual
+    const currentItems = allRows.slice(startIndex, endIndex);
+
+    // Verifica se há mais páginas
+    const hasMorePages = endIndex < allRows.length;
+    const hasPreviousPages = currentPage > 1;
+
+    // Calcular a posição final dos botões de paginação
+    const paginationBottomPosition = safeAreaInsets?.bottom || 0;
+
     return (
-      <SafeAreaView style={{flex: 1, marginBottom: '20%'}}>
-        <ScrollView>{rows.map(item => this.renderItem(item))}</ScrollView>
-      </SafeAreaView>
+      <View style={styles.container}>
+        <ScrollView
+          contentContainerStyle={{
+            paddingBottom:
+              PAGINATION_CONTAINER_HEIGHT + paginationBottomPosition + 20,
+          }}
+          showsVerticalScrollIndicator={true}>
+          {/* Exibe os itens da página atual */}
+          {currentItems.map(item => this.renderItem(item))}
+
+          {/* Indicador de carregamento */}
+          {loading && (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#9F041B" />
+            </View>
+          )}
+
+          {/* Espaço para garantir que o conteúdo não fique atrás dos botões de paginação */}
+          <View style={styles.bottomPadding} />
+        </ScrollView>
+
+        {/* Controles de paginação */}
+        <View
+          style={[
+            styles.paginationContainer,
+            {bottom: paginationBottomPosition},
+          ]}>
+          {/* Botão para página anterior */}
+          <Button
+            mode="outlined"
+            onPress={this.loadPreviousItems}
+            disabled={!hasPreviousPages}
+            textColor="#000"
+            style={[
+              styles.paginationButton,
+              !hasPreviousPages && styles.disabledButton,
+            ]}>
+            Anterior
+          </Button>
+
+          {/* Indicador de página atual */}
+          <Text style={styles.pageIndicator}>
+            Página {currentPage} de {Math.ceil(allRows.length / ITEMS_PER_PAGE)}
+          </Text>
+
+          {/* Botão para próxima página */}
+          <Button
+            mode="outlined"
+            onPress={this.loadMoreItems}
+            disabled={!hasMorePages}
+            textColor="#000"
+            style={[
+              styles.paginationButton,
+              !hasMorePages && styles.disabledButton,
+            ]}>
+            Próxima
+          </Button>
+        </View>
+      </View>
     );
   }
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  loadingContainer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  bottomPadding: {
+    height: '2%', // Espaço extra no final da lista
+  },
+  paginationContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 10,
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    height: PAGINATION_CONTAINER_HEIGHT,
+    elevation: 5, // Sombra para Android
+    shadowColor: '#000', // Sombra para iOS
+    shadowOffset: {width: 0, height: -2},
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    zIndex: 1000, // Garante que fique acima de outros elementos
+  },
+  paginationButton: {
+    minWidth: 100,
+  },
+  disabledButton: {
+    opacity: 0.5,
+  },
+  pageIndicator: {
+    fontWeight: 'bold',
+  },
+});
 
 const mapStateToProps = state => ({
   orders: state.orderReducer.orders,
 });
 
-export default connect(mapStateToProps, null)(MyOrders);
+// Conecta o componente wrapper ao Redux e envolve com SafeAreaProvider
+const ConnectedMyOrdersWithSafeArea = connect(
+  mapStateToProps,
+  null,
+)(MyOrdersWithSafeArea);
+
+// Exporta o componente wrapper envolvido com SafeAreaProvider
+export default function (props) {
+  return (
+    <SafeAreaProvider>
+      <ConnectedMyOrdersWithSafeArea {...props} />
+    </SafeAreaProvider>
+  );
+}

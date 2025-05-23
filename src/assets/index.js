@@ -8,6 +8,7 @@ const situation_order_completed = require('./situation_order_completed.json');
 const situation_order_in_production = require('./situation_order_in_production.json');
 const situation_order_payment_pending = require('./situation_order_payment_pending.json');
 const config = require('./config.json');
+const without_orders = require('./without_orders.json');
 
 export {
   _order_in_progress,
@@ -20,4 +21,5 @@ export {
   situation_order_in_production,
   situation_order_payment_pending,
   config,
+  without_orders,
 };

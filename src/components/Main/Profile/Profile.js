@@ -71,7 +71,7 @@ class Profile extends Component {
                 />
               )}
               <View style={{marginLeft: 20, flex: 1, justifyContent: 'center'}}>
-                <Text style={{fontWeight: 600, fontSize: 18}}>
+                <Text style={{fontWeight: 600, fontSize: 20}}>
                   {this.props.name}
                 </Text>
                 <Text>{this.props.email}</Text>
