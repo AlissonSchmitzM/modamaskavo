@@ -28,6 +28,7 @@ import {
   SAVE_PROFILE_SUCCESS,
   SAVE_PROFILE_ERROR,
   DATA_USER,
+  DATA_USERS_FULL,
   SIGN_OUT,
 } from '../actions/actionTypes';
 
@@ -55,6 +56,7 @@ const INITIAL_STATE = {
   complement: '',
   number: '',
   error: null,
+  usersFull: {},
 };
 
 // Reducer para endereço
@@ -160,6 +162,11 @@ const userReducer = (state = INITIAL_STATE, action) => {
         fileImgType: action.payload.fileImgType,
         saveProfile: action.payload.saveProfile,
         admin: action.payload.admin,
+      };
+    case DATA_USERS_FULL:
+      return {
+        ...state,
+        usersFull: action.payload,
       };
     case MODIFY_PHOTO:
       return {

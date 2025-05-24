@@ -16,10 +16,11 @@ import {Avatar, Card} from 'react-native-paper';
 import {colors} from '../../../styles';
 
 const data = [
-  {id: '1', title: 'Informações Pessoais', icon: 'person-circle-outline'},
-  {id: '2', title: 'Meus Pedidos', icon: 'cart-outline'},
-  {id: '3', title: 'Configurações', icon: 'build-outline'},
-  {id: '4', title: 'Finalizar Sessão', icon: 'log-out-outline'},
+  {id: 1, title: 'Informações Pessoais', icon: 'person-circle-outline'},
+  {id: 2, title: 'Meus Pedidos', icon: 'cart-outline'},
+  {id: 3, title: 'Gerenciar Pedidos', icon: 'reader-outline'},
+  {id: 4, title: 'Configurações', icon: 'build-outline'},
+  {id: 5, title: 'Finalizar Sessão', icon: 'log-out-outline'},
 ];
 
 class Profile extends Component {
@@ -32,6 +33,8 @@ class Profile extends Component {
       navigation.navigate('FormProfile');
     } else if (item.title === 'Meus Pedidos') {
       navigation.navigate('MyOrders');
+    } else if (item.title === 'Gerenciar Pedidos') {
+      navigation.navigate('ManagerOrders');
     } else if (item.title === 'Configurações') {
       navigation.navigate('FormConfig');
     } else if (item.title === 'Finalizar Sessão') {
@@ -41,15 +44,23 @@ class Profile extends Component {
 
   getFiltrarDados = () => {
     if (!this.props.admin) {
-      return data.filter(item => item.id !== '3');
+      return data.filter(item => item.id !== 3 && item.id !== 4);
     }
     return data;
   };
 
   render() {
     return (
-      <SafeAreaView style={{flex: 1}}>
-        <Card style={{backgroundColor: '#E9E9E9FF'}}>
+      <SafeAreaView
+        style={{flex: 1, backgroundColor: '#f5f5f5'}}
+        edges={['bottom', 'left', 'right']}>
+        <Card
+          style={{
+            backgroundColor: '#E9E9E9FF',
+            borderBottomWidth: 1,
+            borderColor: '#ccc',
+            borderRadius: 0,
+          }}>
           <Card.Content>
             <View
               style={{
@@ -57,19 +68,26 @@ class Profile extends Component {
                 alignItems: 'center',
                 alignItems: 'center',
               }}>
-              {this.props.fileImgPath ? (
-                <Avatar.Image
-                  size={100}
-                  source={{uri: this.props.fileImgPath}}
-                />
-              ) : (
-                <Avatar.Text
-                  color="#FFF"
-                  backgroundColor={colors.SECONDARY}
-                  size={100}
-                  label={this.props.name.charAt(0)}
-                />
-              )}
+              <View
+                style={{
+                  borderColor: '#7E7D7DFF',
+                  borderRadius: 50,
+                  borderWidth: 1,
+                }}>
+                {this.props.fileImgPath ? (
+                  <Avatar.Image
+                    size={100}
+                    source={{uri: this.props.fileImgPath}}
+                  />
+                ) : (
+                  <Avatar.Text
+                    color="#FFF"
+                    backgroundColor={colors.SECONDARY}
+                    size={100}
+                    label={this.props.name.charAt(0)}
+                  />
+                )}
+              </View>
               <View style={{marginLeft: 20, flex: 1, justifyContent: 'center'}}>
                 <Text style={{fontWeight: 600, fontSize: 20}}>
                   {this.props.name}

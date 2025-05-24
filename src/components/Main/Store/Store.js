@@ -6,7 +6,9 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 
 const Store = () => {
   return (
-    <SafeAreaView style={{flex: 1}}>
+    <SafeAreaView
+      style={{flex: 1, backgroundColor: '#f5f5f5'}}
+      edges={['bottom', 'left', 'right']}>
       <View style={styles.container}>
         <Text style={styles.title}>Loja em construção</Text>
         <LottieView

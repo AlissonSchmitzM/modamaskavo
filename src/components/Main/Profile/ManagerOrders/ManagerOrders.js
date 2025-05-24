@@ -11,6 +11,7 @@ import {
   SafeAreaProvider,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
+import b64 from 'base-64';
 import {
   Card,
   Text,
@@ -27,9 +28,7 @@ import {
 } from '../../Orders/Situacoes';
 import LottieView from 'lottie-react-native';
 import {without_orders} from '../../../../assets';
-
-const ITEMS_PER_PAGE = 10;
-const PAGINATION_CONTAINER_HEIGHT = 60; // Altura do container de paginação
+import NavigatorService from '../../../../services/NavigatorService';
 
 // Definindo um tema personalizado para garantir cores consistentes
 const theme = {
@@ -38,19 +37,23 @@ const theme = {
     ...DefaultTheme.colors,
     primary: '#000000',
     onSurfaceVariant: '#999999',
+    // Outras cores que você pode querer definir:
     background: '#FFFFFF',
     surface: '#FFFFFF',
     text: '#000000',
   },
 };
 
+const ITEMS_PER_PAGE = 10;
+const PAGINATION_CONTAINER_HEIGHT = 60; // Altura do container de paginação
+
 // Componente wrapper funcional para usar o hook useSafeAreaInsets
-const MyOrdersWithSafeArea = props => {
+const ManagerOrdersWithSafeArea = props => {
   const insets = useSafeAreaInsets();
-  return <MyOrders {...props} safeAreaInsets={insets} />;
+  return <ManagerOrders {...props} safeAreaInsets={insets} />;
 };
 
-class MyOrders extends Component {
+class ManagerOrders extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -60,7 +63,10 @@ class MyOrders extends Component {
       filteredRows: [],
       selectedSituation: 'Todas',
       situationsList: ['Todas'],
+      selectedUser: 'Todos',
+      usersList: ['Todos'],
       situationMenuVisible: false,
+      userMenuVisible: false,
     };
   }
 
@@ -70,7 +76,7 @@ class MyOrders extends Component {
 
   componentDidUpdate(prevProps) {
     // Atualiza os dados se os pedidos mudarem
-    if (prevProps.orders !== this.props.orders) {
+    if (prevProps.ordersFull !== this.props.ordersFull) {
       this.processOrderData();
     }
   }
@@ -79,31 +85,53 @@ class MyOrders extends Component {
   processOrderData = () => {
     const rows = [];
     const situations = new Set(['Todas']); // Começa com "Todas" como opção padrão
+    const users = new Set(['Todos']); // Começa com "Todos" como opção padrão
 
     try {
-      if (!this.props.orders) return;
+      if (!this.props.ordersFull) return;
 
-      const userIds = Object.keys(this.props.orders);
+      const userIds = Object.keys(this.props.ordersFull);
 
       // Para cada ID de usuário
       for (let i = 0; i < userIds.length; i++) {
         const userId = userIds[i];
-        const orderIds = Object.keys(this.props.orders[userId]);
-        const orderData = this.props.orders[userId];
 
-        // Adiciona a situação à lista de situações (se não for undefined)
-        if (orderData.situation) {
-          situations.add(orderData.situation);
+        // Adiciona o usuário decodificado à lista de usuários
+        try {
+          const decodedEmail = b64.decode(userId);
+          users.add(decodedEmail);
+        } catch (e) {
+          users.add(userId); // Usa o ID codificado se não conseguir decodificar
         }
 
-        // Pegamos apenas o primeiro pedido para cada usuário
-        if (orderIds.length > 0) {
-          rows.push([
-            userId,
-            orderIds[0],
-            orderData.createdAt ? new Date(orderData.createdAt).getTime() : 0,
-            orderData.situation || 'Não definida', // Adiciona a situação como quarto elemento
-          ]);
+        const orderIds = Object.keys(this.props.ordersFull[userId]);
+
+        for (let j = 0; j < orderIds.length; j++) {
+          const orderId = orderIds[j];
+          const orderData = this.props.ordersFull[userId][orderId];
+
+          if (orderData) {
+            // Adiciona a situação à lista de situações (se não for undefined)
+            if (orderData.situation) {
+              situations.add(orderData.situation);
+            }
+
+            // Tenta decodificar o email do usuário
+            let decodedEmail;
+            try {
+              decodedEmail = b64.decode(userId);
+            } catch (e) {
+              decodedEmail = userId;
+            }
+
+            rows.push([
+              userId,
+              orderId,
+              orderData.createdAt ? new Date(orderData.createdAt).getTime() : 0,
+              orderData.situation || 'Não definida', // Adiciona a situação como quarto elemento
+              decodedEmail, // Adiciona o email decodificado como quinto elemento
+            ]);
+          }
         }
       }
 
@@ -115,6 +143,7 @@ class MyOrders extends Component {
         filteredRows: rows,
         currentPage: 1,
         situationsList: Array.from(situations),
+        usersList: Array.from(users),
       });
     } catch (error) {
       console.error('Erro ao processar pedidos:', error);
@@ -122,15 +151,20 @@ class MyOrders extends Component {
     }
   };
 
-  // Aplica o filtro de situação
+  // Aplica todos os filtros selecionados
   applyFilters = () => {
-    const {allRows, selectedSituation} = this.state;
+    const {allRows, selectedSituation, selectedUser} = this.state;
 
     let filtered = [...allRows];
 
     // Filtrar por situação se não for "Todas"
     if (selectedSituation !== 'Todas') {
       filtered = filtered.filter(row => row[3] === selectedSituation);
+    }
+
+    // Filtrar por usuário se não for "Todos"
+    if (selectedUser !== 'Todos') {
+      filtered = filtered.filter(row => row[4] === selectedUser);
     }
 
     this.setState({
@@ -150,10 +184,22 @@ class MyOrders extends Component {
     );
   };
 
-  // Limpa o filtro de situação
+  // Filtra os pedidos com base no usuário selecionado
+  selectUser = user => {
+    this.setState(
+      {
+        selectedUser: user,
+        userMenuVisible: false,
+      },
+      this.applyFilters,
+    );
+  };
+
+  // Limpa todos os filtros
   clearFilters = () => {
     this.setState({
       selectedSituation: 'Todas',
+      selectedUser: 'Todos',
       filteredRows: this.state.allRows,
       currentPage: 1,
     });
@@ -163,6 +209,15 @@ class MyOrders extends Component {
   toggleSituationMenu = () => {
     this.setState(prevState => ({
       situationMenuVisible: !prevState.situationMenuVisible,
+      userMenuVisible: false, // Fecha o outro menu se estiver aberto
+    }));
+  };
+
+  // Controla visibilidade do menu de usuários
+  toggleUserMenu = () => {
+    this.setState(prevState => ({
+      userMenuVisible: !prevState.userMenuVisible,
+      situationMenuVisible: false, // Fecha o outro menu se estiver aberto
     }));
   };
 
@@ -196,6 +251,13 @@ class MyOrders extends Component {
     return String(value);
   }
 
+  handleOrderPress = (user, currentItem) => {
+    NavigatorService.navigate('DEFINIR', {
+      user,
+      currentItem,
+    });
+  };
+
   renderItem(item) {
     try {
       const orderId = item[1];
@@ -203,8 +265,8 @@ class MyOrders extends Component {
 
       // Verificação de segurança para evitar acesso a propriedades indefinidas
       if (
-        !this.props.orders[userEmail] ||
-        !this.props.orders[userEmail][orderId]
+        !this.props.ordersFull[userEmail] ||
+        !this.props.ordersFull[userEmail][orderId]
       ) {
         return (
           <Card style={{margin: 8}} key={`${userEmail}-${orderId}`}>
@@ -217,7 +279,7 @@ class MyOrders extends Component {
         );
       }
 
-      const currentItem = this.props.orders[userEmail];
+      const currentItem = this.props.ordersFull[userEmail][orderId];
 
       // Formatar a data para exibição
       let formattedDate = '-';
@@ -248,7 +310,10 @@ class MyOrders extends Component {
             borderColor: '#000',
             backgroundColor: '#F0EDEDFF',
           }}
-          key={`${userEmail}-${orderId}`}>
+          key={`${userEmail}-${orderId}`}
+          onPress={() =>
+            this.handleOrderPress(this.props.usersFull[userEmail], currentItem)
+          }>
           <Card.Content>
             <Text
               variant="titleMedium"
@@ -288,6 +353,20 @@ class MyOrders extends Component {
                   }}
                 />
               </View>
+            </View>
+
+            <View style={{marginBottom: 4}}>
+              <Text variant="bodyMedium">
+                <Text style={{fontWeight: 'bold'}}>Nome: </Text>
+                {this.props.usersFull[userEmail].name}
+              </Text>
+            </View>
+
+            <View style={{marginBottom: 4}}>
+              <Text variant="bodyMedium">
+                <Text style={{fontWeight: 'bold'}}>Email: </Text>
+                {b64.decode(userEmail)}
+              </Text>
             </View>
 
             <View style={{marginBottom: 4}}>
@@ -381,16 +460,20 @@ class MyOrders extends Component {
       currentPage,
       loading,
       selectedSituation,
+      selectedUser,
       situationsList,
+      usersList,
       situationMenuVisible,
+      userMenuVisible,
     } = this.state;
     const {safeAreaInsets} = this.props;
 
     // Verificar se há filtros ativos
-    const hasActiveFilters = selectedSituation !== 'Todas';
+    const hasActiveFilters =
+      selectedSituation !== 'Todas' || selectedUser !== 'Todos';
 
     // Se não há pedidos
-    if (!this.props.orders || filteredRows.length === 0) {
+    if (!this.props.ordersFull || filteredRows.length === 0) {
       return (
         <SafeAreaView
           style={{
@@ -412,14 +495,14 @@ class MyOrders extends Component {
               textAlign: 'center',
               paddingHorizontal: 20,
             }}>
-            {this.props.orders && this.state.allRows.length > 0
+            {this.props.ordersFull && this.state.allRows.length > 0
               ? 'Nenhum pedido encontrado com os filtros atuais'
               : 'Você ainda não tem pedidos'}
           </Text>
 
           {/* Mostrar botão para limpar filtros se estiver filtrando */}
           {hasActiveFilters &&
-            this.props.orders &&
+            this.props.ordersFull &&
             this.state.allRows.length > 0 && (
               <Button
                 mode="contained"
@@ -448,7 +531,7 @@ class MyOrders extends Component {
 
     return (
       <View style={styles.container}>
-        {/* Área de filtro de situação */}
+        {/* Área de filtros */}
         <View style={styles.filtersRow}>
           {/* Filtro por situação */}
           <View style={styles.filterContainer}>
@@ -474,6 +557,36 @@ class MyOrders extends Component {
                   key={situation}
                   onPress={() => this.selectSituation(situation)}
                   title={situation}
+                  titleStyle={{color: '#000000'}}
+                />
+              ))}
+            </Menu>
+          </View>
+
+          {/* Filtro por usuário */}
+          <View style={styles.filterContainer}>
+            <Text style={styles.filterLabel}>Usuário:</Text>
+
+            <Menu
+              visible={userMenuVisible}
+              onDismiss={this.toggleUserMenu}
+              anchor={
+                <TouchableOpacity
+                  style={styles.dropdownButton}
+                  onPress={this.toggleUserMenu}>
+                  <Text
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                    style={styles.dropdownButtonText}>
+                    {selectedUser}
+                  </Text>
+                </TouchableOpacity>
+              }>
+              {usersList.map(user => (
+                <Menu.Item
+                  key={user}
+                  onPress={() => this.selectUser(user)}
+                  title={user}
                   titleStyle={{color: '#000000'}}
                 />
               ))}
@@ -631,21 +744,22 @@ const styles = StyleSheet.create({
 });
 
 const mapStateToProps = state => ({
-  orders: state.orderReducer.orders,
+  ordersFull: state.orderReducer.ordersFull,
+  usersFull: state.userReducer.usersFull,
 });
 
 // Conecta o componente wrapper ao Redux e envolve com SafeAreaProvider
-const ConnectedMyOrdersWithSafeArea = connect(
+const ConnectedManagerOrdersWithSafeArea = connect(
   mapStateToProps,
   null,
-)(MyOrdersWithSafeArea);
+)(ManagerOrdersWithSafeArea);
 
 // Exporta o componente wrapper envolvido com SafeAreaProvider
 export default function (props) {
   return (
     <SafeAreaProvider>
       <Provider theme={theme}>
-        <ConnectedMyOrdersWithSafeArea {...props} />
+        <ConnectedManagerOrdersWithSafeArea {...props} />
       </Provider>
     </SafeAreaProvider>
   );

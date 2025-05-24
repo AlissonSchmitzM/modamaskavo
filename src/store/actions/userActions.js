@@ -38,6 +38,7 @@ import {
   LOGIN_GOOGLE_IN_PROGRESS,
   LOGIN_GOOGLE_ERROR,
   LOGIN_GOOGLE_SUCCESS,
+  DATA_USERS_FULL,
 } from './actionTypes';
 
 export const signOut = () => dispatch => {
@@ -427,6 +428,18 @@ export const readDataUser = () => async dispatch => {
     })
     .catch(() =>
       toastr.showToast('Problema ao carregar dados do usuário.', ERROR),
+    );
+};
+
+export const readDataUsersFull = () => async dispatch => {
+  getDatabase()
+    .ref(`/users`)
+    .once('value')
+    .then(async snapshot => {
+      dispatch({type: DATA_USERS_FULL, payload: await snapshot.val()});
+    })
+    .catch(() =>
+      toastr.showToast('Problema ao carregar todos os usuários.', ERROR),
     );
 };
 

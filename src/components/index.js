@@ -8,6 +8,7 @@ import Store from './Main/Store/Store.js';
 import Profile from './Main/Profile/Profile.js';
 import FormConfig from './Main/Profile/FormConfig/FormConfig.js';
 import MyOrders from './Main/Profile/MyOrders/MyOrders.js';
+import ManagerOrders from './Main/Profile/ManagerOrders/ManagerOrders.js';
 import WooCommerceProducts from './Main/Home/WooCommerceProducts.js';
 import SplashScreen from './SplashScreen.js';
 
@@ -22,6 +23,7 @@ export {
   Profile,
   FormConfig,
   MyOrders,
+  ManagerOrders,
   WooCommerceProducts,
   SplashScreen,
 };

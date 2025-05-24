@@ -13,6 +13,7 @@ import {
   MODIFY_TYPE,
   MODIFY_AMOUNT_PIECES,
   DATA_ORDERS,
+  DATA_ORDERS_FULL,
 } from './actionTypes';
 import {PENDENTE} from '../../components/Main/Orders/Situacoes';
 import NavigatorService from '../../services/NavigatorService';
@@ -190,6 +191,15 @@ export const readDataOrders = () => async dispatch => {
     .on('value', async snapshot => {
       const orders = await snapshot.val();
       dispatch({type: DATA_ORDERS, payload: orders});
+    });
+};
+
+export const readDataOrdersFull = () => async dispatch => {
+  getDatabase()
+    .ref(`/orders`)
+    .on('value', async snapshot => {
+      const ordersFull = await snapshot.val();
+      dispatch({type: DATA_ORDERS_FULL, payload: ordersFull});
     });
 };
 

@@ -14,12 +14,21 @@ import {
   SplashScreen,
   MyOrders,
   FormConfig,
+  ManagerOrders,
 } from './components';
 import Icon from 'react-native-vector-icons/Ionicons';
-import {View} from 'react-native';
+import {StatusBar, View} from 'react-native';
 const Stack = createNativeStackNavigator();
 
 const Tab = createBottomTabNavigator();
+
+const CustomHeader = () => {
+  return (
+    <View style={{backgroundColor: '#000000', height: StatusBar.currentHeight}}>
+      <StatusBar backgroundColor="#000000" />
+    </View>
+  );
+};
 
 const TabNavigator = () => {
   return (
@@ -84,11 +93,11 @@ const MainStackNavigator = () => {
         options={{
           title: 'Cadastro de Usuário',
           headerStyle: {
-            backgroundColor: '#000000', // Fundo preto
+            backgroundColor: '#000000',
           },
-          headerTintColor: '#ffffff', // Texto e botões em branco
+          headerTintColor: '#ffffff',
           headerTitleStyle: {
-            color: '#ffffff', // Garantindo que o título também seja branco
+            color: '#ffffff',
           },
         }}
       />
@@ -103,18 +112,18 @@ const MainStackNavigator = () => {
         options={{
           title: 'Perfil',
           headerStyle: {
-            backgroundColor: '#000000', // Fundo preto
+            backgroundColor: '#000000',
           },
-          headerTintColor: '#ffffff', // Texto e botões em branco
+          headerTintColor: '#ffffff',
           headerTitleStyle: {
-            color: '#ffffff', // Garantindo que o título também seja branco
+            color: '#ffffff',
           },
         }}
       />
       <Stack.Screen
         name="OrdersInProgress"
         component={OrdersInProgress}
-        options={{title: 'Pedido Enviado', headerShown: false}}
+        options={{title: 'Pedido Enviado', header: () => <CustomHeader />}}
       />
       <Stack.Screen
         name="MyOrders"
@@ -122,11 +131,25 @@ const MainStackNavigator = () => {
         options={{
           title: 'Meus Pedidos',
           headerStyle: {
-            backgroundColor: '#000000', // Fundo preto
+            backgroundColor: '#000000',
           },
-          headerTintColor: '#ffffff', // Texto e botões em branco
+          headerTintColor: '#ffffff',
           headerTitleStyle: {
-            color: '#ffffff', // Garantindo que o título também seja branco
+            color: '#ffffff',
+          },
+        }}
+      />
+      <Stack.Screen
+        name="ManagerOrders"
+        component={ManagerOrders}
+        options={{
+          title: 'Gerenciar Pedidos',
+          headerStyle: {
+            backgroundColor: '#000000',
+          },
+          headerTintColor: '#ffffff',
+          headerTitleStyle: {
+            color: '#ffffff',
           },
         }}
       />
@@ -136,23 +159,23 @@ const MainStackNavigator = () => {
         options={{
           title: 'Configurações',
           headerStyle: {
-            backgroundColor: '#000000', // Fundo preto
+            backgroundColor: '#000000',
           },
-          headerTintColor: '#ffffff', // Texto e botões em branco
+          headerTintColor: '#ffffff',
           headerTitleStyle: {
-            color: '#ffffff', // Garantindo que o título também seja branco
+            color: '#ffffff',
           },
         }}
       />
       <Stack.Screen
         name="SplashScreen"
         component={SplashScreen}
-        options={{headerShown: false}}
+        options={{header: () => <CustomHeader />}}
       />
       <Stack.Screen
         name="Main"
         component={TabNavigator}
-        options={{headerShown: false}}
+        options={{header: () => <CustomHeader />}}
       />
     </Stack.Navigator>
   );

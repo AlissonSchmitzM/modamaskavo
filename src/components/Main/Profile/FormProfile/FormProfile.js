@@ -319,7 +319,9 @@ class FormProfile extends Component {
     const {imageMenuVisible} = this.state;
 
     return (
-      <SafeAreaView style={{flex: 1}}>
+      <SafeAreaView
+        style={{flex: 1, backgroundColor: '#FFFFFF'}}
+        edges={['bottom', 'left', 'right']}>
         <PaperProvider>
           <KeyboardAwareScrollView
             style={{flex: 1}}
@@ -336,19 +338,26 @@ class FormProfile extends Component {
                 showsVerticalScrollIndicator={false}>
                 <View style={styles.container}>
                   <View style={styles.containerAvatar}>
-                    {this.props.fileImgPath ? (
-                      <Avatar.Image
-                        size={100}
-                        source={{uri: this.props.fileImgPath}}
-                      />
-                    ) : (
-                      <Avatar.Text
-                        color="#FFF"
-                        backgroundColor={colors.SECONDARY}
-                        size={100}
-                        label={this.props.name.charAt(0)}
-                      />
-                    )}
+                    <View
+                      style={{
+                        borderColor: '#7E7D7DFF',
+                        borderRadius: 50,
+                        borderWidth: 1,
+                      }}>
+                      {this.props.fileImgPath ? (
+                        <Avatar.Image
+                          size={100}
+                          source={{uri: this.props.fileImgPath}}
+                        />
+                      ) : (
+                        <Avatar.Text
+                          color="#FFF"
+                          backgroundColor={colors.SECONDARY}
+                          size={100}
+                          label={this.props.name.charAt(0)}
+                        />
+                      )}
+                    </View>
                     <View
                       style={[
                         styles.containerAvatarIcon,

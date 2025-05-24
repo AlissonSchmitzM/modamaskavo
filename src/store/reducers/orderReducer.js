@@ -8,6 +8,7 @@ import {
   MODIFY_TYPE,
   MODIFY_AMOUNT_PIECES,
   DATA_ORDERS,
+  DATA_ORDERS_FULL,
 } from '../actions/actionTypes';
 
 const INITIAL_STATE = {
@@ -19,6 +20,7 @@ const INITIAL_STATE = {
   amountPieces: '',
   logos: '',
   orders: {},
+  ordersFull: {},
 };
 
 const orderReducer = (state = INITIAL_STATE, action) => {
@@ -39,6 +41,8 @@ const orderReducer = (state = INITIAL_STATE, action) => {
       return {...state, registerOrderInProgress: false};
     case DATA_ORDERS:
       return {...state, orders: action.payload};
+    case DATA_ORDERS_FULL:
+      return {...state, ordersFull: action.payload};
     case MODIFY_TYPE:
       return {...state, type: action.payload};
     case MODIFY_SEGMENT:

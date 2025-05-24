@@ -240,10 +240,11 @@ class Orders extends Component {
     } = this.state;
 
     return (
-      <SafeAreaView style={{flex: 1}}>
+      <SafeAreaView
+        style={{flex: 1, backgroundColor: '#f5f5f5'}}
+        edges={['bottom', 'left', 'right']}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          extraScrollHeight={100}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 40}
           style={{flex: 1}}>
           <ScrollView
