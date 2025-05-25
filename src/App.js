@@ -6,8 +6,11 @@ import store from './store';
 import MainStackNavigator from './Navigator';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {navigationRef} from './services/NavigatorService';
+import {en, registerTranslation} from 'react-native-paper-dates';
 
-function App() {
+registerTranslation('en', en);
+
+export default function App() {
   return (
     <>
       <SafeAreaProvider>
@@ -21,5 +24,3 @@ function App() {
     </>
   );
 }
-
-export default App;

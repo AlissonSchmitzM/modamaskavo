@@ -14,8 +14,20 @@ import {
   MODIFY_AMOUNT_PIECES,
   DATA_ORDERS,
   DATA_ORDERS_FULL,
+  CANCEL_ORDER,
+  SET_PRICE_ORDER,
+  SET_PRICE_ORDER_ERROR,
+  SET_ESTIMATED_FINISH_ORDER,
+  SET_ESTIMATED_FINISH_ORDER_ERROR,
 } from './actionTypes';
-import {PENDENTE} from '../../components/Main/Orders/Situacoes';
+import {
+  CANCELADO,
+  CONCLUIDO,
+  EM_PRODUCAO,
+  PAGAMENTO_CONCLUIDO,
+  PAGAMENTO_PENDENTE,
+  PENDENTE,
+} from '../../components/Main/Orders/Situacoes';
 import NavigatorService from '../../services/NavigatorService';
 import store from '../../services/AsyncStorage';
 import {getAuth} from '@react-native-firebase/auth';
@@ -167,6 +179,90 @@ export const createOrder = data => (dispatch, getState) => {
         orderSaveError(error, dispatch);
       });
   }
+};
+
+export const cancelOrder = (user, orderiD, reason_cancellation) => dispatch => {
+  const emailB64 = b64.encode(user.email);
+
+  getDatabase()
+    .ref(`/orders/${emailB64}/${orderiD}/situation`)
+    .once('value')
+    .then(async snapshot => {
+      const situation = await snapshot.val();
+
+      if (
+        situation === PAGAMENTO_PENDENTE.description ||
+        situation === PAGAMENTO_CONCLUIDO.description ||
+        situation === EM_PRODUCAO.description
+      ) {
+        getDatabase().ref(`/orders/${emailB64}/${orderiD}`).update({
+          value_order: '',
+          estimated_finish: '',
+        });
+      }
+    })
+    .catch(() =>
+      toastr.showToast('Problema ao carregar informação do pedido.', ERROR),
+    );
+
+  getDatabase()
+    .ref(`/orders/${emailB64}/${orderiD}`)
+    .update({
+      reason_cancellation,
+      situation: CANCELADO.description,
+    })
+    .then(() => {
+      dispatch({type: CANCEL_ORDER});
+    })
+    .catch(err => dispatch({type: CANCEL_ORDER, err}));
+};
+
+export const setPrice =
+  (user, orderiD, value_order, observation_admin) => dispatch => {
+    const emailB64 = b64.encode(user.email);
+
+    getDatabase()
+      .ref(`/orders/${emailB64}/${orderiD}`)
+      .update({
+        value_order,
+        observation_admin,
+        situation: PAGAMENTO_PENDENTE.description,
+      })
+      .then(() => {
+        dispatch({type: SET_PRICE_ORDER});
+      })
+      .catch(err => dispatch({type: SET_PRICE_ORDER_ERROR, err}));
+  };
+
+export const setEstimatedFinish =
+  (user, orderiD, estimated_finish) => dispatch => {
+    const emailB64 = b64.encode(user.email);
+
+    getDatabase()
+      .ref(`/orders/${emailB64}/${orderiD}`)
+      .update({
+        estimated_finish,
+        situation: EM_PRODUCAO.description,
+      })
+      .then(() => {
+        dispatch({type: SET_ESTIMATED_FINISH_ORDER});
+      })
+      .catch(err => dispatch({type: SET_ESTIMATED_FINISH_ORDER_ERROR, err}));
+  };
+
+export const setCodeTrack = (user, orderiD, code_track) => dispatch => {
+  const emailB64 = b64.encode(user.email);
+
+  getDatabase()
+    .ref(`/orders/${emailB64}/${orderiD}`)
+    .update({
+      code_track,
+      situation: CONCLUIDO.description,
+    })
+    .then(() => {
+      dispatch({type: SET_CODE_TRACK_ORDER});
+    })
+    .catch(err => dispatch({type: SET_CODE_TRACK_ORDER_ERROR, err}));
 };
 
 export const readDataOrders = () => async dispatch => {

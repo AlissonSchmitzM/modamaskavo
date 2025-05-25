@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   StyleSheet,
   TouchableOpacity,
+  Linking,
 } from 'react-native';
 import {
   SafeAreaProvider,
@@ -196,6 +197,41 @@ class MyOrders extends Component {
     return String(value);
   }
 
+  formatCurrency(value) {
+    if (typeof value === 'number') {
+      return `R$ ${value.toFixed(2).replace('.', ',')}`;
+    } else if (typeof value === 'string') {
+      // Tenta converter string para número
+      const numValue = parseFloat(value.replace(',', '.'));
+      if (!isNaN(numValue)) {
+        return `R$ ${numValue.toFixed(2).replace('.', ',')}`;
+      }
+      return value;
+    }
+    return 'R$ 0,00';
+  }
+
+  // Função para abrir link de pagamento
+  handlePayment = paymentLink => {
+    if (paymentLink) {
+      Linking.openURL(paymentLink).catch(err =>
+        console.error('Erro ao abrir link de pagamento:', err),
+      );
+    } else {
+      // Implementar lógica de pagamento se não houver link direto
+      console.log('Implementar lógica de pagamento');
+    }
+  };
+
+  // Função para rastrear pedido
+  trackOrder = trackingCode => {
+    // URL dos correios ou outra empresa de logística
+    const trackingUrl = `https://www.linkcorreios.com.br/?id=${trackingCode}`;
+    Linking.openURL(trackingUrl).catch(err =>
+      console.error('Erro ao abrir link de rastreamento:', err),
+    );
+  };
+
   renderItem(item) {
     try {
       const orderId = item[1];
@@ -335,6 +371,88 @@ class MyOrders extends Component {
                 {this.renderSafeValue(currentItem.description)}
               </Text>
             </View>
+
+            {/* Motivo de cancelamento (se existir) */}
+            {currentItem.reason_cancellation && (
+              <View style={{marginBottom: 4}}>
+                <Text variant="bodyMedium">
+                  <Text style={{fontWeight: 'bold', color: '#D32F2F'}}>
+                    Motivo do cancelamento:{' '}
+                  </Text>
+                  {this.renderSafeValue(currentItem.reason_cancellation)}
+                </Text>
+              </View>
+            )}
+
+            {/* Valor do pedido e botão de pagamento (se existir) */}
+            {currentItem.value_order && (
+              <View
+                style={{
+                  marginBottom: 4,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                }}>
+                <View style={{flex: 1}}>
+                  <Text variant="bodyMedium">
+                    <Text style={{fontWeight: 'bold'}}>Valor do pedido: </Text>
+                    {this.formatCurrency(currentItem.value_order)}
+                  </Text>
+                </View>
+                <Button
+                  mode="contained"
+                  onPress={() => this.handlePayment(currentItem.payment_link)}
+                  style={{backgroundColor: '#00A74BFF'}}>
+                  Pagar
+                </Button>
+              </View>
+            )}
+
+            {/* Observações do administrador (se existir) */}
+            {currentItem.observation_admin && (
+              <View style={{marginBottom: 4}}>
+                <Text variant="bodyMedium">
+                  <Text style={{fontWeight: 'bold'}}>Observações: </Text>
+                  {this.renderSafeValue(currentItem.observation_admin)}
+                </Text>
+              </View>
+            )}
+
+            {/* Data estimada para finalização (se existir) */}
+            {currentItem.estimated_finish && (
+              <View style={{marginBottom: 4}}>
+                <Text variant="bodyMedium">
+                  <Text style={{fontWeight: 'bold'}}>
+                    Data estimada para finalização:{' '}
+                  </Text>
+                  {currentItem.estimated_finish}
+                </Text>
+              </View>
+            )}
+
+            {/* Código de rastreio (se existir) */}
+            {currentItem.code_track && (
+              <View
+                style={{
+                  marginBottom: 4,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                }}>
+                <View style={{flex: 1}}>
+                  <Text variant="bodyMedium">
+                    <Text style={{fontWeight: 'bold'}}>
+                      Código de rastreio:{' '}
+                    </Text>
+                    {this.renderSafeValue(currentItem.code_track.toUpperCase())}
+                  </Text>
+                </View>
+                <Button
+                  mode="contained"
+                  onPress={() => this.trackOrder(currentItem.code_track)}
+                  style={{backgroundColor: '#0066CC'}}>
+                  Rastrear
+                </Button>
+              </View>
+            )}
 
             <View style={{marginTop: 8}}>
               <Text variant="bodySmall" style={{color: 'gray'}}>

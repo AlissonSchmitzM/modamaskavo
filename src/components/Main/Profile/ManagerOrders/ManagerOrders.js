@@ -4,7 +4,6 @@ import {
   ScrollView,
   SafeAreaView,
   ActivityIndicator,
-  StyleSheet,
   TouchableOpacity,
 } from 'react-native';
 import {
@@ -29,6 +28,7 @@ import {
 import LottieView from 'lottie-react-native';
 import {without_orders} from '../../../../assets';
 import NavigatorService from '../../../../services/NavigatorService';
+import {styles} from './styles';
 
 // Definindo um tema personalizado para garantir cores consistentes
 const theme = {
@@ -173,6 +173,20 @@ class ManagerOrders extends Component {
     });
   };
 
+  formatCurrency(value) {
+    if (typeof value === 'number') {
+      return `R$ ${value.toFixed(2).replace('.', ',')}`;
+    } else if (typeof value === 'string') {
+      // Tenta converter string para número
+      const numValue = parseFloat(value.replace(',', '.'));
+      if (!isNaN(numValue)) {
+        return `R$ ${numValue.toFixed(2).replace('.', ',')}`;
+      }
+      return value;
+    }
+    return 'R$ 0,00';
+  }
+
   // Filtra os pedidos com base na situação selecionada
   selectSituation = situation => {
     this.setState(
@@ -251,10 +265,11 @@ class ManagerOrders extends Component {
     return String(value);
   }
 
-  handleOrderPress = (user, currentItem) => {
-    NavigatorService.navigate('DEFINIR', {
+  handleOrderPress = (user, currentItem, orderId) => {
+    NavigatorService.navigate('ManagerOrdersDetails', {
       user,
       currentItem,
+      orderId,
     });
   };
 
@@ -312,7 +327,11 @@ class ManagerOrders extends Component {
           }}
           key={`${userEmail}-${orderId}`}
           onPress={() =>
-            this.handleOrderPress(this.props.usersFull[userEmail], currentItem)
+            this.handleOrderPress(
+              this.props.usersFull[userEmail],
+              currentItem,
+              orderId,
+            )
           }>
           <Card.Content>
             <Text
@@ -414,6 +433,88 @@ class ManagerOrders extends Component {
                 {this.renderSafeValue(currentItem.description)}
               </Text>
             </View>
+
+            {/* Motivo de cancelamento (se existir) */}
+            {currentItem.reason_cancellation && (
+              <View style={{marginBottom: 4}}>
+                <Text variant="bodyMedium">
+                  <Text style={{fontWeight: 'bold', color: '#D32F2F'}}>
+                    Motivo do cancelamento:{' '}
+                  </Text>
+                  {this.renderSafeValue(currentItem.reason_cancellation)}
+                </Text>
+              </View>
+            )}
+
+            {/* Valor do pedido e botão de pagamento (se existir) */}
+            {currentItem.value_order && (
+              <View
+                style={{
+                  marginBottom: 4,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                }}>
+                <View style={{flex: 1}}>
+                  <Text variant="bodyMedium">
+                    <Text style={{fontWeight: 'bold'}}>Valor do pedido: </Text>
+                    {this.formatCurrency(currentItem.value_order)}
+                  </Text>
+                </View>
+                <Button
+                  mode="contained"
+                  onPress={() => this.handlePayment(currentItem.payment_link)}
+                  style={{backgroundColor: '#00A74BFF'}}>
+                  Pagar
+                </Button>
+              </View>
+            )}
+
+            {/* Observações do administrador (se existir) */}
+            {currentItem.observation_admin && (
+              <View style={{marginBottom: 4}}>
+                <Text variant="bodyMedium">
+                  <Text style={{fontWeight: 'bold'}}>Observações: </Text>
+                  {this.renderSafeValue(currentItem.observation_admin)}
+                </Text>
+              </View>
+            )}
+
+            {/* Data estimada para finalização (se existir) */}
+            {currentItem.estimated_finish && (
+              <View style={{marginBottom: 4}}>
+                <Text variant="bodyMedium">
+                  <Text style={{fontWeight: 'bold'}}>
+                    Data estimada para finalização:{' '}
+                  </Text>
+                  {currentItem.estimated_finish}
+                </Text>
+              </View>
+            )}
+
+            {/* Código de rastreio (se existir) */}
+            {currentItem.code_track && (
+              <View
+                style={{
+                  marginBottom: 4,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                }}>
+                <View style={{flex: 1}}>
+                  <Text variant="bodyMedium">
+                    <Text style={{fontWeight: 'bold'}}>
+                      Código de rastreio:{' '}
+                    </Text>
+                    {this.renderSafeValue(currentItem.code_track.toUpperCase())}
+                  </Text>
+                </View>
+                <Button
+                  mode="contained"
+                  onPress={() => this.trackOrder(currentItem.code_track)}
+                  style={{backgroundColor: '#0066CC'}}>
+                  Rastrear
+                </Button>
+              </View>
+            )}
 
             <View style={{marginTop: 8}}>
               <Text variant="bodySmall" style={{color: 'gray'}}>
@@ -665,83 +766,6 @@ class ManagerOrders extends Component {
     );
   }
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  filtersRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 10,
-    paddingTop: 10,
-    backgroundColor: '#fff',
-  },
-  filterContainer: {
-    flex: 1,
-    marginHorizontal: 5,
-    marginBottom: 8,
-  },
-  filterLabel: {
-    marginBottom: 5,
-    fontWeight: 'bold',
-    color: '#000000',
-  },
-  dropdownButton: {
-    padding: 10,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
-    backgroundColor: '#f9f9f9',
-  },
-  dropdownButtonText: {
-    textAlign: 'center',
-    color: '#000000',
-  },
-  clearFilterContainer: {
-    alignItems: 'center',
-    marginBottom: 5,
-    backgroundColor: '#fff',
-    paddingBottom: 10,
-  },
-  loadingContainer: {
-    padding: 20,
-    alignItems: 'center',
-  },
-  bottomPadding: {
-    height: '2%', // Espaço extra no final da lista
-  },
-  paginationContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 10,
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    height: PAGINATION_CONTAINER_HEIGHT,
-    elevation: 5, // Sombra para Android
-    shadowColor: '#000', // Sombra para iOS
-    shadowOffset: {width: 0, height: -2},
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    zIndex: 1000, // Garante que fique acima de outros elementos
-  },
-  paginationButton: {
-    minWidth: 100,
-  },
-  disabledButton: {
-    opacity: 0.5,
-  },
-  pageIndicator: {
-    fontWeight: 'bold',
-    color: '#000000',
-  },
-});
 
 const mapStateToProps = state => ({
   ordersFull: state.orderReducer.ordersFull,

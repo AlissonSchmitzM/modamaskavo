@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {
@@ -15,16 +15,23 @@ import {
   MyOrders,
   FormConfig,
   ManagerOrders,
+  ManagerOrdersDetais,
+  ManagerOrdersDetails,
 } from './components';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {StatusBar, View} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 const Stack = createNativeStackNavigator();
 
 const Tab = createBottomTabNavigator();
 
 const CustomHeader = () => {
   return (
-    <View style={{backgroundColor: '#000000', height: StatusBar.currentHeight}}>
+    <View
+      style={{
+        backgroundColor: '#000000',
+        paddingTop: useSafeAreaInsets().top,
+      }}>
       <StatusBar backgroundColor="#000000" />
     </View>
   );
@@ -85,7 +92,7 @@ const MainStackNavigator = () => {
       <Stack.Screen
         name="FormLogin"
         component={FormLogin}
-        options={{headerShown: false}}
+        options={{header: () => <CustomHeader />}}
       />
       <Stack.Screen
         name="FormSignUp"
@@ -144,6 +151,20 @@ const MainStackNavigator = () => {
         component={ManagerOrders}
         options={{
           title: 'Gerenciar Pedidos',
+          headerStyle: {
+            backgroundColor: '#000000',
+          },
+          headerTintColor: '#ffffff',
+          headerTitleStyle: {
+            color: '#ffffff',
+          },
+        }}
+      />
+      <Stack.Screen
+        name="ManagerOrdersDetails"
+        component={ManagerOrdersDetails}
+        options={{
+          title: 'Detalhes do Pedido',
           headerStyle: {
             backgroundColor: '#000000',
           },

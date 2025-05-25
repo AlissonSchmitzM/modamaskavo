@@ -4,6 +4,7 @@ import {
   situation_order_completed,
   situation_order_in_production,
   situation_order_payment_pending,
+  situation_order_payment_completed,
 } from '../../../assets';
 
 export const PENDENTE = {
@@ -17,6 +18,12 @@ export const PAGAMENTO_PENDENTE = {
   color: '#00F7FFFF',
   lottie: situation_order_payment_pending,
   lottie_height: 20,
+};
+export const PAGAMENTO_CONCLUIDO = {
+  description: 'Pagamento Concluído',
+  color: '#0EBBADFF',
+  lottie: situation_order_payment_completed,
+  lottie_height: 25,
 };
 export const EM_PRODUCAO = {
   description: 'Em Produção',
@@ -41,6 +48,7 @@ export const CANCELADO = {
 export const STATUS_MAP = {
   Pendente: PENDENTE,
   'Pagamento Pendente': PAGAMENTO_PENDENTE,
+  'Pagamento Concluído': PAGAMENTO_CONCLUIDO,
   'Em Produção': EM_PRODUCAO,
   Concluído: CONCLUIDO,
   Cancelado: CANCELADO,
