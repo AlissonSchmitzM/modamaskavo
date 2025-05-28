@@ -7,6 +7,7 @@ import {
   Modal,
   Image,
   Dimensions,
+  Linking,
 } from 'react-native';
 import {
   Text,
@@ -305,9 +306,7 @@ class ManagerOrdersDetails extends Component {
     }
   };
 
-  // Função para rastrear pedido
   handleTrackOrder = code_track => {
-    // URL dos correios ou outra empresa de logística
     const trackingUrl = `https://www.linkcorreios.com.br/?id=${code_track}`;
     Linking.openURL(trackingUrl).catch(err =>
       console.error('Erro ao abrir link de rastreamento:', err),
@@ -522,16 +521,6 @@ class ManagerOrdersDetails extends Component {
                       {currentItem.value_order}
                     </Text>
                   </View>
-                  {currentItem.payment_link && (
-                    <Button
-                      mode="contained"
-                      onPress={() =>
-                        this.handlePaymentLink(currentItem.payment_link)
-                      }
-                      style={{backgroundColor: '#01411EFF'}}>
-                      Link de Pagamento
-                    </Button>
-                  )}
                 </View>
               )}
 

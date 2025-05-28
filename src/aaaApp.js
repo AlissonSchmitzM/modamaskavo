@@ -7,7 +7,7 @@ import {
   SafeAreaView,
   Alert,
 } from 'react-native';
-import PaymentScreen from './components/PaymentScreen';
+import PaymentScreen from './components/Main/Payment/PaymentScreen';
 
 export default function App() {
   const [showPayment, setShowPayment] = useState(false);
@@ -17,7 +17,7 @@ export default function App() {
   // Exemplo de produto para compra
   const produto = {
     nome: 'Produto Exemplo',
-    valor: 200.0,
+    valor: 5.05,
     descricao: 'Pagamento referente à compra do Produto Exemplo',
   };
 

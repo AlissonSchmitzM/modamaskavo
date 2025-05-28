@@ -2,6 +2,9 @@ import toastr, {ERROR, SUCCESS} from '../../services/toastr';
 import {getDatabase, ref, set} from '@react-native-firebase/database';
 import {
   DATA_CONFIG,
+  MODIFY_ENVIRONMENT,
+  MODIFY_KEY_API_PROD,
+  MODIFY_KEY_API_SANDBOX,
   MODIFY_PHONE_CONFIG,
   SAVE_CONFIG_ERROR,
   SAVE_CONFIG_IN_PROGRESS,
@@ -10,11 +13,11 @@ import {
 
 export const saveConfig = dataConfig => dispatch => {
   dispatch({type: SAVE_CONFIG_IN_PROGRESS});
-  const {phone_orders} = dataConfig;
+  const {phone_orders, environment, key_api_sandbox, key_api_prod} = dataConfig;
 
   getDatabase()
     .ref(`/config`)
-    .update({phone_orders})
+    .update({phone_orders, environment, key_api_sandbox, key_api_prod})
     .then(() => {
       dispatch(
         {type: SAVE_CONFIG_SUCCESS},
@@ -27,8 +30,7 @@ export const saveConfig = dataConfig => dispatch => {
 export const readDataConfig = () => async dispatch => {
   getDatabase()
     .ref(`/config`)
-    .once('value')
-    .then(async snapshot => {
+    .on('value', async snapshot => {
       dispatch({type: DATA_CONFIG, payload: await snapshot.val()});
     })
     .catch(() =>
@@ -38,4 +40,16 @@ export const readDataConfig = () => async dispatch => {
 
 export const modifyPhoneConfig = phone => dispatch => {
   dispatch({type: MODIFY_PHONE_CONFIG, payload: phone});
+};
+
+export const modifyEnvironment = environment => dispatch => {
+  dispatch({type: MODIFY_ENVIRONMENT, payload: environment});
+};
+
+export const modifyKeyApiSandbox = key => dispatch => {
+  dispatch({type: MODIFY_KEY_API_SANDBOX, payload: key});
+};
+
+export const modifyKeyApiProd = key => dispatch => {
+  dispatch({type: MODIFY_KEY_API_PROD, payload: key});
 };

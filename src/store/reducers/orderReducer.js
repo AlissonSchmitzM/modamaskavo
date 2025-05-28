@@ -17,6 +17,8 @@ import {
   SET_ESTIMATED_FINISH_ORDER_ERROR,
   SET_CODE_TRACK_ORDER,
   SET_CODE_TRACK_ORDER_ERROR,
+  PAYMENT_SUCCESS_ORDER,
+  PAYMENT_SUCCESS_ORDER_ERROR,
 } from '../actions/actionTypes';
 
 const INITIAL_STATE = {
@@ -64,6 +66,10 @@ const orderReducer = (state = INITIAL_STATE, action) => {
       return {...state, value_order: action.payload};
     case SET_PRICE_ORDER_ERROR:
       return {...state, value_order: ''};
+    case PAYMENT_SUCCESS_ORDER:
+      return {...state};
+    case PAYMENT_SUCCESS_ORDER_ERROR:
+      return {...state};
     case SET_CODE_TRACK_ORDER:
       return {...state, code_track: action.payload};
     case SET_CODE_TRACK_ORDER_ERROR:

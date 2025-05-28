@@ -40,6 +40,7 @@ import {
   LOGIN_GOOGLE_SUCCESS,
   DATA_USERS_FULL,
 } from './actionTypes';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const signOut = () => dispatch => {
   const {currentUser} = getAuth();
@@ -57,6 +58,9 @@ export const signOut = () => dispatch => {
       if (isLoggedGoogle) {
         GoogleSignin.signOut();
       }
+
+      //Remove o cliente do asaas pagamentos
+      AsyncStorage.removeItem('asaas_cliente_id');
 
       navigationService.reset('FormLogin');
       dispatch({type: SIGN_OUT});

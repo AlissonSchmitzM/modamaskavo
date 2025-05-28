@@ -5,6 +5,7 @@ import {
   SafeAreaView,
   ActivityIndicator,
   TouchableOpacity,
+  Linking,
 } from 'react-native';
 import {
   SafeAreaProvider,
@@ -28,7 +29,7 @@ import {
 import LottieView from 'lottie-react-native';
 import {without_orders} from '../../../../assets';
 import NavigatorService from '../../../../services/NavigatorService';
-import {styles} from './styles';
+import {styles} from './Styles';
 
 // Definindo um tema personalizado para garantir cores consistentes
 const theme = {
@@ -239,6 +240,14 @@ class ManagerOrders extends Component {
   isComplexObject(value) {
     return typeof value === 'object' && value !== null && !Array.isArray(value);
   }
+
+  handleTrackOrder = code_track => {
+    // URL dos correios ou outra empresa de logística
+    const trackingUrl = `https://www.linkcorreios.com.br/?id=${code_track}`;
+    Linking.openURL(trackingUrl).catch(err =>
+      console.error('Erro ao abrir link de rastreamento:', err),
+    );
+  };
 
   // Função para renderizar valores de forma segura
   renderSafeValue(value) {
@@ -460,12 +469,6 @@ class ManagerOrders extends Component {
                     {this.formatCurrency(currentItem.value_order)}
                   </Text>
                 </View>
-                <Button
-                  mode="contained"
-                  onPress={() => this.handlePayment(currentItem.payment_link)}
-                  style={{backgroundColor: '#00A74BFF'}}>
-                  Pagar
-                </Button>
               </View>
             )}
 
@@ -509,7 +512,7 @@ class ManagerOrders extends Component {
                 </View>
                 <Button
                   mode="contained"
-                  onPress={() => this.trackOrder(currentItem.code_track)}
+                  onPress={() => this.handleTrackOrder(currentItem.code_track)}
                   style={{backgroundColor: '#0066CC'}}>
                   Rastrear
                 </Button>

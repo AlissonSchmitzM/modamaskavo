@@ -2,18 +2,22 @@ import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
-  StyleSheet,
   ActivityIndicator,
   TouchableOpacity,
   Alert,
   Share,
-  Clipboard,
 } from 'react-native';
+import Clipboard from '@react-native-clipboard/clipboard';
 import QRCode from 'react-native-qrcode-svg';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import AsaasService from '../services/AsaasService';
+import AsaasService from '../../../../services/AsaasService';
+import toastr, {ERROR, SUCCESS, toastConfig} from '../../../../services/toastr';
+import Toast from 'react-native-toast-message';
+import {Button} from 'react-native-paper';
+import NavigatorService from '../../../../services/NavigatorService';
+import styles from './Styles';
 
-const PixPayment = ({valor, descricao, onSuccess, onCancel}) => {
+const PixPayment = ({valor, descricao, onSuccess, onCancel, dadosCliente}) => {
   const [loading, setLoading] = useState(true);
   const [qrCodeData, setQrCodeData] = useState(null);
   const [copiaCola, setCopiaCola] = useState('');
@@ -49,21 +53,6 @@ const PixPayment = ({valor, descricao, onSuccess, onCancel}) => {
 
         // Se não temos um cliente válido, criar um novo
         if (!clienteId) {
-          // Dados do cliente - em uma aplicação real, você obteria esses dados do usuário
-          const dadosCliente = {
-            nome: 'Alisson Schmitz',
-            email: 'a@testeaaa.com',
-            telefone: '47999064883',
-            cpfCnpj: '10089777999', // CPF sem formatação
-            cep: '88310050',
-            endereco: 'aaaaaa',
-            numero: '1233',
-            complemento: 'Apto 435',
-            bairro: 'Centroa',
-            cidade: 'São Pauloa',
-            estado: 'SC',
-          };
-
           try {
             // Verificar se cliente já existe por CPF/CNPJ
             const clienteExistente = await AsaasService.buscarClientePorCpfCnpj(
@@ -81,12 +70,8 @@ const PixPayment = ({valor, descricao, onSuccess, onCancel}) => {
             // Salvar ID do cliente para uso futuro
             await AsyncStorage.setItem('asaas_cliente_id', clienteId);
           } catch (error) {
-            console.error('Erro ao processar cliente:', error);
+            toastr.showToast('Erro ao carregar dados do cliente', ERROR);
             setLoading(false);
-            Alert.alert(
-              'Erro',
-              'Não foi possível processar os dados do cliente. Tente novamente.',
-            );
             onCancel?.();
             return;
           }
@@ -141,9 +126,9 @@ const PixPayment = ({valor, descricao, onSuccess, onCancel}) => {
             ],
           );
         } else {
-          Alert.alert(
-            'Erro',
+          toastr.showToast(
             'Não foi possível gerar o QR Code do PIX. Tente novamente.',
+            ERROR,
           );
           onCancel?.();
         }
@@ -171,6 +156,10 @@ const PixPayment = ({valor, descricao, onSuccess, onCancel}) => {
         if (status.status === 'RECEIVED' || status.status === 'CONFIRMED') {
           // Pagamento confirmado
           setStatusVerificacao('Pagamento confirmado!');
+
+          toastr.showToast('Pagamento aprovado com sucesso!', SUCCESS);
+          await new Promise(r => setTimeout(r, 3000));
+          NavigatorService.goBack();
           clearInterval(intervalo);
           onSuccess?.(status);
         } else if (status.status === 'PENDING') {
@@ -209,17 +198,20 @@ const PixPayment = ({valor, descricao, onSuccess, onCancel}) => {
         message: `PIX para pagamento: ${copiaCola}`,
       });
     } catch (error) {
-      Alert.alert('Erro', 'Não foi possível compartilhar o código PIX');
+      toastr.showToast('Não foi possível compartilhar o código PIX.', ERROR);
     }
   };
 
   // Copiar código PIX
-  const copiarPix = async () => {
+  const copiarPix = () => {
     try {
-      await Clipboard.setString(copiaCola);
-      Alert.alert('Sucesso', 'Código PIX copiado para a área de transferência');
+      Clipboard.setString(copiaCola);
+      /*toastr.showToast(
+        'Código PIX copiado para a área de transferência',
+        SUCCESS,
+      );*/
     } catch (error) {
-      Alert.alert('Erro', 'Não foi possível copiar o código PIX');
+      toastr.showToast('Não foi possível copiar o código PIX' + error, ERROR);
     }
   };
 
@@ -228,6 +220,7 @@ const PixPayment = ({valor, descricao, onSuccess, onCancel}) => {
       <View style={styles.container}>
         <ActivityIndicator size="large" color="#00AEEF" />
         <Text style={styles.loadingText}>Gerando QR Code PIX...</Text>
+        <Toast config={toastConfig} />
       </View>
     );
   }
@@ -254,89 +247,25 @@ const PixPayment = ({valor, descricao, onSuccess, onCancel}) => {
 
       <Text style={styles.statusText}>{statusVerificacao}</Text>
 
-      <TouchableOpacity style={styles.button} onPress={copiarPix}>
-        <Text style={styles.buttonText}>Copiar código PIX</Text>
-      </TouchableOpacity>
+      <Button
+        mode="contained"
+        style={styles.button}
+        textColor="#FFF"
+        onPress={copiarPix}>
+        Copiar código PIX
+      </Button>
 
-      <TouchableOpacity style={styles.button} onPress={compartilharPix}>
-        <Text style={styles.buttonText}>Compartilhar PIX</Text>
-      </TouchableOpacity>
+      <Button
+        mode="contained"
+        style={[styles.button, {marginBottom: 30}]}
+        textColor="#FFF"
+        onPress={compartilharPix}>
+        Compartilhar PIX
+      </Button>
 
-      <TouchableOpacity style={styles.cancelButton} onPress={onCancel}>
-        <Text style={styles.cancelButtonText}>Cancelar</Text>
-      </TouchableOpacity>
+      <Toast config={toastConfig} />
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
-    backgroundColor: '#f5f5f5',
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#333',
-  },
-  subtitle: {
-    fontSize: 16,
-    marginBottom: 20,
-    color: '#666',
-    textAlign: 'center',
-  },
-  qrContainer: {
-    backgroundColor: 'white',
-    padding: 20,
-    borderRadius: 10,
-    marginBottom: 20,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 16,
-    color: '#666',
-  },
-  errorText: {
-    color: 'red',
-    fontSize: 16,
-  },
-  statusText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#00AEEF',
-    marginBottom: 20,
-  },
-  button: {
-    backgroundColor: '#00AEEF',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    marginBottom: 10,
-    width: '100%',
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  cancelButton: {
-    marginTop: 10,
-    padding: 10,
-  },
-  cancelButtonText: {
-    color: '#666',
-    fontSize: 16,
-  },
-});
 
 export default PixPayment;

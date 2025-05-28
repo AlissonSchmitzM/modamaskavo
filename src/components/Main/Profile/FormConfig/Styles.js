@@ -7,14 +7,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
   },
   input: {
-    width: '90%',
-    marginBottom: 15,
+    width: '100%',
     backgroundColor: '#fff',
   },
   button: {
     width: '90%',
     marginBottom: 10,
     backgroundColor: '#000000',
+  },
+  card: {
+    width: '90%',
+    borderColor: '#000',
+    backgroundColor: '#F0EDEDFF',
+    marginBottom: 15,
   },
 });
 

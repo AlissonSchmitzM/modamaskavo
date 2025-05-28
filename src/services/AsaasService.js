@@ -1,15 +1,6 @@
 import axios from 'axios';
-
-// Ambiente: 'sandbox' ou 'producao'
-const AMBIENTE = 'sandbox';
-
-// Configure suas chaves de API
-const API_KEYS = {
-  sandbox:
-    '$aact_hmlg_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjY1NTU3NzNhLTNkNmMtNGY1YS05ZDdhLWU2NWMzZGJlOTZhNzo6JGFhY2hfMmY0NWE4MDQtNGM0MS00ODFlLTk2ZGMtMjhkMGFmMjVkZWEz',
-  producao:
-    '$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjM0MzYxODY0LWE0NGQtNDc5NC05ZGVmLTE5ZThiN2YyYjRhNjo6JGFhY2hfOTc5ODZkMjMtYmRlMy00NzVjLTk2ZTktZDg3MWVhZTUwYzg1',
-};
+import toastr, {ERROR} from './toastr';
+import store from '../store';
 
 // URLs base da API
 const BASE_URLS = {
@@ -17,18 +8,41 @@ const BASE_URLS = {
   producao: 'https://www.asaas.com/api/v3',
 };
 
-const api = axios.create({
-  baseURL: BASE_URLS[AMBIENTE],
-  headers: {
-    'Content-Type': 'application/json',
-    access_token: API_KEYS[AMBIENTE],
-  },
-});
+// Função para obter configurações atualizadas do Redux store
+const getConfig = () => {
+  const state = store.getState();
+  const ambiente = state.configReducer.environment || 'sandbox';
+
+  const API_KEYS = {
+    sandbox: state.configReducer.key_api_sandbox,
+    producao: state.configReducer.key_api_prod,
+  };
+
+  return {
+    ambiente,
+    apiKey: API_KEYS[ambiente],
+    baseUrl: BASE_URLS[ambiente],
+  };
+};
+
+// Função para criar uma instância atualizada do axios
+const createApi = () => {
+  const {ambiente, apiKey, baseUrl} = getConfig();
+
+  return axios.create({
+    baseURL: baseUrl,
+    headers: {
+      'Content-Type': 'application/json',
+      access_token: apiKey,
+    },
+  });
+};
 
 export default {
   // Criar um cliente no Asaas (necessário antes de criar cobranças)
   async criarCliente(dados) {
     try {
+      const api = createApi(); // Criar instância atualizada
       const response = await api.post('/customers', {
         name: dados.nome,
         email: dados.email,
@@ -44,7 +58,10 @@ export default {
       });
       return response.data;
     } catch (error) {
-      console.error('Erro ao criar cliente:', error.response?.data || error);
+      toastr.showToast(
+        'Erro ao criar cliente. Por favor, tente novamente.',
+        ERROR,
+      );
       throw error;
     }
   },
@@ -52,13 +69,17 @@ export default {
   // Buscar cliente por CPF/CNPJ (para evitar duplicação)
   async buscarClientePorCpfCnpj(cpfCnpj) {
     try {
+      const api = createApi(); // Criar instância atualizada
       const response = await api.get(`/customers?cpfCnpj=${cpfCnpj}`);
       if (response.data.data && response.data.data.length > 0) {
         return response.data.data[0];
       }
       return null;
     } catch (error) {
-      console.error('Erro ao buscar cliente:', error.response?.data || error);
+      toastr.showToast(
+        'Erro ao buscar cliente. Por favor, tente novamente.',
+        ERROR,
+      );
       throw error;
     }
   },
@@ -69,6 +90,7 @@ export default {
       const dataVencimento = this.obterDataVencimento(1); // 1 dia à frente
       console.log('Data de vencimento para PIX:', dataVencimento);
 
+      const api = createApi(); // Criar instância atualizada
       const response = await api.post('/payments', {
         customer: clienteId,
         billingType: 'PIX',
@@ -80,15 +102,14 @@ export default {
       });
       return response.data;
     } catch (error) {
-      console.error(
-        'Erro ao criar cobrança PIX:',
-        error.response?.data || error,
+      toastr.showToast(
+        'Erro ao criar cobrança PIX. Por favor, tente novamente.',
+        ERROR,
       );
       throw error;
     }
   },
 
-  // Criar cobrança Cartão de Crédito
   // Criar cobrança Cartão de Crédito
   async criarCobrancaCartao(
     clienteId,
@@ -107,6 +128,8 @@ export default {
       // Data de vencimento para cartão (hoje)
       const dataVencimento = this.obterDataVencimento(0);
       console.log('Data de vencimento para cartão:', dataVencimento);
+
+      const api = createApi(); // Criar instância atualizada
 
       // Primeiro, tokenizar o cartão
       const tokenResponse = await api.post('/creditCard/tokenize', {
@@ -135,7 +158,7 @@ export default {
         externalReference: referencia,
         installmentCount: parcelas,
         installmentValue: (valor / parcelas).toFixed(2),
-        creditCardToken: tokenResponse.data.creditCardToken, // ALTERAÇÃO AQUI - Movido para fora do objeto creditCard
+        creditCardToken: tokenResponse.data.creditCardToken,
         creditCardHolderInfo: {
           name: cartao.titular,
           email: cartao.email || 'cliente@exemplo.com',
@@ -149,14 +172,17 @@ export default {
 
       return response.data;
     } catch (error) {
-      console.error('Erro ao criar cobrança com cartão:');
-
       if (error.response && error.response.data) {
-        console.error('Detalhes do erro:', JSON.stringify(error.response.data));
+        toastr.showToast(
+          'Saldo insuficiente no cartão. Tente outro cartão ou forma de pagamento.',
+          ERROR,
+        );
       } else {
-        console.error(error);
+        toastr.showToast(
+          'Erro ao processar pagamento. Por favor, tente novamente.',
+          ERROR,
+        );
       }
-
       throw error;
     }
   },
@@ -164,12 +190,13 @@ export default {
   // Obter QR Code do PIX
   async obterQrCodePix(pagamentoId) {
     try {
+      const api = createApi(); // Criar instância atualizada
       const response = await api.get(`/payments/${pagamentoId}/pixQrCode`);
       return response.data;
     } catch (error) {
-      console.error(
-        'Erro ao obter QR Code PIX:',
-        error.response?.data || error,
+      toastr.showToast(
+        'Erro ao obter QR Code PIX. Por favor, tente novamente.',
+        ERROR,
       );
       throw error;
     }
@@ -178,12 +205,13 @@ export default {
   // Consultar status de um pagamento
   async consultarPagamento(pagamentoId) {
     try {
+      const api = createApi(); // Criar instância atualizada
       const response = await api.get(`/payments/${pagamentoId}`);
       return response.data;
     } catch (error) {
-      console.error(
-        'Erro ao consultar pagamento:',
-        error.response?.data || error,
+      toastr.showToast(
+        'Erro ao consultar pagamento. Por favor, tente novamente.',
+        ERROR,
       );
       throw error;
     }
@@ -205,6 +233,7 @@ export default {
   // Verificar se cliente existe e está ativo
   async verificarCliente(clienteId) {
     try {
+      const api = createApi(); // Criar instância atualizada
       const response = await api.get(`/customers/${clienteId}`);
       // Se não der erro e o cliente não estiver removido, ele existe
       return response.data && response.data.deleted !== true;
@@ -213,9 +242,9 @@ export default {
       if (error.response && error.response.status === 404) {
         return false;
       }
-      console.error(
-        'Erro ao verificar cliente:',
-        error.response?.data || error,
+      toastr.showToast(
+        'Erro ao verificar cliente. Por favor, tente novamente.',
+        ERROR,
       );
       throw error;
     }

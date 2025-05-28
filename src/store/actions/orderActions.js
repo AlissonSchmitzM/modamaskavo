@@ -19,6 +19,10 @@ import {
   SET_PRICE_ORDER_ERROR,
   SET_ESTIMATED_FINISH_ORDER,
   SET_ESTIMATED_FINISH_ORDER_ERROR,
+  SET_CODE_TRACK_ORDER,
+  SET_CODE_TRACK_ORDER_ERROR,
+  PAYMENT_SUCCESS_ORDER,
+  PAYMENT_SUCCESS_ORDER_ERROR,
 } from './actionTypes';
 import {
   CANCELADO,
@@ -213,6 +217,7 @@ export const cancelOrder = (user, orderiD, reason_cancellation) => dispatch => {
     })
     .then(() => {
       dispatch({type: CANCEL_ORDER});
+      dispatch(readDataOrders());
     })
     .catch(err => dispatch({type: CANCEL_ORDER, err}));
 };
@@ -230,6 +235,7 @@ export const setPrice =
       })
       .then(() => {
         dispatch({type: SET_PRICE_ORDER});
+        dispatch(readDataOrders());
       })
       .catch(err => dispatch({type: SET_PRICE_ORDER_ERROR, err}));
   };
@@ -246,9 +252,39 @@ export const setEstimatedFinish =
       })
       .then(() => {
         dispatch({type: SET_ESTIMATED_FINISH_ORDER});
+        dispatch(readDataOrders());
       })
       .catch(err => dispatch({type: SET_ESTIMATED_FINISH_ORDER_ERROR, err}));
   };
+
+export const paymentSuccessOrder = orderiD => async dispatch => {
+  const {currentUser} = getAuth();
+  const emailUserLogged = await store.get('emailUserLogged');
+
+  if (emailUserLogged === null) {
+    store.save('emailUserLogged', currentUser.email);
+  }
+
+  let userEmail;
+  if (emailUserLogged !== null) {
+    userEmail = emailUserLogged;
+  } else if (currentUser !== null) {
+    userEmail = currentUser.email;
+  }
+
+  const userEmailB64 = b64.encode(userEmail);
+
+  getDatabase()
+    .ref(`/orders/${userEmailB64}/${orderiD}`)
+    .update({
+      situation: PAGAMENTO_CONCLUIDO.description,
+    })
+    .then(() => {
+      dispatch({type: PAYMENT_SUCCESS_ORDER});
+      dispatch(readDataOrders());
+    })
+    .catch(err => dispatch({type: PAYMENT_SUCCESS_ORDER_ERROR, err}));
+};
 
 export const setCodeTrack = (user, orderiD, code_track) => dispatch => {
   const emailB64 = b64.encode(user.email);
@@ -261,6 +297,7 @@ export const setCodeTrack = (user, orderiD, code_track) => dispatch => {
     })
     .then(() => {
       dispatch({type: SET_CODE_TRACK_ORDER});
+      dispatch(readDataOrders());
     })
     .catch(err => dispatch({type: SET_CODE_TRACK_ORDER_ERROR, err}));
 };

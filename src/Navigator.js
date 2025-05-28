@@ -21,6 +21,7 @@ import {
 import Icon from 'react-native-vector-icons/Ionicons';
 import {StatusBar, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import PaymentScreen from './components/Main/Payment/PaymentScreen';
 const Stack = createNativeStackNavigator();
 
 const Tab = createBottomTabNavigator();
@@ -192,6 +193,20 @@ const MainStackNavigator = () => {
         name="SplashScreen"
         component={SplashScreen}
         options={{header: () => <CustomHeader />}}
+      />
+      <Stack.Screen
+        name="PaymentScreen"
+        component={PaymentScreen}
+        options={{
+          title: 'Pagamento',
+          headerStyle: {
+            backgroundColor: '#000000',
+          },
+          headerTintColor: '#ffffff',
+          headerTitleStyle: {
+            color: '#ffffff',
+          },
+        }}
       />
       <Stack.Screen
         name="Main"

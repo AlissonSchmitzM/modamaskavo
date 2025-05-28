@@ -4,7 +4,6 @@ import {
   ScrollView,
   SafeAreaView,
   ActivityIndicator,
-  StyleSheet,
   TouchableOpacity,
   Linking,
 } from 'react-native';
@@ -25,9 +24,12 @@ import {connect} from 'react-redux';
 import {
   getLottieByDescription,
   getLottieHeightByDescription,
+  PAGAMENTO_PENDENTE,
 } from '../../Orders/Situacoes';
 import LottieView from 'lottie-react-native';
 import {without_orders} from '../../../../assets';
+import NavigatorService from '../../../../services/NavigatorService';
+import {styles} from './Styles';
 
 const ITEMS_PER_PAGE = 10;
 const PAGINATION_CONTAINER_HEIGHT = 60; // Altura do container de paginação
@@ -211,22 +213,16 @@ class MyOrders extends Component {
     return 'R$ 0,00';
   }
 
-  // Função para abrir link de pagamento
-  handlePayment = paymentLink => {
-    if (paymentLink) {
-      Linking.openURL(paymentLink).catch(err =>
-        console.error('Erro ao abrir link de pagamento:', err),
-      );
-    } else {
-      // Implementar lógica de pagamento se não houver link direto
-      console.log('Implementar lógica de pagamento');
-    }
+  handlePayment = (value_order, orderiD, descricao) => {
+    NavigatorService.navigate('PaymentScreen', {
+      valor: parseFloat(value_order.replace(',', '.')),
+      descricao,
+      orderiD,
+    });
   };
 
-  // Função para rastrear pedido
-  trackOrder = trackingCode => {
-    // URL dos correios ou outra empresa de logística
-    const trackingUrl = `https://www.linkcorreios.com.br/?id=${trackingCode}`;
+  trackOrder = code_track => {
+    const trackingUrl = `https://www.linkcorreios.com.br/?id=${code_track}`;
     Linking.openURL(trackingUrl).catch(err =>
       console.error('Erro ao abrir link de rastreamento:', err),
     );
@@ -237,7 +233,6 @@ class MyOrders extends Component {
       const orderId = item[1];
       const userEmail = item[0];
 
-      // Verificação de segurança para evitar acesso a propriedades indefinidas
       if (
         !this.props.orders[userEmail] ||
         !this.props.orders[userEmail][orderId]
@@ -398,12 +393,22 @@ class MyOrders extends Component {
                     {this.formatCurrency(currentItem.value_order)}
                   </Text>
                 </View>
-                <Button
-                  mode="contained"
-                  onPress={() => this.handlePayment(currentItem.payment_link)}
-                  style={{backgroundColor: '#00A74BFF'}}>
-                  Pagar
-                </Button>
+                {currentItem.situation === PAGAMENTO_PENDENTE.description && (
+                  <Button
+                    style={{backgroundColor: '#00A74BFF'}}
+                    mode="contained"
+                    onPress={() =>
+                      this.handlePayment(
+                        currentItem.value_order,
+                        item[0],
+                        currentItem.type === 'uniform'
+                          ? 'Uniforme'
+                          : 'Peça Exclusiva',
+                      )
+                    }>
+                    Pagar
+                  </Button>
+                )}
               </View>
             )}
 
@@ -670,83 +675,6 @@ class MyOrders extends Component {
     );
   }
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  filtersRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 10,
-    paddingTop: 10,
-    backgroundColor: '#fff',
-  },
-  filterContainer: {
-    flex: 1,
-    marginHorizontal: 5,
-    marginBottom: 8,
-  },
-  filterLabel: {
-    marginBottom: 5,
-    fontWeight: 'bold',
-    color: '#000000',
-  },
-  dropdownButton: {
-    padding: 10,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
-    backgroundColor: '#f9f9f9',
-  },
-  dropdownButtonText: {
-    textAlign: 'center',
-    color: '#000000',
-  },
-  clearFilterContainer: {
-    alignItems: 'center',
-    marginBottom: 5,
-    backgroundColor: '#fff',
-    paddingBottom: 10,
-  },
-  loadingContainer: {
-    padding: 20,
-    alignItems: 'center',
-  },
-  bottomPadding: {
-    height: '2%', // Espaço extra no final da lista
-  },
-  paginationContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 10,
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    height: PAGINATION_CONTAINER_HEIGHT,
-    elevation: 5, // Sombra para Android
-    shadowColor: '#000', // Sombra para iOS
-    shadowOffset: {width: 0, height: -2},
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    zIndex: 1000, // Garante que fique acima de outros elementos
-  },
-  paginationButton: {
-    minWidth: 100,
-  },
-  disabledButton: {
-    opacity: 0.5,
-  },
-  pageIndicator: {
-    fontWeight: 'bold',
-    color: '#000000',
-  },
-});
 
 const mapStateToProps = state => ({
   orders: state.orderReducer.orders,
