@@ -11,19 +11,20 @@ import {
 } from 'react-native';
 import {TextInput, Button} from 'react-native-paper';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import {login} from '../../imgs';
-import toastr, {ERROR, toastConfig} from '../../services/toastr';
+import {login} from '../../../imgs';
+import toastr, {ERROR, toastConfig} from '../../../services/toastr';
 import Toast from 'react-native-toast-message';
-import navigationService from '../../services/NavigatorService';
+import navigationService from '../../../services/NavigatorService';
 import {connect} from 'react-redux';
 import {
   modifyEmail,
   modifyPassword,
   authUserEmail,
   authUserGoogle,
-} from '../../store/actions/userActions';
+} from '../../../store/actions/userActions';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {colors} from '../../styles/Styles';
+import styles from './Styles';
+import {colors} from '../../../styles';
 
 class FormLogin extends Component {
   constructor(props) {
@@ -162,38 +163,6 @@ class FormLogin extends Component {
     );
   }
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F5F5F5',
-  },
-  input: {
-    width: '90%',
-    marginBottom: 15,
-    backgroundColor: '#FFF',
-  },
-  button: {
-    width: '90%',
-    marginBottom: 10,
-    backgroundColor: '#000000',
-  },
-  googleButton: {
-    width: '90%',
-    backgroundColor: '#DB4437',
-  },
-  signUpText: {
-    marginTop: 20,
-    textAlign: 'center',
-  },
-  login: {
-    width: '80%',
-    height: '40%',
-    marginBottom: 20,
-  },
-});
 
 const mapDispatchToProps = dispatch => ({
   onAuthUserEmail: user => dispatch(authUserEmail(user)),

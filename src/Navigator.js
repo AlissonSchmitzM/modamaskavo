@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {
@@ -15,7 +15,6 @@ import {
   MyOrders,
   FormConfig,
   ManagerOrders,
-  ManagerOrdersDetais,
   ManagerOrdersDetails,
 } from './components';
 import Icon from 'react-native-vector-icons/Ionicons';

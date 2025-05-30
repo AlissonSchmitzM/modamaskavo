@@ -3,14 +3,14 @@ import {StyleSheet} from 'react-native';
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F5F5F5',
   },
   filtersRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 10,
     paddingTop: 10,
-    backgroundColor: '#fff',
+    backgroundColor: '#F5F5F5',
   },
   filterContainer: {
     flex: 1,
@@ -27,7 +27,7 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 5,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#FFFFFFFF',
   },
   dropdownButtonText: {
     textAlign: 'center',
@@ -36,7 +36,7 @@ export const styles = StyleSheet.create({
   clearFilterContainer: {
     alignItems: 'center',
     marginBottom: 5,
-    backgroundColor: '#fff',
+    backgroundColor: '#F5F5F5',
     paddingBottom: 10,
   },
   loadingContainer: {

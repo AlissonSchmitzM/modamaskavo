@@ -88,7 +88,6 @@ export default {
   async criarCobrancaPix(clienteId, valor, descricao, referencia) {
     try {
       const dataVencimento = this.obterDataVencimento(1); // 1 dia à frente
-      console.log('Data de vencimento para PIX:', dataVencimento);
 
       const api = createApi(); // Criar instância atualizada
       const response = await api.post('/payments', {
@@ -123,11 +122,8 @@ export default {
       // Limpar o número do cartão de qualquer espaço ou caractere não numérico
       const numeroCartaoLimpo = cartao.numero.replace(/[^\d]/g, '');
 
-      console.log('Número do cartão (limpo):', numeroCartaoLimpo);
-
       // Data de vencimento para cartão (hoje)
       const dataVencimento = this.obterDataVencimento(0);
-      console.log('Data de vencimento para cartão:', dataVencimento);
 
       const api = createApi(); // Criar instância atualizada
 
@@ -142,11 +138,6 @@ export default {
           ccv: cartao.cvv,
         },
       });
-
-      console.log(
-        'Token gerado com sucesso:',
-        tokenResponse.data.creditCardToken,
-      );
 
       // Depois, criar a cobrança com o token do cartão
       const response = await api.post('/payments', {

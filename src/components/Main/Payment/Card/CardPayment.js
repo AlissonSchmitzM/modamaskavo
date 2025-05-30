@@ -6,7 +6,6 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
-  Clipboard,
   SafeAreaView,
 } from 'react-native';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
@@ -140,6 +139,7 @@ const CardPayment = ({valor, descricao, onSuccess, onCancel, dadosCliente}) => {
       );
 
       setLoading(false);
+      console.log('cobranca', cobranca);
 
       // Verificar resultado
       if (cobranca.status === 'CONFIRMED' || cobranca.status === 'RECEIVED') {
@@ -160,6 +160,7 @@ const CardPayment = ({valor, descricao, onSuccess, onCancel, dadosCliente}) => {
         onCancel?.();
       }
     } catch (error) {
+      console.log('error', error);
       setLoading(false);
       toastr.showToast(
         `Erro ao processar pagamento com cartão: ${error}`,
@@ -190,6 +191,7 @@ const CardPayment = ({valor, descricao, onSuccess, onCancel, dadosCliente}) => {
           );
           return;
         }
+        console.log('errors', errors);
 
         errors.some(err => console.log('err.code', err.code));
 
@@ -206,6 +208,10 @@ const CardPayment = ({valor, descricao, onSuccess, onCancel, dadosCliente}) => {
             'Saldo insuficiente no cartão. Tente outro cartão ou forma de pagamento.',
             ERROR,
           );
+
+          Alert.alert('Erro no Pagamento', errors[0].description, [
+            {text: 'OK', onPress: () => console.log('OK Pressionado')},
+          ]);
           return;
         }
 

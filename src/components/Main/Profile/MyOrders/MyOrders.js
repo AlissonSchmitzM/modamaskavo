@@ -277,7 +277,7 @@ class MyOrders extends Component {
           style={{
             margin: 8,
             borderColor: '#000',
-            backgroundColor: '#F0EDEDFF',
+            backgroundColor: '#FFFFFFFF',
           }}
           key={`${userEmail}-${orderId}`}>
           <Card.Content>
@@ -580,6 +580,7 @@ class MyOrders extends Component {
             <Menu
               visible={situationMenuVisible}
               onDismiss={this.toggleSituationMenu}
+              contentStyle={{backgroundColor: '#F5F5F5'}}
               anchor={
                 <TouchableOpacity
                   style={styles.dropdownButton}

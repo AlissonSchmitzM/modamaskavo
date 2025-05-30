@@ -1,5 +1,5 @@
-import FormLogin from './Login/FormLogin.js';
-import FormSignUp from './Login/FormSignUp.js';
+import FormLogin from './Login/FormLogin/FormLogin.js';
+import FormSignUp from './Login/FormSignUp/FormSignUp.js';
 import FormProfile from './Main/Profile/FormProfile/FormProfile.js';
 import Home from './Main/Home/Home.js';
 import Orders from './Main/Orders/Orders.js';

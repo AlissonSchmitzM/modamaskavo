@@ -7,18 +7,19 @@ import {
   Platform,
 } from 'react-native';
 import {TextInput, Button, ActivityIndicator} from 'react-native-paper';
-import {signup} from '../../imgs';
+import {signup} from '../../../imgs';
 import {connect} from 'react-redux';
 import {
   modifyName,
   modifyEmail,
   modifyPassword,
   createUser,
-} from '../../store/actions/userActions';
-import toastr, {ERROR, toastConfig} from '../../services/toastr';
+} from '../../../store/actions/userActions';
+import toastr, {ERROR, toastConfig} from '../../../services/toastr';
 import Toast from 'react-native-toast-message';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {colors} from '../../styles/Styles';
+import styles from './Styles';
+import {colors} from '../../../styles';
 
 class FormSignUp extends Component {
   constructor(props) {
@@ -149,36 +150,6 @@ class FormSignUp extends Component {
     );
   }
 }
-
-const styles = StyleSheet.create({
-  scrollContainer: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 20,
-    backgroundColor: '#f5f5f5',
-  },
-  container: {
-    width: '100%',
-    alignItems: 'center',
-    backgroundColor: '#f5f5f5',
-  },
-  input: {
-    width: '90%',
-    marginBottom: 15,
-    backgroundColor: '#fff',
-  },
-  button: {
-    width: '90%',
-    marginBottom: 10,
-    backgroundColor: '#000000',
-  },
-  signup: {
-    width: '90%',
-    height: 200,
-    marginBottom: 20,
-  },
-});
 
 const mapDispatchToProps = dispatch => ({
   onModifyName: name => dispatch(modifyName(name)),

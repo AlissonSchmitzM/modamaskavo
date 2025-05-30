@@ -18,6 +18,7 @@ import {
   Surface,
   ActivityIndicator,
   Chip,
+  Card,
 } from 'react-native-paper';
 import {order} from '../../../assets';
 import LottieView from 'lottie-react-native';
@@ -117,7 +118,6 @@ class Orders extends Component {
     return true;
   }
 
-  // Equivalent to useEffect when showDropdown changes
   componentDidUpdate(prevProps, prevState) {
     if (this.state.showDropdown && !prevState.showDropdown) {
       this.measureInput();
@@ -242,7 +242,7 @@ class Orders extends Component {
     return (
       <SafeAreaView
         style={{flex: 1, backgroundColor: '#f5f5f5'}}
-        edges={['bottom', 'left', 'right']}>
+        edges={['left', 'right']}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 40}

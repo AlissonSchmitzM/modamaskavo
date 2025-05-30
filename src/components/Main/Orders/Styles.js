@@ -13,6 +13,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
   },
+  card: {
+    padding: 16,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    elevation: 2,
+  },
   lottie: {
     width: 400,
     height: 200,
@@ -20,7 +26,10 @@ const styles = StyleSheet.create({
   },
   content: {
     alignItems: 'center',
-    width: '100%',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    elevation: 2,
+    marginHorizontal: 15,
   },
   radioGroup: {
     flexDirection: 'row',
@@ -63,7 +72,8 @@ const styles = StyleSheet.create({
   },
   button: {
     width: '90%',
-    marginBottom: 10,
+    marginBottom: 20,
+    marginTop: 10,
     backgroundColor: '#000000',
   },
   fileUploadContainer: {

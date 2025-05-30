@@ -1,8 +1,6 @@
 import React, {Component} from 'react';
 import {
   View,
-  StyleSheet,
-  Image,
   ScrollView,
   Text,
   Modal,
@@ -17,7 +15,6 @@ import {
   ActivityIndicator,
   Avatar,
   IconButton,
-  Menu,
   Divider,
   PaperProvider,
   Portal,
@@ -54,6 +51,7 @@ import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import {getAuth} from '@react-native-firebase/auth';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import imageMenuStyles from './ImageMenuStyles';
 
 class FormProfile extends Component {
   constructor(props) {
@@ -578,39 +576,6 @@ class FormProfile extends Component {
     );
   }
 }
-
-const colorScheme = Appearance.getColorScheme();
-const isDarkMode = colorScheme === 'dark';
-
-// Estilos para o menu de seleção de imagem
-const imageMenuStyles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  menuContainer: {
-    width: '80%',
-    borderRadius: 10,
-    overflow: 'hidden',
-    elevation: 5,
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 8,
-  },
-  menuText: {
-    fontSize: 16,
-    marginLeft: 8,
-    color: isDarkMode ? '#ADADADFF' : '#000',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#E0E0E0',
-  },
-});
 
 const mapDispatchToProps = dispatch => ({
   onSaveProfileUser: user => dispatch(saveProfileUser(user)),

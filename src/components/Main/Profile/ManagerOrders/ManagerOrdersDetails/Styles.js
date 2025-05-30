@@ -5,7 +5,7 @@ const windowHeight = Dimensions.get('window').height;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F5F5F5',
   },
   scrollContent: {
     padding: 16,
@@ -15,6 +15,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     elevation: 4,
     borderRadius: 8,
+    backgroundColor: '#FFFFFF',
   },
   divider: {
     marginVertical: 12,
@@ -73,7 +74,7 @@ const styles = StyleSheet.create({
   logoItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#EBE8E879',
     borderRadius: 8,
     paddingVertical: 6,
     paddingHorizontal: 12,

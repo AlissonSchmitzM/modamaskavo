@@ -1,12 +1,10 @@
 import React, {Component} from 'react';
 import {
   View,
-  StyleSheet,
   ScrollView,
   TouchableOpacity,
   Modal,
   Image,
-  Dimensions,
   Linking,
 } from 'react-native';
 import {
@@ -19,7 +17,6 @@ import {
   Button,
   IconButton,
   TextInput,
-  MD3LightTheme,
   PaperProvider,
 } from 'react-native-paper';
 import LottieView from 'lottie-react-native';
@@ -43,8 +40,6 @@ import {colors} from '../../../../../styles';
 import styles from './Styles';
 import Toast from 'react-native-toast-message';
 import {DatePickerModal} from 'react-native-paper-dates';
-import {format} from 'date-fns';
-import {pt} from 'date-fns/locale';
 
 class ManagerOrdersDetails extends Component {
   constructor(props) {

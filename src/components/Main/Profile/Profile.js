@@ -1,12 +1,5 @@
 import React, {Component} from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-} from 'react-native';
+import {View, Text, FlatList, TouchableOpacity} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {signOut} from '../../../store/actions/userActions';
 import {connect} from 'react-redux';
@@ -14,6 +7,7 @@ import navigation from '../../../services/NavigatorService';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {Avatar, Card} from 'react-native-paper';
 import {colors} from '../../../styles';
+import styles from './Styles';
 
 const data = [
   {id: 1, title: 'Informações Pessoais', icon: 'person-circle-outline'},
@@ -122,27 +116,6 @@ class Profile extends Component {
     );
   }
 }
-
-const styles = StyleSheet.create({
-  item: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-  },
-  iconText: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  icon: {
-    marginRight: 10,
-  },
-  title: {
-    fontSize: 18,
-  },
-});
 
 const mapDispatchToProps = dispatch => ({
   onSignout: () => dispatch(signOut()),
