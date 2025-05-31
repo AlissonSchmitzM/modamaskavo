@@ -21,6 +21,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import {StatusBar, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import PaymentScreen from './components/Main/Payment/PaymentScreen';
+import FormForgotPassword from './components/Login/FormLogin/FormForgotPassword/FormForgotPassword';
 const Stack = createNativeStackNavigator();
 
 const Tab = createBottomTabNavigator();
@@ -56,6 +57,7 @@ const TabNavigator = () => {
 
           return <Icon name={iconName} size={size} color={color} />;
         },
+        tabBarHideOnKeyboard: true,
         tabBarActiveTintColor: 'black',
         tabBarInactiveTintColor: 'gray',
         tabBarStyle: {
@@ -99,6 +101,20 @@ const MainStackNavigator = () => {
         component={FormSignUp}
         options={{
           title: 'Cadastro de Usuário',
+          headerStyle: {
+            backgroundColor: '#000000',
+          },
+          headerTintColor: '#ffffff',
+          headerTitleStyle: {
+            color: '#ffffff',
+          },
+        }}
+      />
+      <Stack.Screen
+        name="FormForgotPassword"
+        component={FormForgotPassword}
+        options={{
+          title: 'Redefinir Senha',
           headerStyle: {
             backgroundColor: '#000000',
           },

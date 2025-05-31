@@ -6,6 +6,8 @@ import {styles} from './Styles.js';
 import {connect} from 'react-redux';
 import {logo_cartao, logo_pix} from '../../../imgs/index.js';
 import {paymentSuccessOrder} from '../../../store/actions/orderActions.js';
+import {toastConfig} from '../../../services/toastr.js';
+import Toast from 'react-native-toast-message';
 
 class PaymentScreen extends Component {
   constructor(props) {
@@ -112,6 +114,7 @@ class PaymentScreen extends Component {
             <Text style={styles.methodDescription}>Pagamento em até 12x</Text>
           </View>
         </TouchableOpacity>
+        <Toast config={toastConfig} />
       </View>
     );
   }

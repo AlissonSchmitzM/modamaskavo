@@ -39,6 +39,9 @@ import {
   LOGIN_GOOGLE_ERROR,
   LOGIN_GOOGLE_SUCCESS,
   DATA_USERS_FULL,
+  FORGOT_PASSWORD_IN_PROGRESS,
+  FORGOT_PASSWORD_SUCCESS,
+  FORGOT_PASSWORD_ERROR,
 } from './actionTypes';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -445,6 +448,35 @@ export const readDataUsersFull = () => async dispatch => {
     .catch(() =>
       toastr.showToast('Problema ao carregar todos os usuários.', ERROR),
     );
+};
+
+export const forgotPassword = email => dispatch => {
+  dispatch({type: FORGOT_PASSWORD_IN_PROGRESS});
+
+  getAuth()
+    .sendPasswordResetEmail(email)
+    .then(() => {
+      dispatch(
+        {type: FORGOT_PASSWORD_SUCCESS},
+        toastr.showToast(
+          'Instruções de redefinição enviadas para o e-mail.',
+          SUCCESS,
+        ),
+      );
+
+      setTimeout(() => {
+        navigationService.reset('FormLogin');
+      }, 1250);
+    })
+    .catch(err => {
+      dispatch(
+        {type: FORGOT_PASSWORD_ERROR},
+        toastr.showToast(
+          'Problema ao enviar instruções de redefinição.',
+          ERROR,
+        ),
+      );
+    });
 };
 
 export const modifyPhoto = (fileImgPath, fileImgType) => dispatch => {

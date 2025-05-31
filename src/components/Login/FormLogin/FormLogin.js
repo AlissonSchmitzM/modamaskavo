@@ -14,7 +14,7 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import {login} from '../../../imgs';
 import toastr, {ERROR, toastConfig} from '../../../services/toastr';
 import Toast from 'react-native-toast-message';
-import navigationService from '../../../services/NavigatorService';
+import NavigationService from '../../../services/NavigatorService';
 import {connect} from 'react-redux';
 import {
   modifyEmail,
@@ -148,10 +148,15 @@ class FormLogin extends Component {
                 colors: {primary: '#000000', onSurfaceVariant: '#999999'},
               }}
             />
+            <TouchableOpacity
+              style={{marginBottom: 20}}
+              onPress={() => NavigationService.navigate('FormForgotPassword')}>
+              <Text>Esqueceu sua senha?</Text>
+            </TouchableOpacity>
             {this.renderBtnLogin()}
             {this.renderBtnGoogle()}
             <TouchableOpacity
-              onPress={() => navigationService.navigate('FormSignUp')}>
+              onPress={() => NavigationService.navigate('FormSignUp')}>
               <Text style={styles.signUpText}>
                 Não tem uma conta? Cadastre-se
               </Text>

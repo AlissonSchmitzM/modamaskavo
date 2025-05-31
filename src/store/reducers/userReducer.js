@@ -30,6 +30,9 @@ import {
   DATA_USER,
   DATA_USERS_FULL,
   SIGN_OUT,
+  FORGOT_PASSWORD_IN_PROGRESS,
+  FORGOT_PASSWORD_SUCCESS,
+  FORGOT_PASSWORD_ERROR,
 } from '../actions/actionTypes';
 
 // Estado inicial
@@ -39,6 +42,7 @@ const INITIAL_STATE = {
   loginInProgress: false,
   saveProfileInProgress: false,
   loginGoogleInProgress: false,
+  forgotPasswordInProgress: false,
   photoModify: false,
   admin: false,
   name: '',
@@ -124,6 +128,12 @@ const userReducer = (state = INITIAL_STATE, action) => {
       return {...state, password: '', registrationInProgress: false};
     case REGISTRATION_ERROR:
       return {...state, registrationInProgress: false, error: action.payload};
+    case FORGOT_PASSWORD_IN_PROGRESS:
+      return {...state, forgotPasswordInProgress: true};
+    case FORGOT_PASSWORD_SUCCESS:
+      return {...state, forgotPasswordInProgress: false};
+    case FORGOT_PASSWORD_ERROR:
+      return {...state, forgotPasswordInProgress: false};
     case LOGIN_IN_PROGRESS:
       return {...state, loginInProgress: true};
     case LOGIN_SUCCESS:

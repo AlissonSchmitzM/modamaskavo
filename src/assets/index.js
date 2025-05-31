@@ -1,4 +1,3 @@
-const _order_in_progress = require('./_order_in_progress.json');
 const order_in_progress = require('./order_in_progress.json');
 const store_comming = require('./store_comming.json');
 const order = require('./order.json');
@@ -11,9 +10,9 @@ const situation_order_payment_completed = require('./situation_order_payment_com
 const config = require('./config.json');
 const without_orders = require('./without_orders.json');
 const payment_process = require('./payment_process.json');
+const forgot_password = require('./forgot_password.json');
 
 export {
-  _order_in_progress,
   order_in_progress,
   store_comming,
   order,
@@ -26,4 +25,5 @@ export {
   config,
   without_orders,
   payment_process,
+  forgot_password,
 };

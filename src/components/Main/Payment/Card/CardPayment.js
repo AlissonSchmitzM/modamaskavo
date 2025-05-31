@@ -143,7 +143,7 @@ const CardPayment = ({valor, descricao, onSuccess, onCancel, dadosCliente}) => {
 
       // Verificar resultado
       if (cobranca.status === 'CONFIRMED' || cobranca.status === 'RECEIVED') {
-        toastr.showToast('Pagamento aprovado com sucesso!', SUCCESS);
+        toastr.showToast('Pagamento aprovado com sucesso!', SUCCESS, 3000);
         NavigatorService.goBack();
         onSuccess?.();
       } else if (cobranca.status === 'PENDING') {

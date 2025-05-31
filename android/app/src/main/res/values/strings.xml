@@ -1,5 +1,5 @@
 <resources>
     <string name="app_name">Moda Maskavo</string>
-    <string name="splashscreen_bg">@color/splashscreen_bg</string>
-    <string name="splashscreen_text">@color/splashscreen_text</string>
+    <string name="splashscreen_bg">#000000</string>
+    <string name="splashscreen_text">#FFFFFFFF</string>
 </resources>
