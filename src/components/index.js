@@ -12,6 +12,7 @@ import ManagerOrders from './Main/Profile/ManagerOrders/ManagerOrders.js';
 import ManagerOrdersDetails from './Main/Profile/ManagerOrders/ManagerOrdersDetails/ManagerOrdersDetails.js';
 import WooCommerceProducts from './Main/Home/WooCommerceProducts.js';
 import SplashScreen from './SplashScreen.js';
+import WhoWeAre from './Main/Profile/WhoWeAre/WhoWeAre.js';
 
 export {
   FormLogin,
@@ -28,4 +29,5 @@ export {
   ManagerOrdersDetails,
   WooCommerceProducts,
   SplashScreen,
+  WhoWeAre,
 };

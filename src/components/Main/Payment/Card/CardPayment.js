@@ -209,9 +209,9 @@ const CardPayment = ({valor, descricao, onSuccess, onCancel, dadosCliente}) => {
             ERROR,
           );
 
-          Alert.alert('Erro no Pagamento', errors[0].description, [
+          /*Alert.alert('Erro no Pagamento', errors[0].description, [
             {text: 'OK', onPress: () => console.log('OK Pressionado')},
-          ]);
+          ]);*/
           return;
         }
 

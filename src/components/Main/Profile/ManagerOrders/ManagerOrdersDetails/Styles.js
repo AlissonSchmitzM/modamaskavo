@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
     marginRight: 16,
   },
   avatar: {
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: '#000',
   },
   userHeaderInfo: {

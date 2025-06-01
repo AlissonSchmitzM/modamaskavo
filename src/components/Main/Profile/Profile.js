@@ -8,18 +8,25 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {Avatar, Card} from 'react-native-paper';
 import {colors} from '../../../styles';
 import styles from './Styles';
+import LinearGradient from 'react-native-linear-gradient';
+import ShimmerPlaceholder from 'react-native-shimmer-placeholder';
 
 const data = [
   {id: 1, title: 'Informações Pessoais', icon: 'person-circle-outline'},
   {id: 2, title: 'Meus Pedidos', icon: 'cart-outline'},
   {id: 3, title: 'Gerenciar Pedidos', icon: 'reader-outline'},
   {id: 4, title: 'Configurações', icon: 'build-outline'},
-  {id: 5, title: 'Finalizar Sessão', icon: 'log-out-outline'},
+  {id: 5, title: 'Quem somos', icon: 'briefcase-outline'},
+  {id: 6, title: 'Finalizar Sessão', icon: 'log-out-outline'},
 ];
 
 class Profile extends Component {
   constructor(props) {
     super(props);
+
+    this.state = {
+      imageLoading: true,
+    };
   }
 
   handlePress = item => {
@@ -31,6 +38,8 @@ class Profile extends Component {
       navigation.navigate('ManagerOrders');
     } else if (item.title === 'Configurações') {
       navigation.navigate('FormConfig');
+    } else if (item.title === 'Quem somos') {
+      navigation.navigate('WhoWeAre');
     } else if (item.title === 'Finalizar Sessão') {
       this.props.onSignout();
     }
@@ -69,10 +78,21 @@ class Profile extends Component {
                   borderWidth: 1,
                 }}>
                 {this.props.fileImgPath ? (
-                  <Avatar.Image
-                    size={100}
-                    source={{uri: this.props.fileImgPath}}
-                  />
+                  <ShimmerPlaceholder
+                    LinearGradient={LinearGradient}
+                    visible={!this.state.imageLoading}
+                    height={100}
+                    width={100}
+                    style={{
+                      borderRadius: 50,
+                    }}>
+                    <Avatar.Image
+                      size={100}
+                      source={{uri: this.props.fileImgPath}}
+                      onLoadStart={() => this.setState({imageLoading: true})}
+                      onLoadEnd={() => this.setState({imageLoading: false})}
+                    />
+                  </ShimmerPlaceholder>
                 ) : (
                   <Avatar.Text
                     color="#FFF"

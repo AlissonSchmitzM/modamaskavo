@@ -4,7 +4,6 @@ import {
   Text,
   Dimensions,
   TouchableOpacity,
-  ActivityIndicator,
   Image,
   FlatList,
 } from 'react-native';
@@ -19,11 +18,14 @@ import {
 } from '../../../store/actions/orderActions';
 import {readDataConfig} from '../../../store/actions/configActions';
 import {Card, Surface, Button} from 'react-native-paper';
-
 import Icon from 'react-native-vector-icons/Feather';
 import NavigatorService from '../../../services/NavigatorService';
 import styles from './Styles';
+// Importações para o Shimmer
+import {createShimmerPlaceholder} from 'react-native-shimmer-placeholder';
+import LinearGradient from 'react-native-linear-gradient';
 
+const ShimmerPlaceholder = createShimmerPlaceholder(LinearGradient);
 const {width} = Dimensions.get('window');
 const CARD_WIDTH = width - 32; // Um pouco menor que a largura da tela para margens
 
@@ -32,7 +34,7 @@ class Home extends Component {
     super(props);
     this.state = {
       activeIndex: 0,
-      loading: {},
+      imagesLoading: {}, // Objeto para rastrear o carregamento de cada imagem
       imageHeight: 300, // Altura padrão inicial
     };
     this.flatListRef = React.createRef();
@@ -45,6 +47,13 @@ class Home extends Component {
     this.props.onReadDataOrders();
     this.props.onReadDataOrdersFull();
     this.props.onReadDataConfig();
+
+    // Inicializar o estado de carregamento para todas as imagens
+    const imagesLoading = {};
+    this.images.forEach(img => {
+      imagesLoading[img.id] = true;
+    });
+    this.setState({imagesLoading});
 
     // Calcular a altura proporcional para a primeira imagem
     if (this.images.length > 0) {
@@ -141,20 +150,22 @@ class Home extends Component {
     this.setState({activeIndex: index});
   };
 
-  handleLoadStart = id => {
+  handleImageLoadStart = id => {
     this.setState(prevState => ({
-      loading: {...prevState.loading, [id]: true},
+      imagesLoading: {...prevState.imagesLoading, [id]: true},
     }));
   };
 
-  handleLoadEnd = id => {
+  handleImageLoadEnd = id => {
     this.setState(prevState => ({
-      loading: {...prevState.loading, [id]: false},
+      imagesLoading: {...prevState.imagesLoading, [id]: false},
     }));
   };
 
   renderItem = ({item}) => {
-    const {loading, imageHeight} = this.state;
+    const {imagesLoading, imageHeight} = this.state;
+    const isLoading = imagesLoading[item.id];
+
     return (
       <View
         style={[
@@ -163,19 +174,33 @@ class Home extends Component {
             justifyContent: 'center',
             alignItems: 'center',
             backgroundColor: '#f0f0f0',
-            overflow: 'hidden', // Impede que a imagem transborde,
+            overflow: 'hidden',
+            height: imageHeight,
           },
-          {height: imageHeight},
         ]}>
-        {loading[item.id] && (
-          <ActivityIndicator color="#000000FF" style={styles.loader} />
-        )}
+        <ShimmerPlaceholder
+          LinearGradient={LinearGradient}
+          visible={!isLoading}
+          width={CARD_WIDTH}
+          height={imageHeight}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+          }}>
+          <View />
+        </ShimmerPlaceholder>
+
         <Image
           source={{uri: item.url}}
-          style={{width: CARD_WIDTH, height: imageHeight}}
-          onLoadStart={() => this.handleLoadStart(item.id)}
-          onLoadEnd={() => this.handleLoadEnd(item.id)}
-          resizeMode="cover" // Alterado para cover para preencher horizontalmente
+          style={{
+            width: CARD_WIDTH,
+            height: imageHeight,
+            opacity: isLoading ? 0 : 1, // Esconder a imagem enquanto carrega
+          }}
+          onLoadStart={() => this.handleImageLoadStart(item.id)}
+          onLoadEnd={() => this.handleImageLoadEnd(item.id)}
+          resizeMode="cover"
         />
       </View>
     );

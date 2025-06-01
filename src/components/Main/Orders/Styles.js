@@ -30,6 +30,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     elevation: 2,
     marginHorizontal: 15,
+    marginBottom: 20,
   },
   radioGroup: {
     flexDirection: 'row',

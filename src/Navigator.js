@@ -16,6 +16,7 @@ import {
   FormConfig,
   ManagerOrders,
   ManagerOrdersDetails,
+  WhoWeAre,
 } from './components';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {StatusBar, View} from 'react-native';
@@ -95,6 +96,20 @@ const MainStackNavigator = () => {
         name="FormLogin"
         component={FormLogin}
         options={{header: () => <CustomHeader />}}
+      />
+      <Stack.Screen
+        name="WhoWeAre"
+        component={WhoWeAre}
+        options={{
+          title: 'Quem somos',
+          headerStyle: {
+            backgroundColor: '#000000',
+          },
+          headerTintColor: '#ffffff',
+          headerTitleStyle: {
+            color: '#ffffff',
+          },
+        }}
       />
       <Stack.Screen
         name="FormSignUp"

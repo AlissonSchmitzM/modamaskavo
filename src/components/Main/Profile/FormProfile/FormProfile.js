@@ -52,6 +52,8 @@ import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import {getAuth} from '@react-native-firebase/auth';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import imageMenuStyles from './ImageMenuStyles';
+import ShimmerPlaceholder from 'react-native-shimmer-placeholder';
+import LinearGradient from 'react-native-linear-gradient';
 
 class FormProfile extends Component {
   constructor(props) {
@@ -61,6 +63,7 @@ class FormProfile extends Component {
       visible: false,
       menuVisible: false,
       imageMenuVisible: false,
+      imageLoading: true,
     };
 
     this.btnRegisterRef = React.createRef();
@@ -343,10 +346,25 @@ class FormProfile extends Component {
                         borderWidth: 1,
                       }}>
                       {this.props.fileImgPath ? (
-                        <Avatar.Image
-                          size={100}
-                          source={{uri: this.props.fileImgPath}}
-                        />
+                        <ShimmerPlaceholder
+                          LinearGradient={LinearGradient}
+                          visible={!this.state.imageLoading}
+                          height={100}
+                          width={100}
+                          style={{
+                            borderRadius: 50,
+                          }}>
+                          <Avatar.Image
+                            size={100}
+                            source={{uri: this.props.fileImgPath}}
+                            onLoadStart={() =>
+                              this.setState({imageLoading: true})
+                            }
+                            onLoadEnd={() =>
+                              this.setState({imageLoading: false})
+                            }
+                          />
+                        </ShimmerPlaceholder>
                       ) : (
                         <Avatar.Text
                           color="#FFF"
@@ -371,7 +389,13 @@ class FormProfile extends Component {
                     </View>
                   </View>
                   <View>
-                    <Text style={{fontSize: 16, color: colors.SECONDARY}}>
+                    <Text
+                      style={{
+                        fontSize: 16,
+                        fontWeight: 'bold',
+                        color: colors.PRIMARY,
+                        marginVertical: 10,
+                      }}>
                       {this.props.email}
                     </Text>
                   </View>

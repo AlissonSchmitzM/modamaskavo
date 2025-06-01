@@ -18,7 +18,6 @@ import {
   Surface,
   ActivityIndicator,
   Chip,
-  Card,
 } from 'react-native-paper';
 import {order} from '../../../assets';
 import LottieView from 'lottie-react-native';
@@ -241,7 +240,7 @@ class Orders extends Component {
 
     return (
       <SafeAreaView
-        style={{flex: 1, backgroundColor: '#f5f5f5'}}
+        style={{flex: 1, backgroundColor: '#f5f5f5', marginTop: 30}}
         edges={['left', 'right']}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
