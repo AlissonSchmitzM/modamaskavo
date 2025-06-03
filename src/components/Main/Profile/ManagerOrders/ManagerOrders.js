@@ -466,7 +466,7 @@ class ManagerOrders extends Component {
                 <View style={{flex: 1}}>
                   <Text variant="bodyMedium">
                     <Text style={{fontWeight: 'bold'}}>Valor do pedido: </Text>
-                    {this.formatCurrency(currentItem.value_order)}
+                    {`R$ ${currentItem.value_order}`}
                   </Text>
                 </View>
               </View>

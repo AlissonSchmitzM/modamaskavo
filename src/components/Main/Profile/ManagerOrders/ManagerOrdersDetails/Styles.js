@@ -49,10 +49,9 @@ const styles = StyleSheet.create({
   },
   avatarContainer: {
     marginRight: 16,
-  },
-  avatar: {
     borderWidth: 1,
-    borderColor: '#000',
+    borderRadius: 50,
+    borderColor: '#7E7D7DFF',
   },
   userHeaderInfo: {
     flex: 1,

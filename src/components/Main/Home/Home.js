@@ -24,6 +24,7 @@ import styles from './Styles';
 // Importações para o Shimmer
 import {createShimmerPlaceholder} from 'react-native-shimmer-placeholder';
 import LinearGradient from 'react-native-linear-gradient';
+import {fetchProducts} from '../../../store/actions/productActions';
 
 const ShimmerPlaceholder = createShimmerPlaceholder(LinearGradient);
 const {width} = Dimensions.get('window');
@@ -47,6 +48,7 @@ class Home extends Component {
     this.props.onReadDataOrders();
     this.props.onReadDataOrdersFull();
     this.props.onReadDataConfig();
+    this.props.onReadDataProducts();
 
     // Inicializar o estado de carregamento para todas as imagens
     const imagesLoading = {};
@@ -286,13 +288,20 @@ class Home extends Component {
         <View style={styles.contentBelow}>
           <Text style={styles.title}>Peças Exclusivas e Uniformes</Text>
           <Text style={styles.description}>
-            Faça seu pedido e retornaremos com o melhor preço e qualidade.
+            Faça seu pedido ou compre na loja e retornaremos com o melhor preço
+            e qualidade.
           </Text>
           <Button
             mode="contained"
             onPress={() => NavigatorService.navigate('Orders')}
             style={styles.button}>
             Faça seu pedido
+          </Button>
+          <Button
+            mode="contained"
+            onPress={() => NavigatorService.navigate('Store')}
+            style={styles.button}>
+            Comprar na loja
           </Button>
         </View>
       </Surface>
@@ -306,6 +315,7 @@ const mapDispatchToProps = dispatch => ({
   onReadDataOrders: () => dispatch(readDataOrders()),
   onReadDataOrdersFull: () => dispatch(readDataOrdersFull()),
   onReadDataConfig: () => dispatch(readDataConfig()),
+  onReadDataProducts: () => dispatch(fetchProducts()),
 });
 
 export default connect(null, mapDispatchToProps)(Home);

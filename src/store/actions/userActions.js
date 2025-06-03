@@ -372,7 +372,7 @@ export const saveProfileUser = dataUser => dispatch => {
         userData.fileImgPath = downloadURL;
         userData.fileImgType = fileImgType;
 
-        return getDatabase().ref(`/users/${emailB64}`).set(userData);
+        return getDatabase().ref(`/users/${emailB64}`).update(userData);
       })
       .then(() => {
         saveProfileUserSuccess(dispatch);

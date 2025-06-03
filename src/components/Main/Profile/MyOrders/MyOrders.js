@@ -199,23 +199,9 @@ class MyOrders extends Component {
     return String(value);
   }
 
-  formatCurrency(value) {
-    if (typeof value === 'number') {
-      return `R$ ${value.toFixed(2).replace('.', ',')}`;
-    } else if (typeof value === 'string') {
-      // Tenta converter string para número
-      const numValue = parseFloat(value.replace(',', '.'));
-      if (!isNaN(numValue)) {
-        return `R$ ${numValue.toFixed(2).replace('.', ',')}`;
-      }
-      return value;
-    }
-    return 'R$ 0,00';
-  }
-
   handlePayment = (value_order, orderiD, descricao) => {
     NavigatorService.navigate('PaymentScreen', {
-      valor: parseFloat(value_order.replace(',', '.')),
+      valor: value_order,
       descricao,
       orderiD,
     });
@@ -390,7 +376,7 @@ class MyOrders extends Component {
                 <View style={{flex: 1}}>
                   <Text variant="bodyMedium">
                     <Text style={{fontWeight: 'bold'}}>Valor do pedido: </Text>
-                    {this.formatCurrency(currentItem.value_order)}
+                    {`R$ ${currentItem.value_order}`}
                   </Text>
                 </View>
                 {currentItem.situation === PAGAMENTO_PENDENTE.description && (

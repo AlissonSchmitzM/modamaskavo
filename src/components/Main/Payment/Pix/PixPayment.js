@@ -255,8 +255,6 @@ const PixPayment = ({valor, descricao, onSuccess, onCancel, dadosCliente}) => {
         onPress={compartilharPix}>
         Compartilhar PIX
       </Button>
-
-      <Toast config={toastConfig} />
     </View>
   );
 };

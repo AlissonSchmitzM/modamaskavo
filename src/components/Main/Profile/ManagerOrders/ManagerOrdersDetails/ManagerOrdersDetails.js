@@ -513,7 +513,7 @@ class ManagerOrdersDetails extends Component {
                   <View style={{flex: 1}}>
                     <Text variant="bodyMedium">
                       <Text style={styles.boldText}>Valor do pedido: </Text>
-                      {currentItem.value_order}
+                      {`R$ ${currentItem.value_order}`}
                     </Text>
                   </View>
                 </View>
@@ -587,7 +587,6 @@ class ManagerOrdersDetails extends Component {
                     <Avatar.Image
                       size={80}
                       source={{uri: userData.fileImgPath}}
-                      style={styles.avatar}
                     />
                   ) : (
                     <Avatar.Text
@@ -597,7 +596,6 @@ class ManagerOrdersDetails extends Component {
                           ? userData.name.charAt(0).toUpperCase()
                           : '?'
                       }
-                      style={styles.avatar}
                       color="#FFF"
                       backgroundColor={colors.SECONDARY}
                     />

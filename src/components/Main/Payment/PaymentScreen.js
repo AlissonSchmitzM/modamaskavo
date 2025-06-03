@@ -6,8 +6,10 @@ import {styles} from './Styles.js';
 import {connect} from 'react-redux';
 import {logo_cartao, logo_pix} from '../../../imgs/index.js';
 import {paymentSuccessOrder} from '../../../store/actions/orderActions.js';
-import {toastConfig} from '../../../services/toastr.js';
-import Toast from 'react-native-toast-message';
+import {
+  reduceProductStockSimple,
+  reduceProductStockVariation,
+} from '../../../store/actions/productActions.js';
 
 class PaymentScreen extends Component {
   constructor(props) {
@@ -23,7 +25,18 @@ class PaymentScreen extends Component {
 
   handleSuccess = () => {
     const {orderiD} = this.props.route.params;
-    this.props.onPaymentSuccessOrder(orderiD);
+
+    if (orderiD) {
+      this.props.onPaymentSuccessOrder(orderiD);
+    } else {
+      const {product} = this.props.route.params;
+
+      if (product.type === 'simple') {
+        this.props.onReduceProductStockSimple(product);
+      } else {
+        this.props.onReduceProductStockVariation(product.id, product.variation);
+      }
+    }
   };
 
   render() {
@@ -82,9 +95,7 @@ class PaymentScreen extends Component {
     return (
       <View style={styles.container}>
         <Text style={styles.title}>Escolha como pagar</Text>
-        <Text style={styles.subtitle}>
-          Valor: R$ {valor.toFixed(2).replace('.', ',')}
-        </Text>
+        <Text style={styles.subtitle}>Valor: R$ {valor}</Text>
         <Text style={styles.description}>{descricao}</Text>
 
         <TouchableOpacity
@@ -114,7 +125,6 @@ class PaymentScreen extends Component {
             <Text style={styles.methodDescription}>Pagamento em até 12x</Text>
           </View>
         </TouchableOpacity>
-        <Toast config={toastConfig} />
       </View>
     );
   }
@@ -122,6 +132,10 @@ class PaymentScreen extends Component {
 
 const mapDispatchToProps = dispatch => ({
   onPaymentSuccessOrder: orderiD => dispatch(paymentSuccessOrder(orderiD)),
+  onReduceProductStockSimple: product =>
+    dispatch(reduceProductStockSimple(product)),
+  onReduceProductStockVariation: (productId, variation) =>
+    dispatch(reduceProductStockVariation(productId, variation)),
 });
 
 const mapStateToProps = state => ({

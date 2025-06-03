@@ -11,7 +11,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     elevation: 4,
-    marginBottom: 20,
+    marginBottom: 10,
   },
   carouselContainer: {
     position: 'relative',
@@ -19,7 +19,6 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   flatListContent: {
-    // Garante que o FlatList tenha a largura correta
     alignItems: 'center',
   },
   pagination: {
@@ -63,19 +62,16 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   title: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 8,
   },
   description: {
     fontSize: 16,
     color: '#555',
-    marginBottom: 16,
   },
   button: {
     marginTop: 10,
     backgroundColor: '#000000',
-    marginBottom: 5,
   },
 });
 

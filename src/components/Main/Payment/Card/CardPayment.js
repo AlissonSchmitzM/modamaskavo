@@ -337,11 +337,17 @@ const CardPayment = ({valor, descricao, onSuccess, onCancel, dadosCliente}) => {
 
   // Opções de parcelas
   const opcoesParcelamento = () => {
+    const valorNumerico = parseFloat(
+      String(valor).replace(/\./g, '').replace(',', '.'),
+    );
+    if (isNaN(valorNumerico)) {
+      return []; // Retorna array vazio ou trata o erro como preferir
+    }
     const opcoes = [];
-    const maxParcelas = valor >= 100 ? 12 : valor >= 50 ? 6 : 3;
+    const maxParcelas = valorNumerico >= 100 ? 12 : valorNumerico >= 50 ? 6 : 3;
 
     for (let i = 1; i <= maxParcelas; i++) {
-      const valorParcela = (valor / i).toFixed(2);
+      const valorParcela = valorNumerico / i;
       opcoes.push(
         <TouchableOpacity
           key={i}
@@ -351,7 +357,7 @@ const CardPayment = ({valor, descricao, onSuccess, onCancel, dadosCliente}) => {
           ]}
           onPress={() => setParcelas(i.toString())}>
           <Text style={styles.parcelaText}>
-            {i}x de R$ {valorParcela}
+            {i}x de R$ {valorParcela.toFixed(2).replace('.', ',')}
             {i === 1 ? ' (à vista)' : ''}
           </Text>
         </TouchableOpacity>,
@@ -391,7 +397,7 @@ const CardPayment = ({valor, descricao, onSuccess, onCancel, dadosCliente}) => {
         showsVerticalScrollIndicator={false}>
         <ScrollView contentContainerStyle={styles.container}>
           <Text style={styles.title}>Pagamento com Cartão</Text>
-          <Text style={styles.subtitle}>Valor: R$ {valor.toFixed(2)}</Text>
+          <Text style={styles.subtitle}>Valor: R$ {valor}</Text>
 
           <View style={styles.formContainer}>
             <TextInput
@@ -533,7 +539,6 @@ const CardPayment = ({valor, descricao, onSuccess, onCancel, dadosCliente}) => {
           </Button>
         </ScrollView>
       </KeyboardAwareScrollView>
-      <Toast config={toastConfig} />
     </SafeAreaView>
   );
 };

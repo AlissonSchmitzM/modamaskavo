@@ -76,8 +76,8 @@ export default function App() {
           <NavigationContainer ref={navigationRef}>
             <MainStackNavigator />
           </NavigationContainer>
+          <Toast config={toastConfig} />
         </Provider>
-        <Toast config={toastConfig} />
       </SafeAreaProvider>
     </>
   );
