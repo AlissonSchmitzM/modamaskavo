@@ -74,7 +74,7 @@ const PixPayment = ({valor, descricao, onSuccess, onCancel, dadosCliente}) => {
         const referencia = `APP-${Date.now()}`;
         const cobranca = await AsaasService.criarCobrancaPix(
           clienteId,
-          valor,
+          parseFloat(String(valor).replace(/\./g, '').replace(',', '.')),
           descricao,
           referencia,
         );
