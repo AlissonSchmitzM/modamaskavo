@@ -440,6 +440,7 @@ const CardPayment = ({valor, descricao, onSuccess, onCancel, dadosCliente}) => {
             height: 350,
           }}
         />
+        <Toast config={toastConfig} />
       </View>
     );
   }
@@ -571,7 +572,7 @@ const CardPayment = ({valor, descricao, onSuccess, onCancel, dadosCliente}) => {
 
             <TextInput
               ref={cpfRef}
-              returnKeyType="done" // Changed to done for the last field
+              returnKeyType="done"
               label="CPF do Titular"
               placeholder="000.000.000-00"
               style={styles.input}
@@ -588,7 +589,6 @@ const CardPayment = ({valor, descricao, onSuccess, onCancel, dadosCliente}) => {
               theme={{
                 colors: {primary: '#000000', onSurfaceVariant: '#999999'},
               }}
-              onSubmitEditing={processarPagamento} // Trigger payment on submit
             />
             <Text style={styles.parcelasTitle}>Opções de Parcelamento</Text>
             <View style={styles.parcelasContainer}>{opcoesParcelamento()}</View>

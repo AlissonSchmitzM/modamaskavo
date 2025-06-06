@@ -518,15 +518,7 @@ class Store extends Component {
                     style={styles.button}
                     onPress={() => this.handleOpenShippingModal(item)}
                     disabled={updatingProductId === item.id}>
-                    {updatingProductId === item.id ? (
-                      <ShimmerPlaceholder
-                        LinearGradient={LinearGradient}
-                        style={{width: '100%', height: 20, borderRadius: 5}}
-                        shimmerColors={['#808080', '#606060', '#808080']}
-                      />
-                    ) : (
-                      <Text style={styles.buttonText}>Comprar</Text>
-                    )}
+                    <Text style={styles.buttonText}>Comprar</Text>
                   </TouchableOpacity>
                 ) : (
                   <View style={styles.dropdownContainer}>
@@ -568,15 +560,7 @@ class Store extends Component {
                         updatingProductId === item.id ||
                         !selectedVariations[item.id]
                       }>
-                      {updatingProductId === item.id ? (
-                        <ShimmerPlaceholder
-                          LinearGradient={LinearGradient}
-                          style={{width: '100%', height: 20, borderRadius: 5}}
-                          shimmerColors={['#808080', '#606060', '#808080']}
-                        />
-                      ) : (
-                        <Text style={styles.buttonText}>Comprar</Text>
-                      )}
+                      <Text style={styles.buttonText}>Comprar</Text>
                     </TouchableOpacity>
                   </View>
                 )}
