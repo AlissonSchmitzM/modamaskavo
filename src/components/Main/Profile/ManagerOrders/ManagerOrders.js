@@ -349,9 +349,21 @@ class ManagerOrders extends Component {
                 fontWeight: 'bold',
                 marginBottom: 8,
                 color:
-                  currentItem.type === 'uniform' ? '#01411EFF' : '#D46103FF',
+                  currentItem.type === 'uniform'
+                    ? '#01411EFF'
+                    : currentItem.type === 'exclusive'
+                    ? '#D46103FF'
+                    : currentItem.type === 'store'
+                    ? '#0066CCFF'
+                    : '#000000',
               }}>
-              {currentItem.type === 'uniform' ? 'Uniforme' : 'Peça Exclusiva'}
+              {currentItem.type === 'uniform'
+                ? 'Uniforme'
+                : currentItem.type === 'exclusive'
+                ? 'Peça Exclusiva'
+                : currentItem.type === 'store'
+                ? 'Compra Peça Exclusiva'
+                : '-'}
             </Text>
 
             <Divider style={{marginBottom: 8}} />
@@ -383,6 +395,15 @@ class ManagerOrders extends Component {
               </View>
             </View>
 
+            {currentItem.type === 'store' && (
+              <View style={{marginBottom: 4}}>
+                <Text variant="bodyMedium">
+                  <Text style={{fontWeight: 'bold'}}>Produto: </Text>
+                  {this.renderSafeValue(currentItem.product.name)}
+                </Text>
+              </View>
+            )}
+
             <View style={{marginBottom: 4}}>
               <Text variant="bodyMedium">
                 <Text style={{fontWeight: 'bold'}}>Nome: </Text>
@@ -397,14 +418,18 @@ class ManagerOrders extends Component {
               </Text>
             </View>
 
-            <View style={{marginBottom: 4}}>
-              <Text variant="bodyMedium">
-                <Text style={{fontWeight: 'bold'}}>Segmento: </Text>
-                {this.renderSafeValue(currentItem.segment)}
-              </Text>
-            </View>
+            {(currentItem.type === 'uniform' ||
+              currentItem.type === 'exclusive') && (
+              <View style={{marginBottom: 4}}>
+                <Text variant="bodyMedium">
+                  <Text style={{fontWeight: 'bold'}}>Segmento: </Text>
+                  {this.renderSafeValue(currentItem.segment)}
+                </Text>
+              </View>
+            )}
 
-            {currentItem.type === 'exclusive' && (
+            {(currentItem.type === 'store' ||
+              currentItem.type === 'exclusive') && (
               <View style={{marginBottom: 4}}>
                 <Text variant="bodyMedium">
                   <Text style={{fontWeight: 'bold'}}>Tamanho: </Text>
@@ -436,26 +461,16 @@ class ManagerOrders extends Component {
               </View>
             )}
 
-            <View style={{marginBottom: 4}}>
-              <Text variant="bodyMedium">
-                <Text style={{fontWeight: 'bold'}}>Descrição: </Text>
-                {this.renderSafeValue(currentItem.description)}
-              </Text>
-            </View>
-
-            {/* Motivo de cancelamento (se existir) */}
-            {currentItem.reason_cancellation && (
+            {(currentItem.type === 'uniform' ||
+              currentItem.type === 'exclusive') && (
               <View style={{marginBottom: 4}}>
                 <Text variant="bodyMedium">
-                  <Text style={{fontWeight: 'bold', color: '#D32F2F'}}>
-                    Motivo do cancelamento:{' '}
-                  </Text>
-                  {this.renderSafeValue(currentItem.reason_cancellation)}
+                  <Text style={{fontWeight: 'bold'}}>Descrição: </Text>
+                  {this.renderSafeValue(currentItem.description)}
                 </Text>
               </View>
             )}
 
-            {/* Valor do pedido e botão de pagamento (se existir) */}
             {currentItem.value_order && (
               <View
                 style={{
@@ -469,6 +484,43 @@ class ManagerOrders extends Component {
                     {`R$ ${currentItem.value_order}`}
                   </Text>
                 </View>
+              </View>
+            )}
+
+            {currentItem.shipping && (
+              <View style={{marginBottom: 4}}>
+                <Text variant="bodyMedium">
+                  <Text style={{fontWeight: 'bold'}}>Envio: </Text>
+                  {currentItem.shipping.name} - R$ {currentItem.shipping.price}{' '}
+                  - Prazo: {currentItem.shipping.delivery_time} dias
+                </Text>
+              </View>
+            )}
+
+            {currentItem.value_order && currentItem.shipping && (
+              <View style={{marginBottom: 4}}>
+                <Text variant="bodyMedium">
+                  <Text style={{fontWeight: 'bold'}}>Total: </Text>
+                  <Text>R$ </Text>
+                  {(
+                    parseFloat(currentItem.value_order.replace(',', '.')) +
+                    parseFloat(currentItem.shipping.price.replace(',', '.'))
+                  )
+                    .toFixed(2)
+                    .replace('.', ',')}
+                </Text>
+              </View>
+            )}
+
+            {/* Motivo de cancelamento (se existir) */}
+            {currentItem.reason_cancellation && (
+              <View style={{marginBottom: 4}}>
+                <Text variant="bodyMedium">
+                  <Text style={{fontWeight: 'bold', color: '#D32F2F'}}>
+                    Motivo do cancelamento:{' '}
+                  </Text>
+                  {this.renderSafeValue(currentItem.reason_cancellation)}
+                </Text>
               </View>
             )}
 
@@ -487,7 +539,7 @@ class ManagerOrders extends Component {
               <View style={{marginBottom: 4}}>
                 <Text variant="bodyMedium">
                   <Text style={{fontWeight: 'bold'}}>
-                    Data estimada para finalização:{' '}
+                    Data estimada para finalizar produção:{' '}
                   </Text>
                   {currentItem.estimated_finish}
                 </Text>

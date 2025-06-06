@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+// Import the adjusted service
 import AsaasService from '../../../../services/AsaasService';
 import toastr, {
   ERROR,
@@ -53,95 +54,130 @@ const CardPayment = ({valor, descricao, onSuccess, onCancel, dadosCliente}) => {
     return grupos.join(' ');
   };
 
-  // Processar pagamento
+  // --- Processar pagamento com lógica de reutilização de token ---
   const processarPagamento = async () => {
-    // Validar campos
     if (!validarFormulario()) {
       return;
     }
 
+    setLoading(true);
+    let clienteId = null;
+    let cobranca = null;
+    let attemptTokenization = true; // Flag to control if we should try tokenizing
+
     try {
-      setLoading(true);
-
-      // Verificar se já temos o cliente salvo
-      let clienteId = await AsyncStorage.getItem('asaas_cliente_id');
-
-      // Se temos um ID de cliente, verificar se ele ainda existe e está ativo
-      if (clienteId) {
-        try {
-          const clienteAtivo = await AsaasService.verificarCliente(clienteId);
-          if (!clienteAtivo) {
-            // Se o cliente foi removido, limpar o ID armazenado
-            await AsyncStorage.removeItem('asaas_cliente_id');
-            clienteId = null;
-            console.log('Cliente removido no Asaas, será criado um novo');
-          }
-        } catch (error) {
-          // Em caso de erro na verificação, é mais seguro tentar criar um novo cliente
-          await AsyncStorage.removeItem('asaas_cliente_id');
-          clienteId = null;
-        }
-      }
-
-      // Se não temos um cliente válido, criar um novo
+      // 1. Obter ou criar Cliente Asaas
+      clienteId = await obterOuCriarClienteAsaas();
       if (!clienteId) {
-        try {
-          // Verificar se cliente já existe por CPF/CNPJ
-          const clienteExistente = await AsaasService.buscarClientePorCpfCnpj(
-            dadosCliente.cpfCnpj,
-          );
-
-          if (clienteExistente && !clienteExistente.deleted) {
-            clienteId = clienteExistente.id;
-          } else {
-            // Criar cliente
-            const novoCliente = await AsaasService.criarCliente(dadosCliente);
-            clienteId = novoCliente.id;
-          }
-
-          // Salvar ID do cliente para uso futuro
-          await AsyncStorage.setItem('asaas_cliente_id', clienteId);
-        } catch (error) {
-          //console.error('Erro ao processar cliente:', error);
-          setLoading(false);
-          toastr.showToast(
-            'Não foi possível processar os dados do cliente. Tente novamente.',
-            ERROR,
-          );
-          return;
-        }
+        // Error handled inside obterOuCriarClienteAsaas
+        setLoading(false);
+        return;
       }
 
-      // Dados do cartão
-      const dadosCartao = {
-        titular: titular,
-        numero: numeroCartao,
-        mesExpiracao: mesExpiracao,
-        anoExpiracao: anoExpiracao,
-        cvv: cvv,
-        cpfCnpj: cpf.replace(/[^\d]/g, ''),
-        email: dadosCliente.email,
-        telefone: dadosCliente.telefone,
-        cep: dadosCliente.cep,
-        numeroEndereco: dadosCliente.numero,
-        complemento: dadosCliente.complemento,
-      };
-
-      // Criar cobrança com cartão
-      const referencia = `APP-${Date.now()}`;
-      const cobranca = await AsaasService.criarCobrancaCartao(
+      // 2. Tentar buscar token existente
+      const existingToken = await AsaasService.getToken(
         clienteId,
-        parseFloat(String(valor).replace(/\./g, '').replace(',', '.')),
-        descricao,
-        referencia,
-        dadosCartao,
-        parseInt(parcelas),
+        numeroCartao,
+        mesExpiracao,
+        anoExpiracao,
       );
 
-      setLoading(false);
-      console.log('cobranca', cobranca);
+      // 3. Se token existir, tentar pagar com ele
+      if (existingToken) {
+        console.log('Token encontrado, tentando pagamento com token...');
+        attemptTokenization = false; // Don't tokenize if we have a token
+        try {
+          const cartaoInfoTitular = {
+            titular: titular,
+            cpfCnpj: cpf.replace(/[^\d]/g, ''),
+            email: dadosCliente.email,
+            telefone: dadosCliente.telefone,
+            cep: dadosCliente.cep,
+            numeroEndereco: dadosCliente.numero,
+            complemento: dadosCliente.complemento,
+          };
 
-      // Verificar resultado
+          cobranca = await AsaasService.criarCobrancaComToken(
+            clienteId,
+            parseFloat(String(valor).replace(/\./g, '').replace(',', '.')),
+            descricao,
+            `APP-${Date.now()}`,
+            existingToken,
+            cartaoInfoTitular,
+            parseInt(parcelas),
+          );
+          console.log('Pagamento com token existente:', cobranca);
+        } catch (tokenError) {
+          console.warn('Erro ao pagar com token existente:', tokenError);
+          // Se o erro for token inválido/expirado, remove o token e tenta tokenizar novamente
+          if (tokenError.message === 'invalid_token') {
+            console.log(
+              'Token inválido ou expirado, removendo e tentando tokenizar...',
+            );
+            await AsaasService.removeToken(
+              clienteId,
+              numeroCartao,
+              mesExpiracao,
+              anoExpiracao,
+            );
+            attemptTokenization = true; // Force tokenization attempt
+          } else {
+            // Outro erro ao pagar com token, tratar como erro geral
+            throw tokenError;
+          }
+        }
+      }
+
+      // 4. Se não havia token ou o pagamento com token falhou (e precisa tokenizar)
+      if (attemptTokenization) {
+        console.log(
+          'Token não encontrado ou inválido, tentando tokenizar e pagar...',
+        );
+        const dadosCartao = {
+          titular: titular,
+          numero: numeroCartao, // Service will clean it
+          mesExpiracao: mesExpiracao,
+          anoExpiracao: anoExpiracao,
+          cvv: cvv,
+          cpfCnpj: cpf.replace(/[^\d]/g, ''),
+          email: dadosCliente.email,
+          telefone: dadosCliente.telefone,
+          cep: dadosCliente.cep,
+          numeroEndereco: dadosCliente.numero,
+          complemento: dadosCliente.complemento,
+        };
+
+        const resultadoCobranca = await AsaasService.criarCobrancaCartao(
+          clienteId,
+          parseFloat(String(valor).replace(/\./g, '').replace(',', '.')),
+          descricao,
+          `APP-${Date.now()}`,
+          dadosCartao,
+          parseInt(parcelas),
+        );
+
+        cobranca = resultadoCobranca; // Assign the payment result
+        console.log('Pagamento com tokenização:', cobranca);
+
+        // Se a cobrança foi criada (mesmo que PENDING), salva o token
+        if (resultadoCobranca.creditCardToken) {
+          await AsaasService.saveToken(
+            clienteId,
+            numeroCartao,
+            mesExpiracao,
+            anoExpiracao,
+            resultadoCobranca.creditCardToken,
+          );
+        }
+      }
+
+      // 5. Processar resultado da cobrança (seja com token ou nova tokenização)
+      setLoading(false);
+      if (!cobranca) {
+        // Should not happen if logic is correct, but as a safeguard
+        throw new Error('Falha ao obter resultado da cobrança.');
+      }
+
       if (cobranca.status === 'CONFIRMED' || cobranca.status === 'RECEIVED') {
         toastr.showToast('Pagamento aprovado com sucesso!', SUCCESS, 3000);
         NavigatorService.goBack();
@@ -151,168 +187,190 @@ const CardPayment = ({valor, descricao, onSuccess, onCancel, dadosCliente}) => {
           'Seu pagamento está sendo processado. Você receberá uma confirmação em breve.',
           INFO,
         );
-        onSuccess?.();
+        NavigatorService.goBack(); // Go back even if pending
+        onSuccess?.(); // Consider success even if pending
       } else {
+        // Handle other statuses like REJECTED, FAILED etc.
         toastr.showToast(
-          `Não foi possível processar o pagamento. Status: ${cobranca.status}`,
+          `Pagamento não aprovado. Status: ${cobranca.status}`,
           ERROR,
         );
         onCancel?.();
       }
     } catch (error) {
-      console.log('error', error);
+      console.error('Erro GERAL no processarPagamento:', error);
       setLoading(false);
-      toastr.showToast(
-        `Erro ao processar pagamento com cartão: ${error}`,
-        ERROR,
-      );
+      handlePaymentError(error, clienteId); // Use helper function for error handling
+    }
+  };
 
-      // Verificar tipos específicos de erro de cartão
-      if (error.response?.data?.errors) {
-        const errors = error.response.data.errors;
+  // --- Helper para obter/criar cliente Asaas ---
+  const obterOuCriarClienteAsaas = async () => {
+    let clienteId = await AsyncStorage.getItem('asaas_cliente_id');
 
-        // Verificar erro de cliente removido
-        if (errors.some(err => err.description?.includes('cliente removido'))) {
+    if (clienteId) {
+      try {
+        const clienteAtivo = await AsaasService.verificarCliente(clienteId);
+        if (!clienteAtivo) {
           await AsyncStorage.removeItem('asaas_cliente_id');
-          Alert.alert(
-            'Erro',
-            'O cliente associado foi removido. Por favor, tente novamente.',
-            [
-              {
-                text: 'Tentar Novamente',
-                onPress: () => processarPagamento(),
-              },
-              {
-                text: 'Cancelar',
-                onPress: onCancel,
-                style: 'cancel',
-              },
-            ],
-          );
-          return;
+          clienteId = null;
+          console.log('Cliente Asaas removido, limpando ID local.');
         }
-        console.log('errors', errors);
+      } catch (error) {
+        console.warn(
+          'Erro ao verificar cliente Asaas, limpando ID local:',
+          error,
+        );
+        await AsyncStorage.removeItem('asaas_cliente_id');
+        clienteId = null;
+      }
+    }
 
-        errors.some(err => console.log('err.code', err.code));
+    if (!clienteId) {
+      console.log(
+        'Cliente ID não encontrado ou inválido, tentando buscar/criar...',
+      );
+      try {
+        const clienteExistente = await AsaasService.buscarClientePorCpfCnpj(
+          dadosCliente.cpfCnpj,
+        );
 
-        // Verificar erros específicos de cartão
-        if (
-          errors.some(
-            err =>
-              err.code === 'invalid_creditCard' ||
-              err.code === 'insufficient_funds' ||
-              err.description?.includes('saldo insuficiente'),
-          )
-        ) {
-          toastr.showToast(
-            'Saldo insuficiente no cartão. Tente outro cartão ou forma de pagamento.',
-            ERROR,
-          );
-
-          /*Alert.alert('Erro no Pagamento', errors[0].description, [
-            {text: 'OK', onPress: () => console.log('OK Pressionado')},
-          ]);*/
-          return;
+        if (clienteExistente && !clienteExistente.deleted) {
+          clienteId = clienteExistente.id;
+          console.log('Cliente encontrado por CPF/CNPJ:', clienteId);
+        } else {
+          console.log('Cliente não encontrado ou deletado, criando novo...');
+          const novoCliente = await AsaasService.criarCliente(dadosCliente);
+          clienteId = novoCliente.id;
+          console.log('Novo cliente criado:', clienteId);
         }
-
-        if (
-          errors.some(
-            err =>
-              err.code === 'expired_card' ||
-              err.description?.includes('expirado') ||
-              err.description?.includes('vencido'),
-          )
-        ) {
-          toastr.showToast(
-            'Cartão expirado. Verifique a data de validade ou use outro cartão.',
-            ERROR,
-          );
-          return;
-        }
-
-        if (
-          errors.some(
-            err =>
-              err.code === 'blocked_card' ||
-              err.description?.includes('bloqueado'),
-          )
-        ) {
-          toastr.showToast(
-            'Cartão bloqueado. Entre em contato com seu banco ou use outro cartão.',
-            ERROR,
-          );
-          return;
-        }
-
-        if (
-          errors.some(
-            err =>
-              err.description?.includes('inválido') ||
-              err.description?.includes('invalido'),
-          )
-        ) {
-          toastr.showToast(
-            'Número de cartão inválido. Verifique os dados e tente novamente.',
-            ERROR,
-          );
-          return;
-        }
-
-        // Mostrar o primeiro erro se nenhum dos casos específicos foi identificado
+        await AsyncStorage.setItem('asaas_cliente_id', clienteId);
+      } catch (error) {
+        console.error('Erro ao buscar/criar cliente Asaas:', error);
         toastr.showToast(
-          errors[0].description || 'Erro ao processar o pagamento.',
+          'Não foi possível processar os dados do cliente. Tente novamente.',
           ERROR,
         );
-        return;
+        return null; // Indicate failure
       }
+    }
+    return clienteId;
+  };
 
-      // Erro genérico
+  // --- Helper para tratar erros de pagamento ---
+  const handlePaymentError = async (error, clienteId) => {
+    // Check for specific Asaas API errors
+    if (error.response?.data?.errors) {
+      const errors = error.response.data.errors;
+      const firstError = errors[0];
+      console.error('Asaas Payment Error:', errors);
+
+      // Specific card errors
+      if (
+        firstError.code === 'invalid_creditCard' ||
+        firstError.description?.includes('inválido')
+      ) {
+        toastr.showToast(
+          'Número de cartão inválido. Verifique os dados.',
+          ERROR,
+        );
+      } else if (
+        firstError.code === 'insufficient_funds' ||
+        firstError.description?.includes('saldo insuficiente')
+      ) {
+        toastr.showToast('Saldo insuficiente no cartão.', ERROR);
+      } else if (
+        firstError.code === 'expired_card' ||
+        firstError.description?.includes('expirado') ||
+        firstError.description?.includes('vencido')
+      ) {
+        toastr.showToast('Cartão expirado.', ERROR);
+      } else if (
+        firstError.code === 'blocked_card' ||
+        firstError.description?.includes('bloqueado')
+      ) {
+        toastr.showToast(
+          'Cartão bloqueado. Entre em contato com seu banco.',
+          ERROR,
+        );
+      } else if (
+        firstError.code === 'invalid_creditCardToken' ||
+        firstError.code === 'expired_creditCardToken'
+      ) {
+        // This case should ideally be handled by the retry logic, but show a generic message if it reaches here
+        toastr.showToast(
+          'Problema com o cartão salvo. Tente novamente.',
+          ERROR,
+        );
+        // Optionally remove the bad token again here if needed
+        if (clienteId) {
+          await AsaasService.removeToken(
+            clienteId,
+            numeroCartao,
+            mesExpiracao,
+            anoExpiracao,
+          );
+        }
+      } else if (firstError.description?.includes('cliente removido')) {
+        await AsyncStorage.removeItem('asaas_cliente_id');
+        Alert.alert(
+          'Erro',
+          'O cliente associado foi removido. Por favor, tente novamente.',
+          [
+            {text: 'Tentar Novamente', onPress: () => processarPagamento()},
+            {text: 'Cancelar', onPress: onCancel, style: 'cancel'},
+          ],
+        );
+      } else {
+        // Show the first error description from Asaas
+        toastr.showToast(firstError.description || 'Erro no pagamento.', ERROR);
+      }
+    } else {
+      // Generic error (network issue, unexpected error)
       toastr.showToast(
-        'Não foi possível processar o pagamento. Verifique os dados e tente novamente.',
+        `Erro ao processar pagamento: ${error.message || 'Tente novamente.'}`,
         ERROR,
       );
     }
+    onCancel?.(); // Call cancel callback on error
   };
 
   // Validar formulário
   const validarFormulario = () => {
-    if (numeroCartao.replace(/\s/g, '').length < 16) {
+    // Basic validations (keep them simple or enhance as needed)
+    if (numeroCartao.replace(/\s/g, '').length < 13) {
+      // Allow shorter numbers for some cards
       toastr.showToast('Número de cartão inválido', ERROR);
       return false;
     }
-
-    if (titular.length < 3) {
+    if (titular.trim().length < 3) {
       toastr.showToast('Nome do titular inválido', ERROR);
       return false;
     }
-
-    if (
-      mesExpiracao.length !== 2 ||
-      parseInt(mesExpiracao) < 1 ||
-      parseInt(mesExpiracao) > 12
-    ) {
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1;
+    const expMonth = parseInt(mesExpiracao);
+    const expYear = parseInt(anoExpiracao);
+    if (!expMonth || expMonth < 1 || expMonth > 12) {
       toastr.showToast('Mês de expiração inválido', ERROR);
       return false;
     }
-
     if (
-      anoExpiracao.length !== 4 ||
-      parseInt(anoExpiracao) < new Date().getFullYear()
+      !expYear ||
+      expYear < currentYear ||
+      (expYear === currentYear && expMonth < currentMonth)
     ) {
-      toastr.showToast('Ano de expiração inválido', ERROR);
+      toastr.showToast('Data de expiração inválida', ERROR);
       return false;
     }
-
-    if (cvv.length < 3) {
+    if (cvv.length < 3 || cvv.length > 4) {
       toastr.showToast('Código de segurança inválido', ERROR);
       return false;
     }
-
     if (cpf.replace(/[^\d]/g, '').length !== 11) {
       toastr.showToast('CPF inválido', ERROR);
       return false;
     }
-
     return true;
   };
 
@@ -341,9 +399,10 @@ const CardPayment = ({valor, descricao, onSuccess, onCancel, dadosCliente}) => {
       String(valor).replace(/\./g, '').replace(',', '.'),
     );
     if (isNaN(valorNumerico)) {
-      return []; // Retorna array vazio ou trata o erro como preferir
+      return [];
     }
     const opcoes = [];
+    // Define max installments based on value (example logic)
     const maxParcelas = valorNumerico >= 100 ? 12 : valorNumerico >= 50 ? 6 : 3;
 
     for (let i = 1; i <= maxParcelas; i++) {
@@ -363,10 +422,10 @@ const CardPayment = ({valor, descricao, onSuccess, onCancel, dadosCliente}) => {
         </TouchableOpacity>,
       );
     }
-
     return opcoes;
   };
 
+  // --- Renderização ---
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -391,6 +450,7 @@ const CardPayment = ({valor, descricao, onSuccess, onCancel, dadosCliente}) => {
       edges={['bottom', 'left', 'right']}>
       <KeyboardAwareScrollView
         style={{flex: 1}}
+        contentContainerStyle={{flexGrow: 1}} // Ensure content can grow
         extraScrollHeight={100}
         enableOnAndroid={true}
         keyboardShouldPersistTaps="handled"
@@ -410,7 +470,6 @@ const CardPayment = ({valor, descricao, onSuccess, onCancel, dadosCliente}) => {
               onChangeText={text => {
                 const formatted = formatarNumeroCartao(text);
                 if (formatted.length <= 19) {
-                  // 16 dígitos + 3 espaços
                   setNumeroCartao(formatted);
                 }
               }}
@@ -512,33 +571,47 @@ const CardPayment = ({valor, descricao, onSuccess, onCancel, dadosCliente}) => {
 
             <TextInput
               ref={cpfRef}
-              returnKeyType="go"
+              returnKeyType="done" // Changed to done for the last field
               label="CPF do Titular"
               placeholder="000.000.000-00"
               style={styles.input}
               value={cpf}
-              onChangeText={text => setCpf(formatarCPF(text))}
+              onChangeText={text => {
+                const formatted = formatarCPF(text);
+                if (formatted.length <= 14) {
+                  setCpf(formatted);
+                }
+              }}
               keyboardType="numeric"
               maxLength={14}
               mode="outlined"
               theme={{
                 colors: {primary: '#000000', onSurfaceVariant: '#999999'},
               }}
+              onSubmitEditing={processarPagamento} // Trigger payment on submit
             />
-
-            <Text style={styles.label}>Selecione o número de parcelas:</Text>
+            <Text style={styles.parcelasTitle}>Opções de Parcelamento</Text>
             <View style={styles.parcelasContainer}>{opcoesParcelamento()}</View>
           </View>
 
           <Button
             mode="contained"
             style={styles.payButton}
-            textColor="#FFF"
-            onPress={processarPagamento}>
-            Finalizar Pagamento
+            labelStyle={styles.payButtonText}
+            onPress={processarPagamento}
+            disabled={loading}
+            icon="credit-card-check-outline">
+            Pagar
           </Button>
+
+          <TouchableOpacity
+            onPress={() => NavigatorService.goBack()}
+            style={styles.cancelButton}>
+            <Text style={styles.cancelButtonText}>Cancelar</Text>
+          </TouchableOpacity>
         </ScrollView>
       </KeyboardAwareScrollView>
+      <Toast config={toastConfig} />
     </SafeAreaView>
   );
 };

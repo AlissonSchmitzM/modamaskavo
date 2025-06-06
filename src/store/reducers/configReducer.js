@@ -7,6 +7,9 @@ import {
   SAVE_CONFIG_ERROR,
   SAVE_CONFIG_IN_PROGRESS,
   SAVE_CONFIG_SUCCESS,
+  MODIFY_TOKEN_SUPERFRETE,
+  MODIFY_USER_WOO,
+  MODIFY_PASSWORD_WOO,
 } from '../actions/actionTypes';
 
 const INITIAL_STATE = {
@@ -15,6 +18,9 @@ const INITIAL_STATE = {
   environment: '',
   key_api_sandbox: '',
   key_api_prod: '',
+  token_superfrete: '',
+  user_woo: '',
+  password_woo: '',
 };
 
 const configReducer = (state = INITIAL_STATE, action) => {
@@ -26,6 +32,9 @@ const configReducer = (state = INITIAL_STATE, action) => {
         environment: action.payload.environment,
         key_api_sandbox: action.payload.key_api_sandbox,
         key_api_prod: action.payload.key_api_prod,
+        token_superfrete: action.payload.token_superfrete,
+        user_woo: action.payload.user_woo,
+        password_woo: action.payload.password_woo,
       };
     case SAVE_CONFIG_IN_PROGRESS:
       return {...state, saveConfigInProgress: true};
@@ -41,6 +50,12 @@ const configReducer = (state = INITIAL_STATE, action) => {
       return {...state, key_api_sandbox: action.payload};
     case MODIFY_KEY_API_PROD:
       return {...state, key_api_prod: action.payload};
+    case MODIFY_TOKEN_SUPERFRETE:
+      return {...state, token_superfrete: action.payload};
+    case MODIFY_USER_WOO:
+      return {...state, user_woo: action.payload};
+    case MODIFY_PASSWORD_WOO:
+      return {...state, password_woo: action.payload};
     default:
       return state;
   }

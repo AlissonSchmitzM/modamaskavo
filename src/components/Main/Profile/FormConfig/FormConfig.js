@@ -23,6 +23,9 @@ import {
   modifyKeyApiProd,
   readDataConfig,
   saveConfig,
+  modifyTokenSuperfrete,
+  modifyUserWoo,
+  modifyPasswordWoo,
 } from '../../../../store/actions/configActions';
 import LottieView from 'lottie-react-native';
 import {config} from '../../../../assets';
@@ -86,7 +89,7 @@ class FormConfig extends Component {
               loop
               style={{
                 width: '100%',
-                height: 150,
+                height: 120,
               }}
             />
             <Card style={styles.card}>
@@ -111,7 +114,7 @@ class FormConfig extends Component {
             <Card style={styles.card}>
               <Card.Content>
                 <Text style={{marginBottom: 12}} variant="titleMedium">
-                  Pagamentos
+                  Integração Pagamentos
                 </Text>
                 <Text variant="titleSmall">Ambiente</Text>
                 <RadioButton.Group
@@ -142,11 +145,60 @@ class FormConfig extends Component {
                   }}
                 />
                 <TextInput
-                  label="Chave API Produçãos"
+                  label="Chave API Produção"
                   style={styles.input}
                   value={this.props.key_api_prod}
                   textColor="#000"
                   onChangeText={text => this.props.onModifyKeyApiProd(text)}
+                  mode="outlined"
+                  theme={{
+                    colors: {primary: '#000000', onSurfaceVariant: '#999999'},
+                  }}
+                />
+              </Card.Content>
+            </Card>
+            <Card style={styles.card}>
+              <Card.Content>
+                <Text style={{marginBottom: 12}} variant="titleMedium">
+                  Integração Loja
+                </Text>
+                <TextInput
+                  label="Usuário"
+                  style={[styles.input, {marginBottom: 15}]}
+                  value={this.props.user_woo}
+                  textColor="#000"
+                  onChangeText={text => this.props.onModifyUserWoo(text)}
+                  mode="outlined"
+                  theme={{
+                    colors: {primary: '#000000', onSurfaceVariant: '#999999'},
+                  }}
+                />
+                <TextInput
+                  label="Senha"
+                  style={styles.input}
+                  value={this.props.password_woo}
+                  textColor="#000"
+                  onChangeText={text => this.props.onModifyPasswordWoo(text)}
+                  mode="outlined"
+                  theme={{
+                    colors: {primary: '#000000', onSurfaceVariant: '#999999'},
+                  }}
+                />
+              </Card.Content>
+            </Card>
+            <Card style={styles.card}>
+              <Card.Content>
+                <Text style={{marginBottom: 12}} variant="titleMedium">
+                  Integração Frete
+                </Text>
+                <TextInput
+                  label="Token"
+                  style={[styles.input, {marginBottom: 15}]}
+                  value={this.props.token_superfrete}
+                  textColor="#000"
+                  onChangeText={text =>
+                    this.props.onModifyTokenSuperfrete(text)
+                  }
                   mode="outlined"
                   theme={{
                     colors: {primary: '#000000', onSurfaceVariant: '#999999'},
@@ -171,6 +223,9 @@ const mapDispatchToProps = dispatch => ({
   onModifyEnvironment: environment => dispatch(modifyEnvironment(environment)),
   onModifyKeyApiSandbox: key => dispatch(modifyKeyApiSandbox(key)),
   onModifyKeyApiProd: key => dispatch(modifyKeyApiProd(key)),
+  onModifyTokenSuperfrete: token => dispatch(modifyTokenSuperfrete(token)),
+  onModifyUserWoo: user => dispatch(modifyUserWoo(user)),
+  onModifyPasswordWoo: password => dispatch(modifyPasswordWoo(password)),
 });
 
 const mapStateToProps = state => ({
@@ -179,6 +234,9 @@ const mapStateToProps = state => ({
   environment: state.configReducer.environment,
   key_api_sandbox: state.configReducer.key_api_sandbox,
   key_api_prod: state.configReducer.key_api_prod,
+  token_superfrete: state.configReducer.token_superfrete,
+  user_woo: state.configReducer.user_woo,
+  password_woo: state.configReducer.password_woo,
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(FormConfig);

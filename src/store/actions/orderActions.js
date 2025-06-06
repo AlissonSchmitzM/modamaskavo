@@ -25,6 +25,7 @@ import {
   PAYMENT_SUCCESS_ORDER_ERROR,
 } from './actionTypes';
 import {
+  AGUARDANDO_ENVIO,
   CANCELADO,
   CONCLUIDO,
   EM_PRODUCAO,
@@ -43,7 +44,7 @@ export const createOrder = data => (dispatch, getState) => {
     getState().userReducer;
 
   const userEmailB64 = b64.encode(email);
-  const {type} = data;
+  const {type, selectedShipping} = data;
 
   let message = `🪡 *DADOS DO CLIENTE* 🪡
 
@@ -56,7 +57,7 @@ export const createOrder = data => (dispatch, getState) => {
   🔢 Número: ${number}
   🔍 Complemento: ${complement ? complement : ''}
   🏙️ Bairro: ${address?.neighborhood}
-  🌆 Cidade/Estado: ${address?.city}/${address?.state}
+  🌆 Cidade/Estado: ${address?.city}/${address?.uf}
   
   `;
   const {phone_orders} = getState().configReducer;
@@ -64,14 +65,17 @@ export const createOrder = data => (dispatch, getState) => {
   // Em comum
   const {segment, description} = data;
 
-  const message_2 = `👕 *PEDIDO* ${
+  let message_2 = `👕 *PEDIDO* ${
     type === 'exclusive' ? '*PEÇA EXCLUSIVA*' : '*UNIFORME*'
   } 👕
   
   🏢 Segmento: ${segment}
   `;
+
   const message_3 = `
-  🗒️ Descrição: ${description}`;
+  🗒️ Descrição: ${description}
+  📦 Envio: ${selectedShipping.name} - R$ ${selectedShipping.price} - Prazo: ${selectedShipping.delivery_time} dias`;
+
   if (type === 'exclusive') {
     const {tam} = data;
 
@@ -85,16 +89,18 @@ export const createOrder = data => (dispatch, getState) => {
         tam,
         description,
         situation: PENDENTE.description,
+        shipping: selectedShipping,
         createdAt: new Date().toISOString(),
       })
       .then(() => {
         orderSaveSuccess(dispatch);
 
-        Linking.openURL(
-          `whatsapp://send?phone=55${phone_orders}&text=${encodeURIComponent(
-            message,
-          )}`,
-        );
+        NavigatorService.navigate('OrdersInProgress'),
+          Linking.openURL(
+            `whatsapp://send?phone=55${phone_orders}&text=${encodeURIComponent(
+              message,
+            )}`,
+          );
       })
       .catch(err => orderSaveError(err, dispatch));
   } else if (type === 'uniform') {
@@ -152,16 +158,18 @@ export const createOrder = data => (dispatch, getState) => {
           segment,
           amountPieces,
           description,
-          logos: logoURLs, // Salvar os URLs dos logos
+          logos: logoURLs,
           situation: PENDENTE.description,
+          shipping: selectedShipping,
           createdAt: new Date().toISOString(),
         });
       })
       .then(() => {
         orderSaveSuccess(dispatch);
 
-        // Adicionar informação sobre os logos na mensagem
-        message += `\n\n📎 *${logoURLs.length} arquivo(s) de logo foram enviados e estão disponíveis no aplicativo.*`;
+        NavigatorService.navigate('OrdersInProgress'),
+          // Adicionar informação sobre os logos na mensagem
+          (message += `\n\n📎 *${logoURLs.length} arquivo(s) de logo foram enviados e estão disponíveis no aplicativo.*`);
 
         // Adicionar cada logo com seu nome e link
         logoURLs.forEach((logo, index) => {
@@ -182,6 +190,60 @@ export const createOrder = data => (dispatch, getState) => {
         );
         orderSaveError(error, dispatch);
       });
+  } else if (type === 'store') {
+    const {product} = data;
+    let message_2 = `👕 *COMPRA PEÇA EXCLUSIVA* 👕
+    
+    🏢 Produto: ${product.name}
+    🔍 Descrição: ${
+      product.short_description
+        ? (product.short_description.match(/<p>(.*?)<\/p>/) || [])[1]
+            .replace(/<[^>]+>/g, '')
+            .trim()
+        : '-'
+    }
+    🔍 Tamanho: ${
+      product.variation?.name || product.attributes?.[0]?.options?.[0] || '-'
+    }
+    💰 Valor: R$ ${product.price}
+    📦 Envio: ${selectedShipping.name} - R$ ${
+      selectedShipping.price
+    } - Prazo: ${selectedShipping.delivery_time} dias
+    🔍 Total: R$ ${(
+      parseFloat(product.price.replace(',', '.')) +
+      parseFloat(selectedShipping.price.replace(',', '.'))
+    )
+      .toFixed(2)
+      .replace('.', ',')}
+    `;
+
+    message += message_2;
+
+    getDatabase()
+      .ref(`/orders/${userEmailB64}`)
+      .push({
+        type,
+        product,
+        tam: product.variation?.name || product.attributes?.[0]?.options?.[0],
+        situation: AGUARDANDO_ENVIO.description,
+        shipping: selectedShipping,
+        createdAt: new Date().toISOString(),
+        value_order: product.price,
+      })
+      .then(() => {
+        orderSaveSuccess(dispatch);
+
+        NavigatorService.navigate('OrdersInProgress', {
+          descricao: 'Compra realizada com sucesso!',
+        });
+
+        Linking.openURL(
+          `whatsapp://send?phone=55${phone_orders}&text=${encodeURIComponent(
+            message,
+          )}`,
+        );
+      })
+      .catch(err => orderSaveError(err, dispatch));
   }
 };
 
@@ -340,7 +402,6 @@ export const orderSaveSuccess = dispatch => {
   dispatch(
     {type: ORDER_REGISTRATION_SUCCESS},
     toastr.showToast('Pedido enviado com sucesso!', SUCCESS),
-    NavigatorService.navigate('OrdersInProgress'),
   );
 };
 

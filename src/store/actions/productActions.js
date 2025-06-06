@@ -18,15 +18,15 @@ import {
   SET_DROPDOWN_LAYOUT,
 } from './actionTypes';
 
-const WOO_API_USERNAME = 'ck_786b172f345c8788590cf6a0a78bff51ef0cfea1';
-const WOO_API_PASSWORD = 'cs_029f3eb048e8a3d3ed416f1c63254959ee8ad0bb';
 const WOO_API_URL = 'https://www.modamaskavo.com.br/wp-json/wc/v3';
 
 // Buscar produtos
 export const fetchProducts =
   (pageNumber = 1, isLoadMore = false) =>
-  async dispatch => {
+  async (dispatch, getState) => {
     try {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
       if (!isLoadMore) {
         dispatch({type: FETCH_PRODUCTS_IN_PROGRESS});
       }
@@ -40,8 +40,8 @@ export const fetchProducts =
           catalog_visibility: 'visible',
         },
         auth: {
-          username: WOO_API_USERNAME,
-          password: WOO_API_PASSWORD,
+          username: getState().configReducer.user_woo,
+          password: getState().configReducer.password_woo,
         },
       });
 
@@ -88,7 +88,7 @@ export const loadMoreProducts = currentPage => (dispatch, getState) => {
 };
 
 // Buscar variações de um produto
-export const fetchVariations = productId => async dispatch => {
+export const fetchVariations = productId => async (dispatch, getState) => {
   try {
     dispatch({type: FETCH_VARIATIONS_IN_PROGRESS, payload: productId});
 
@@ -99,8 +99,8 @@ export const fetchVariations = productId => async dispatch => {
           per_page: 100,
         },
         auth: {
-          username: WOO_API_USERNAME,
-          password: WOO_API_PASSWORD,
+          username: getState().configReducer.user_woo,
+          password: getState().configReducer.password_woo,
         },
       },
     );
@@ -132,62 +132,63 @@ export const fetchVariations = productId => async dispatch => {
 };
 
 // Atualizar estoque de produto simples
-export const reduceProductStockSimple = product => async dispatch => {
-  // Verifica se o produto tem estoque gerenciado e quantidade definida
-  if (!product.manage_stock || product.stock_quantity === null) {
-    toastr.showToast('Este produto não tem estoque gerenciado.', ERROR);
-    return;
-  }
+export const reduceProductStockSimple =
+  product => async (dispatch, getState) => {
+    // Verifica se o produto tem estoque gerenciado e quantidade definida
+    if (!product.manage_stock || product.stock_quantity === null) {
+      toastr.showToast('Este produto não tem estoque gerenciado.', ERROR);
+      return;
+    }
 
-  // Verifica se há estoque suficiente
-  if (product.stock_quantity <= 0) {
-    toastr.showToast('Produto sem estoque disponível.', ERROR);
-    return;
-  }
+    // Verifica se há estoque suficiente
+    if (product.stock_quantity <= 0) {
+      toastr.showToast('Produto sem estoque disponível.', ERROR);
+      return;
+    }
 
-  try {
-    dispatch({type: UPDATE_PRODUCT_STOCK_IN_PROGRESS, payload: product.id});
+    try {
+      dispatch({type: UPDATE_PRODUCT_STOCK_IN_PROGRESS, payload: product.id});
 
-    // Calcula nova quantidade
-    const novaQuantidade = product.stock_quantity - 1;
+      // Calcula nova quantidade
+      const novaQuantidade = product.stock_quantity - 1;
 
-    // Faz a requisição para atualizar o estoque
-    await axios.put(
-      `${WOO_API_URL}/products/${product.id}`,
-      {
-        stock_quantity: novaQuantidade,
-      },
-      {
-        auth: {
-          username: WOO_API_USERNAME,
-          password: WOO_API_PASSWORD,
+      // Faz a requisição para atualizar o estoque
+      await axios.put(
+        `${WOO_API_URL}/products/${product.id}`,
+        {
+          stock_quantity: novaQuantidade,
         },
-      },
-    );
+        {
+          auth: {
+            username: getState().configReducer.user_woo,
+            password: getState().configReducer.password_woo,
+          },
+        },
+      );
 
-    dispatch({
-      type: UPDATE_PRODUCT_STOCK_SUCCESS,
-      payload: {
-        productId: product.id,
-        newQuantity: novaQuantidade,
-      },
-    });
+      dispatch({
+        type: UPDATE_PRODUCT_STOCK_SUCCESS,
+        payload: {
+          productId: product.id,
+          newQuantity: novaQuantidade,
+        },
+      });
 
-    // Opcional: mostrar mensagem de sucesso
-    // toastr.showToast(`Estoque do produto ${product.name} reduzido para ${novaQuantidade}.`, SUCCESS);
-  } catch (error) {
-    console.error(
-      'Erro ao atualizar estoque:',
-      error.response?.data || error.message,
-    );
-    dispatch({type: UPDATE_PRODUCT_STOCK_ERROR, payload: product.id});
-    toastr.showToast('Não foi possível atualizar o estoque.', ERROR);
-  }
-};
+      // Opcional: mostrar mensagem de sucesso
+      // toastr.showToast(`Estoque do produto ${product.name} reduzido para ${novaQuantidade}.`, SUCCESS);
+    } catch (error) {
+      console.error(
+        'Erro ao atualizar estoque:',
+        error.response?.data || error.message,
+      );
+      dispatch({type: UPDATE_PRODUCT_STOCK_ERROR, payload: product.id});
+      toastr.showToast('Não foi possível atualizar o estoque.', ERROR);
+    }
+  };
 
 // Atualizar estoque de variação
 export const reduceProductStockVariation =
-  (productId, variation) => async dispatch => {
+  (productId, variation) => async (dispatch, getState) => {
     if (!variation) {
       toastr.showToast('Selecione uma variação primeiro.', ERROR);
       return;
@@ -207,8 +208,8 @@ export const reduceProductStockVariation =
         },
         {
           auth: {
-            username: WOO_API_USERNAME,
-            password: WOO_API_PASSWORD,
+            username: getState().configReducer.user_woo,
+            password: getState().configReducer.password_woo,
           },
         },
       );

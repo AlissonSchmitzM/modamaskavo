@@ -15,6 +15,9 @@ import NavigatorService from '../../../../services/NavigatorService';
 
 export default class OrdersInProgress extends Component {
   render() {
+    const {descricao} =
+      this.props.route.params || 'Pedido enviado com sucesso!';
+
     return (
       <SafeAreaView
         style={{flex: 1, backgroundColor: '#f5f5f5'}}
@@ -40,7 +43,7 @@ export default class OrdersInProgress extends Component {
               }}
             />
 
-            <Text style={styles.title}>Pedido enviado com sucesso!</Text>
+            <Text style={styles.title}>{descricao}</Text>
             <View
               style={{
                 flex: 1,

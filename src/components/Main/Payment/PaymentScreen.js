@@ -5,11 +5,16 @@ import CardPayment from './Card/CardPayment.js';
 import {styles} from './Styles.js';
 import {connect} from 'react-redux';
 import {logo_cartao, logo_pix} from '../../../imgs/index.js';
-import {paymentSuccessOrder} from '../../../store/actions/orderActions.js';
+import {
+  createOrder,
+  paymentSuccessOrder,
+} from '../../../store/actions/orderActions.js';
 import {
   reduceProductStockSimple,
   reduceProductStockVariation,
 } from '../../../store/actions/productActions.js';
+import Toast from 'react-native-toast-message';
+import {toastConfig} from '../../../services/toastr.js';
 
 class PaymentScreen extends Component {
   constructor(props) {
@@ -29,13 +34,15 @@ class PaymentScreen extends Component {
     if (orderiD) {
       this.props.onPaymentSuccessOrder(orderiD);
     } else {
-      const {product} = this.props.route.params;
+      const {product, orderData} = this.props.route.params;
 
       if (product.type === 'simple') {
         this.props.onReduceProductStockSimple(product);
       } else {
         this.props.onReduceProductStockVariation(product.id, product.variation);
       }
+
+      this.props.onCreateOrder(orderData);
     }
   };
 
@@ -125,6 +132,7 @@ class PaymentScreen extends Component {
             <Text style={styles.methodDescription}>Pagamento em até 12x</Text>
           </View>
         </TouchableOpacity>
+        <Toast config={toastConfig} />
       </View>
     );
   }
@@ -136,6 +144,7 @@ const mapDispatchToProps = dispatch => ({
     dispatch(reduceProductStockSimple(product)),
   onReduceProductStockVariation: (productId, variation) =>
     dispatch(reduceProductStockVariation(productId, variation)),
+  onCreateOrder: order => dispatch(createOrder(order)),
 });
 
 const mapStateToProps = state => ({

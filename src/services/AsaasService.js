@@ -1,4 +1,5 @@
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
 import toastr, {ERROR} from './toastr';
 import store from '../store';
 
@@ -36,6 +37,17 @@ const createApi = () => {
       access_token: apiKey,
     },
   });
+};
+
+// --- Helper function to generate token storage key ---
+const getTokenStorageKey = (
+  customerId,
+  cardNumber,
+  expiryMonth,
+  expiryYear,
+) => {
+  const last4 = String(cardNumber).replace(/\D/g, '').slice(-4);
+  return `asaas_token_${customerId}_${last4}_${expiryMonth}${expiryYear}`;
 };
 
 export default {
@@ -76,10 +88,12 @@ export default {
       }
       return null;
     } catch (error) {
-      toastr.showToast(
-        'Erro ao buscar cliente. Por favor, tente novamente.',
-        ERROR,
-      );
+      // Don't show toast here, let the calling function handle it
+      // toastr.showToast(
+      //   'Erro ao buscar cliente. Por favor, tente novamente.',
+      //   ERROR,
+      // );
+      console.error('Erro ao buscar cliente por CPF/CNPJ:', error);
       throw error;
     }
   },
@@ -109,7 +123,7 @@ export default {
     }
   },
 
-  // Criar cobrança Cartão de Crédito
+  // Criar cobrança Cartão de Crédito (Tokeniza e Paga)
   async criarCobrancaCartao(
     clienteId,
     valor,
@@ -118,6 +132,7 @@ export default {
     cartao,
     parcelas = 1,
   ) {
+    let creditCardToken = null; // Variable to store the token
     try {
       // Limpar o número do cartão de qualquer espaço ou caractere não numérico
       const numeroCartaoLimpo = cartao.numero.replace(/[^\d]/g, '');
@@ -139,6 +154,8 @@ export default {
         },
       });
 
+      creditCardToken = tokenResponse.data.creditCardToken; // Store the token
+
       // Depois, criar a cobrança com o token do cartão
       const response = await api.post('/payments', {
         customer: clienteId,
@@ -149,7 +166,7 @@ export default {
         externalReference: referencia,
         installmentCount: parcelas,
         installmentValue: (valor / parcelas).toFixed(2),
-        creditCardToken: tokenResponse.data.creditCardToken,
+        creditCardToken: creditCardToken, // Use the obtained token
         creditCardHolderInfo: {
           name: cartao.titular,
           email: cartao.email || 'cliente@exemplo.com',
@@ -161,19 +178,79 @@ export default {
         },
       });
 
+      // Return both payment data and the token
+      return {...response.data, creditCardToken: creditCardToken};
+    } catch (error) {
+      // Handle specific Asaas errors if possible
+      if (error.response && error.response.data && error.response.data.errors) {
+        console.error(
+          'Asaas API Error (Tokenize/Pay):',
+          error.response.data.errors,
+        );
+        // You might want to throw a more specific error here based on error.response.data.errors[0].code
+        // e.g., throw new Error(error.response.data.errors[0].description);
+      }
+      // Rethrow the error to be caught by the calling function
+      throw error;
+    }
+  },
+
+  // --- NEW FUNCTION: Create payment using an existing token ---
+  async criarCobrancaComToken(
+    clienteId,
+    valor,
+    descricao,
+    referencia,
+    creditCardToken, // Existing token
+    cartaoInfoTitular, // Only holder info needed
+    parcelas = 1,
+  ) {
+    try {
+      const dataVencimento = this.obterDataVencimento(0);
+      const api = createApi();
+
+      const response = await api.post('/payments', {
+        customer: clienteId,
+        billingType: 'CREDIT_CARD',
+        dueDate: dataVencimento,
+        value: valor,
+        description: descricao,
+        externalReference: referencia,
+        installmentCount: parcelas,
+        installmentValue: (valor / parcelas).toFixed(2),
+        creditCardToken: creditCardToken, // Use the existing token
+        creditCardHolderInfo: {
+          name: cartaoInfoTitular.titular,
+          email: cartaoInfoTitular.email || 'cliente@exemplo.com',
+          cpfCnpj: cartaoInfoTitular.cpfCnpj,
+          postalCode: cartaoInfoTitular.cep || '01001000',
+          addressNumber: cartaoInfoTitular.numeroEndereco || '123',
+          addressComplement: cartaoInfoTitular.complemento || 'Apto 45',
+          phone: cartaoInfoTitular.telefone || '11999999999',
+        },
+      });
+
+      // Return only payment data (token already exists)
       return response.data;
     } catch (error) {
-      if (error.response && error.response.data) {
-        toastr.showToast(
-          'Saldo insuficiente no cartão. Tente outro cartão ou forma de pagamento.',
-          ERROR,
+      if (error.response && error.response.data && error.response.data.errors) {
+        console.error(
+          'Asaas API Error (Pay with Token):',
+          error.response.data.errors,
         );
-      } else {
-        toastr.showToast(
-          'Erro ao processar pagamento. Por favor, tente novamente.',
-          ERROR,
-        );
+        // Check if the error is related to the token itself (e.g., expired, invalid)
+        if (
+          error.response.data.errors.some(
+            e =>
+              e.code === 'invalid_creditCardToken' ||
+              e.code === 'expired_creditCardToken',
+          )
+        ) {
+          // If token is invalid/expired, throw a specific error to trigger re-tokenization
+          throw new Error('invalid_token');
+        }
       }
+      // Rethrow other errors
       throw error;
     }
   },
@@ -233,11 +310,58 @@ export default {
       if (error.response && error.response.status === 404) {
         return false;
       }
-      toastr.showToast(
-        'Erro ao verificar cliente. Por favor, tente novamente.',
-        ERROR,
-      );
+      // Don't show toast here
+      // toastr.showToast(
+      //   'Erro ao verificar cliente. Por favor, tente novamente.',
+      //   ERROR,
+      // );
+      console.error('Erro ao verificar cliente:', error);
       throw error;
+    }
+  },
+
+  // --- Token Management --- (Optional: Could be in a separate service)
+  async saveToken(customerId, cardNumber, expiryMonth, expiryYear, token) {
+    const key = getTokenStorageKey(
+      customerId,
+      cardNumber,
+      expiryMonth,
+      expiryYear,
+    );
+    try {
+      await AsyncStorage.setItem(key, token);
+    } catch (e) {
+      console.error('Failed to save token to AsyncStorage:', e);
+    }
+  },
+
+  async getToken(customerId, cardNumber, expiryMonth, expiryYear) {
+    const key = getTokenStorageKey(
+      customerId,
+      cardNumber,
+      expiryMonth,
+      expiryYear,
+    );
+    try {
+      const token = await AsyncStorage.getItem(key);
+      return token;
+    } catch (e) {
+      console.error('Failed to get token from AsyncStorage:', e);
+      return null;
+    }
+  },
+
+  async removeToken(customerId, cardNumber, expiryMonth, expiryYear) {
+    const key = getTokenStorageKey(
+      customerId,
+      cardNumber,
+      expiryMonth,
+      expiryYear,
+    );
+    try {
+      await AsyncStorage.removeItem(key);
+    } catch (e) {
+      console.error('Failed to remove token from AsyncStorage:', e);
     }
   },
 };

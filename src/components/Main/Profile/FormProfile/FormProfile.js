@@ -42,6 +42,7 @@ import {
   saveProfileUser,
   readDataUser,
   modifyPhoto,
+  modifyUf,
 } from '../../../../store/actions/userActions';
 import toastr, {ERROR, toastConfig} from '../../../../services/toastr';
 import Toast from 'react-native-toast-message';
@@ -76,7 +77,7 @@ class FormProfile extends Component {
     this.complementoRef = React.createRef();
     this.bairroRef = React.createRef();
     this.cidadeRef = React.createRef();
-    this.estadoRef = React.createRef();
+    this.ufRef = React.createRef();
   }
 
   componentDidMount() {
@@ -94,7 +95,6 @@ class FormProfile extends Component {
   };
 
   handleCompleteCep = cep => {
-    console.log('cep', cep);
     if (cep && cep.length >= 8) {
       this.props.onFetchAddressByCep(cep);
     }
@@ -273,7 +273,6 @@ class FormProfile extends Component {
   }
 
   validateFields() {
-    console.log('this.props.cpfcnpj.length', this.props.cpfcnpj.length);
     if (!this.props.name) {
       toastr.showToast('Nome é obrigatório!', ERROR);
       return false;
@@ -301,8 +300,8 @@ class FormProfile extends Component {
     } else if (!this.props.address.city) {
       toastr.showToast('Cidade inválida!', ERROR);
       return false;
-    } else if (!this.props.address.state) {
-      toastr.showToast('Estado inválido!', ERROR);
+    } else if (!this.props.address.uf) {
+      toastr.showToast('UF inválido!', ERROR);
       return false;
     }
 
@@ -501,11 +500,12 @@ class FormProfile extends Component {
                     }}
                   />
                   <TextInput
+                    editable={false}
                     ref={this.cidadeRef}
                     returnKeyType="next"
-                    onSubmitEditing={() => this.estadoRef.current?.focus()}
+                    onSubmitEditing={() => this.ufRef.current?.focus()}
                     label="Cidade"
-                    style={styles.input}
+                    style={[styles.input, {backgroundColor: '#ECECECFF'}]}
                     value={address.city}
                     textColor="#000"
                     onChangeText={text => this.props.onModifyCity(text)}
@@ -515,14 +515,15 @@ class FormProfile extends Component {
                     }}
                   />
                   <TextInput
-                    ref={this.estadoRef}
+                    editable={false}
+                    ref={this.ufRef}
                     returnKeyType="go"
                     onSubmitEditing={this.handleSubmit}
-                    label="Estado"
-                    style={styles.input}
-                    value={address.state}
+                    label="UF"
+                    style={[styles.input, {backgroundColor: '#ECECECFF'}]}
+                    value={address.uf}
                     textColor="#000"
-                    onChangeText={text => this.props.onModifyState(text)}
+                    onChangeText={text => this.props.onModifyUf(text)}
                     mode="outlined"
                     theme={{
                       colors: {primary: '#000000', onSurfaceVariant: '#999999'},
@@ -609,7 +610,7 @@ const mapDispatchToProps = dispatch => ({
   onModifyNeighborhood: neighborhood =>
     dispatch(modifyNeighborhood(neighborhood)),
   onModifyCity: city => dispatch(modifyCity(city)),
-  onModifyState: state => dispatch(modifyState(state)),
+  onModifyUf: uf => dispatch(modifyUf(uf)),
   onModifyName: name => dispatch(modifyName(name)),
   onModifyCpfCnpj: cpfcnpj => dispatch(modifyCpfCnpj(cpfcnpj)),
   onModifyPhone: phone => dispatch(modifyPhone(phone)),

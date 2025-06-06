@@ -5,7 +5,7 @@ import {
   MODIFY_ADDRESS,
   MODIFY_NEIGHBORHOOD,
   MODIFY_CITY,
-  MODIFY_STATE,
+  MODIFY_UF,
   REGISTRATION_IN_PROGRESS,
   REGISTRATION_SUCCESS,
   REGISTRATION_ERROR,
@@ -55,7 +55,7 @@ const INITIAL_STATE = {
     logradouro: '',
     neighborhood: '',
     city: '',
-    state: '',
+    uf: '',
   },
   complement: '',
   number: '',
@@ -77,7 +77,7 @@ const userReducer = (state = INITIAL_STATE, action) => {
           logradouro: action.payload.logradouro,
           neighborhood: action.payload.bairro,
           city: action.payload.localidade,
-          state: action.payload.estado,
+          uf: action.payload.uf,
         },
       };
     case FETCH_ADDRESS_FAILURE:
@@ -116,11 +116,11 @@ const userReducer = (state = INITIAL_STATE, action) => {
       return {...state, number: action.payload};
     case MODIFY_COMPLEMENT:
       return {...state, complement: action.payload};
-    case MODIFY_STATE:
+    case MODIFY_UF:
       return {
         ...state,
         loading: false,
-        address: {...state.address, state: action.payload},
+        address: {...state.address, uf: action.payload},
       };
     case REGISTRATION_IN_PROGRESS:
       return {...state, registrationInProgress: true};
@@ -166,7 +166,7 @@ const userReducer = (state = INITIAL_STATE, action) => {
           logradouro: action.payload.logradouro,
           neighborhood: action.payload.neighborhood,
           city: action.payload.city,
-          state: action.payload.state,
+          uf: action.payload.uf,
         },
         fileImgPath: action.payload.fileImgPath,
         fileImgType: action.payload.fileImgType,

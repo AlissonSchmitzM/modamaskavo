@@ -42,6 +42,7 @@ import {
   FORGOT_PASSWORD_IN_PROGRESS,
   FORGOT_PASSWORD_SUCCESS,
   FORGOT_PASSWORD_ERROR,
+  MODIFY_UF,
 } from './actionTypes';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -91,7 +92,7 @@ export const fetchAddressByCep = cep => {
       const ViaCepService = require('../../services/ViaCepService').default;
       const address = await ViaCepService.searchAddressCompletedByCep(cep);
 
-      if (!address.estado !== undefined && address.localidade !== undefined) {
+      if (!address.uf !== undefined && address.localidade !== undefined) {
         dispatch(fetchAddressSuccess(address));
       } else {
         dispatch(fetchAddressFailure('CEP não encontrado'));
@@ -326,7 +327,7 @@ export const saveProfileUser = dataUser => dispatch => {
     logradouro: address?.logradouro || '',
     neighborhood: address?.neighborhood || '',
     city: address?.city || '',
-    state: address?.state || '',
+    uf: address?.uf || '',
     saveProfile: true,
   };
 
@@ -495,8 +496,8 @@ export const modifyCity = city => dispatch => {
   dispatch({type: MODIFY_CITY, payload: city});
 };
 
-export const modifyState = state => dispatch => {
-  dispatch({type: MODIFY_STATE, payload: state});
+export const modifyUf = uf => dispatch => {
+  dispatch({type: MODIFY_UF, payload: uf});
 };
 
 export const modifyName = name => dispatch => {

@@ -27,7 +27,11 @@ import {
 import {SafeAreaView} from 'react-native-safe-area-context';
 import ShimmerPlaceholder from 'react-native-shimmer-placeholder';
 import LinearGradient from 'react-native-linear-gradient';
-import toastr, {ERROR, toastConfig} from '../../../../../services/toastr';
+import toastr, {
+  ERROR,
+  SUCCESS,
+  toastConfig,
+} from '../../../../../services/toastr';
 import {connect} from 'react-redux';
 import b64 from 'base-64';
 import {
@@ -40,6 +44,7 @@ import {colors} from '../../../../../styles';
 import styles from './Styles';
 import Toast from 'react-native-toast-message';
 import {DatePickerModal} from 'react-native-paper-dates';
+import {SuperFreteService} from '../../../../../services/SuperFreteService';
 
 class ManagerOrdersDetails extends Component {
   constructor(props) {
@@ -64,6 +69,7 @@ class ManagerOrdersDetails extends Component {
       datePickerVisible: false,
       estimatedCompletionDate: '',
       selectedDate: undefined,
+      loadingGenerateLabel: false,
     };
   }
 
@@ -162,6 +168,51 @@ class ManagerOrdersDetails extends Component {
       currentImageUrl: '',
       currentImageName: '',
     });
+  };
+
+  renderImagesProduct = images => {
+    if (!images || !Array.isArray(images) || images.length === 0) {
+      return <Text>Nenhuma imagem disponível</Text>;
+    }
+
+    return (
+      <View style={styles.logosContainer}>
+        {images.map((image, index) => {
+          // Verificar se o logo tem as propriedades necessárias
+          if (!image || !image.src) {
+            return (
+              <Text key={`invalid-logo-${index}`} style={styles.invalidLogo}>
+                Imagem inválida
+              </Text>
+            );
+          }
+
+          const fileName = image.name || `Imagem ${index + 1}`;
+
+          return (
+            <TouchableOpacity
+              key={`logo-${index}`}
+              style={styles.logoLink}
+              onPress={() => this.openImageModal(image.src, fileName)}>
+              <View style={styles.logoItem}>
+                <Text
+                  style={styles.logoText}
+                  numberOfLines={1}
+                  ellipsizeMode="middle">
+                  {fileName}
+                </Text>
+                <IconButton
+                  icon="eye"
+                  size={20}
+                  iconColor="#000"
+                  style={styles.viewIcon}
+                />
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    );
   };
 
   // Função para renderizar as logos como links clicáveis
@@ -275,6 +326,59 @@ class ManagerOrdersDetails extends Component {
     this.setState({completeDialogVisible: true});
   };
 
+  handleGenerateLabel = async (userData, orderId) => {
+    this.setState({loadingGenerateLabel: true});
+    const item = this.props.ordersFull[b64.encode(userData.email)][orderId];
+    const details = {
+      to: {
+        name: userData.name,
+        postal_code: userData.cep.replace('-', ''),
+        address: userData.logradouro,
+        number: userData.number,
+        district: userData.neighborhood,
+        city: userData.city,
+        country: 'Brasil',
+        complement: userData.complement,
+        phone: userData.phone,
+        email: userData.email,
+        state_abbr: userData.uf,
+      }, // Completar dados destinatário
+      service: item.shipping.id,
+      products: [
+        {
+          name:
+            item.type === 'uniform'
+              ? 'Uniforme Maskavo'
+              : item.type === 'exclusive'
+              ? 'Peça Exclusiva'
+              : item.type === 'store'
+              ? 'Compra Peça Exclusiva'
+              : '-',
+          quantity: 1,
+          unitary_value: parseFloat(item.value_order.replace(',', '.')),
+        },
+        {
+          name: 'Frete',
+          quantity: 1,
+          unitary_value: parseFloat(item.shipping.price.replace(',', '.')),
+        },
+      ],
+      options: {receipt: false, own_hand: false},
+    };
+    try {
+      const labelResult = await SuperFreteService.generateLabel(details);
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      toastr.showToast(
+        'Etiqueta gerada com sucesso! Acesse o App do Superfrete para realizar o pagamento.',
+        SUCCESS,
+        5000,
+      );
+    } catch (err) {
+      toastr.showToast('Erro ao gerar etiqueta: ' + err, ERROR);
+    }
+    this.setState({loadingGenerateLabel: false});
+  };
+
   handleConfirmComplete = (user, orderId) => {
     const {code_track} = this.state;
     if (!code_track.trim()) {
@@ -310,14 +414,11 @@ class ManagerOrdersDetails extends Component {
 
   // Render action buttons based on order status
   renderActionButtons = (userData, orderId) => {
-    //const {situation} = orderData;
     const {situation} =
       this.props.ordersFull[b64.encode(userData.email)][orderId];
 
-    // Common styles for all action buttons
     const actionButtonStyle = {marginTop: 10, marginBottom: 5};
 
-    // Don't show actions for completed or canceled orders
     if (situation === 'Concluído' || situation === 'Cancelado') {
       return null;
     }
@@ -327,7 +428,6 @@ class ManagerOrdersDetails extends Component {
         <Divider style={[styles.divider, {marginTop: 15}]} />
         <Text style={styles.actionTitle}>Ações disponíveis:</Text>
 
-        {/* Cancel button available for all statuses except Completed and Canceled */}
         <Button
           mode="outlined"
           icon="close-circle"
@@ -337,7 +437,6 @@ class ManagerOrdersDetails extends Component {
           Cancelar Pedido
         </Button>
 
-        {/* Status-specific action buttons */}
         {situation === 'Pendente' && (
           <Button
             mode="contained"
@@ -358,15 +457,33 @@ class ManagerOrdersDetails extends Component {
           </Button>
         )}
 
-        {situation === 'Em Produção' && (
-          <Button
-            mode="contained"
-            icon="check-circle"
-            onPress={this.handleCompleteOrder}
-            style={[actionButtonStyle, {backgroundColor: '#4CAF50'}]}>
-            Finalizar Pedido
-          </Button>
-        )}
+        {situation === 'Em Produção' ||
+          (situation === 'Aguardando Envio' && (
+            <View>
+              <Button
+                mode="contained"
+                icon="truck-outline"
+                disabled={this.state.loadingGenerateLabel}
+                onPress={() => this.handleGenerateLabel(userData, orderId)}
+                labelStyle={this.state.loadingGenerateLabel && {color: '#fff'}}
+                style={[
+                  actionButtonStyle,
+                  {backgroundColor: '#0fae79'},
+                  this.state.loadingGenerateLabel && {opacity: 0.8},
+                ]}>
+                {this.state.loadingGenerateLabel
+                  ? 'Gerando Etiqueta...'
+                  : 'Gerar Etiqueta SuperFrete'}
+              </Button>
+              <Button
+                mode="contained"
+                icon="check-circle"
+                onPress={this.handleCompleteOrder}
+                style={[actionButtonStyle, {backgroundColor: '#4CAF50'}]}>
+                Finalizar Pedido
+              </Button>
+            </View>
+          ))}
       </View>
     );
   };
@@ -418,9 +535,21 @@ class ManagerOrdersDetails extends Component {
                   fontWeight: 'bold',
                   marginBottom: 8,
                   color:
-                    currentItem.type === 'uniform' ? '#01411EFF' : '#D46103FF',
+                    currentItem.type === 'uniform'
+                      ? '#01411EFF'
+                      : currentItem.type === 'exclusive'
+                      ? '#D46103FF'
+                      : currentItem.type === 'store'
+                      ? '#0066CCFF'
+                      : '#000000',
                 }}>
-                {currentItem.type === 'uniform' ? 'Uniforme' : 'Peça Exclusiva'}
+                {currentItem.type === 'uniform'
+                  ? 'Uniforme'
+                  : currentItem.type === 'exclusive'
+                  ? 'Peça Exclusiva'
+                  : currentItem.type === 'store'
+                  ? 'Compra Peça Exclusiva'
+                  : '-'}
               </Text>
 
               <Divider style={styles.divider} />
@@ -449,17 +578,30 @@ class ManagerOrdersDetails extends Component {
                 </View>
               </View>
 
-              <View style={styles.infoRow}>
-                <Text variant="bodyMedium">
-                  <Text style={styles.boldText}>Segmento: </Text>
-                  {this.renderSafeValue(currentItem.segment)}
-                </Text>
-              </View>
-
-              {currentItem.type === 'exclusive' && (
+              {currentItem.type === 'store' && (
                 <View style={styles.infoRow}>
                   <Text variant="bodyMedium">
-                    <Text style={styles.boldText}>Tamanho: </Text>
+                    <Text style={styles.boldText}>Produto: </Text>
+                    {this.renderSafeValue(currentItem.product.name)}
+                  </Text>
+                </View>
+              )}
+
+              {(currentItem.type === 'uniform' ||
+                currentItem.type === 'exclusive') && (
+                <View style={styles.infoRow}>
+                  <Text variant="bodyMedium">
+                    <Text style={styles.boldText}>Segmento: </Text>
+                    {this.renderSafeValue(currentItem.segment)}
+                  </Text>
+                </View>
+              )}
+
+              {(currentItem.type === 'store' ||
+                currentItem.type === 'exclusive') && (
+                <View style={{marginBottom: 4}}>
+                  <Text variant="bodyMedium">
+                    <Text style={{fontWeight: 'bold'}}>Tamanho: </Text>
                     {this.renderSafeValue(currentItem.tam)}
                   </Text>
                 </View>
@@ -482,14 +624,66 @@ class ManagerOrdersDetails extends Component {
                 </View>
               )}
 
-              <View style={styles.infoRow}>
-                <Text variant="bodyMedium">
-                  <Text style={styles.boldText}>Descrição: </Text>
-                  {this.renderSafeValue(currentItem.description)}
-                </Text>
-              </View>
+              {currentItem.type === 'store' && currentItem.product.images && (
+                <View style={styles.infoRow}>
+                  <Text style={styles.boldText}>Imagem(s):</Text>
+                  {this.renderImagesProduct(currentItem.product.images)}
+                </View>
+              )}
 
-              {/* NOVOS CAMPOS */}
+              {(currentItem.type === 'uniform' ||
+                currentItem.type === 'exclusive') && (
+                <View style={{marginBottom: 4}}>
+                  <Text variant="bodyMedium">
+                    <Text style={{fontWeight: 'bold'}}>Descrição: </Text>
+                    {this.renderSafeValue(currentItem.description)}
+                  </Text>
+                </View>
+              )}
+
+              {currentItem.value_order && (
+                <View
+                  style={{
+                    marginBottom: 4,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                  }}>
+                  <View style={{flex: 1}}>
+                    <Text variant="bodyMedium">
+                      <Text style={{fontWeight: 'bold'}}>
+                        Valor do pedido:{' '}
+                      </Text>
+                      {`R$ ${currentItem.value_order}`}
+                    </Text>
+                  </View>
+                </View>
+              )}
+
+              {currentItem.shipping && (
+                <View style={{marginBottom: 4}}>
+                  <Text variant="bodyMedium">
+                    <Text style={{fontWeight: 'bold'}}>Envio: </Text>
+                    {currentItem.shipping.name} - R${' '}
+                    {currentItem.shipping.price} - Prazo:{' '}
+                    {currentItem.shipping.delivery_time} dias
+                  </Text>
+                </View>
+              )}
+
+              {currentItem.value_order && currentItem.shipping && (
+                <View style={{marginBottom: 4}}>
+                  <Text variant="bodyMedium">
+                    <Text style={{fontWeight: 'bold'}}>Total: </Text>
+                    <Text>R$ </Text>
+                    {(
+                      parseFloat(currentItem.value_order.replace(',', '.')) +
+                      parseFloat(currentItem.shipping.price.replace(',', '.'))
+                    )
+                      .toFixed(2)
+                      .replace('.', ',')}
+                  </Text>
+                </View>
+              )}
 
               {/* Motivo de cancelamento (se existir) */}
               {currentItem.reason_cancellation && (
@@ -500,22 +694,6 @@ class ManagerOrdersDetails extends Component {
                     </Text>
                     {this.renderSafeValue(currentItem.reason_cancellation)}
                   </Text>
-                </View>
-              )}
-
-              {/* Valor do pedido e link de pagamento (se existir) */}
-              {currentItem.value_order && (
-                <View
-                  style={[
-                    styles.infoRow,
-                    {flexDirection: 'row', alignItems: 'center'},
-                  ]}>
-                  <View style={{flex: 1}}>
-                    <Text variant="bodyMedium">
-                      <Text style={styles.boldText}>Valor do pedido: </Text>
-                      {`R$ ${currentItem.value_order}`}
-                    </Text>
-                  </View>
                 </View>
               )}
 
@@ -534,7 +712,7 @@ class ManagerOrdersDetails extends Component {
                 <View style={styles.infoRow}>
                   <Text variant="bodyMedium">
                     <Text style={styles.boldText}>
-                      Data estimada para finalização:{' '}
+                      Data estimada para finalizar produção:{' '}
                     </Text>
                     {currentItem.estimated_finish}
                   </Text>
@@ -969,8 +1147,8 @@ class ManagerOrdersDetails extends Component {
               </View>
             </View>
           </View>
-          <Toast config={toastConfig} />
         </Modal>
+        <Toast config={toastConfig} />
       </SafeAreaView>
     );
   }

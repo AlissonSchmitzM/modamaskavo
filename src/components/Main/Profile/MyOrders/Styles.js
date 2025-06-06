@@ -1,4 +1,6 @@
-import {StyleSheet} from 'react-native';
+import {StyleSheet, Dimensions} from 'react-native';
+
+const windowHeight = Dimensions.get('window').height;
 
 export const styles = StyleSheet.create({
   container: {
@@ -74,5 +76,78 @@ export const styles = StyleSheet.create({
   pageIndicator: {
     fontWeight: 'bold',
     color: '#000000',
+  },
+  logoText: {
+    flex: 1,
+    color: '#000',
+    fontSize: 14,
+  },
+  logoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EBE8E879',
+    borderRadius: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  logoLink: {
+    marginVertical: 4,
+  },
+  viewIcon: {
+    margin: 0,
+    padding: 0,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    padding: 30,
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    width: '100%',
+    maxWidth: 600,
+    height: '90%',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 30,
+    textAlign: 'center',
+  },
+  imageContainer: {
+    width: '100%',
+    height: 300,
+    aspectRatio: 1, // Mantém proporção quadrada
+    marginBottom: 15,
+    borderRadius: 5,
+    overflow: 'hidden',
+  },
+  modalImage: {
+    width: '100%',
+    height: 450,
+  },
+  closeButton: {
+    marginTop: 10,
+    backgroundColor: '#000000FF',
+  },
+  closeButtonLabel: {
+    color: 'white',
+  },
+  invalidLogo: {
+    color: 'red',
+    fontStyle: 'italic',
+  },
+  logosContainer: {
+    marginTop: 20,
+  },
+  infoRow: {
+    marginBottom: 8,
+  },
+  boldText: {
+    fontWeight: 'bold',
   },
 });

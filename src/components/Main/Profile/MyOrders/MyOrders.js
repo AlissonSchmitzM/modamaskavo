@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Linking,
+  Image,
 } from 'react-native';
 import {
   SafeAreaProvider,
@@ -19,6 +20,8 @@ import {
   Menu,
   Provider,
   DefaultTheme,
+  IconButton,
+  Modal,
 } from 'react-native-paper';
 import {connect} from 'react-redux';
 import {
@@ -30,6 +33,8 @@ import LottieView from 'lottie-react-native';
 import {without_orders} from '../../../../assets';
 import NavigatorService from '../../../../services/NavigatorService';
 import {styles} from './Styles';
+import ShimmerPlaceholder from 'react-native-shimmer-placeholder';
+import LinearGradient from 'react-native-linear-gradient';
 
 const ITEMS_PER_PAGE = 10;
 const PAGINATION_CONTAINER_HEIGHT = 60; // Altura do container de paginação
@@ -64,6 +69,10 @@ class MyOrders extends Component {
       selectedSituation: 'Todas',
       situationsList: ['Todas'],
       situationMenuVisible: false,
+      modalVisible: false,
+      currentImageUrl: '',
+      currentImageName: '',
+      imageLoading: true,
     };
   }
 
@@ -174,6 +183,115 @@ class MyOrders extends Component {
     return typeof value === 'object' && value !== null && !Array.isArray(value);
   }
 
+  // Função para abrir a modal com a imagem
+  openImageModal = (url, name) => {
+    this.setState({
+      modalVisible: true,
+      currentImageUrl: url,
+      currentImageName: name,
+      imageLoading: true,
+    });
+  };
+
+  // Função para fechar a modal
+  closeImageModal = () => {
+    this.setState({
+      modalVisible: false,
+      currentImageUrl: '',
+      currentImageName: '',
+    });
+  };
+
+  renderImagesProduct = images => {
+    if (!images || !Array.isArray(images) || images.length === 0) {
+      return <Text>Nenhuma imagem disponível</Text>;
+    }
+
+    return (
+      <View style={styles.logosContainer}>
+        {images.map((image, index) => {
+          // Verificar se o logo tem as propriedades necessárias
+          if (!image || !image.src) {
+            return (
+              <Text key={`invalid-logo-${index}`} style={styles.invalidLogo}>
+                Imagem inválida
+              </Text>
+            );
+          }
+
+          const fileName = image.name || `Imagem ${index + 1}`;
+
+          return (
+            <TouchableOpacity
+              key={`logo-${index}`}
+              style={styles.logoLink}
+              onPress={() => this.openImageModal(image.src, fileName)}>
+              <View style={styles.logoItem}>
+                <Text
+                  style={styles.logoText}
+                  numberOfLines={1}
+                  ellipsizeMode="middle">
+                  {fileName}
+                </Text>
+                <IconButton
+                  icon="eye"
+                  size={20}
+                  iconColor="#000"
+                  style={styles.viewIcon}
+                />
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    );
+  };
+
+  renderLogos = logos => {
+    if (!logos || !Array.isArray(logos) || logos.length === 0) {
+      return <Text>Nenhuma logo disponível</Text>;
+    }
+
+    return (
+      <View style={styles.logosContainer}>
+        {logos.map((logo, index) => {
+          // Verificar se o logo tem as propriedades necessárias
+          if (!logo || !logo.url) {
+            return (
+              <Text key={`invalid-logo-${index}`} style={styles.invalidLogo}>
+                Logo inválida
+              </Text>
+            );
+          }
+
+          const fileName = logo.fileName || `Logo ${index + 1}`;
+
+          return (
+            <TouchableOpacity
+              key={`logo-${index}`}
+              style={styles.logoLink}
+              onPress={() => this.openImageModal(logo.url, fileName)}>
+              <View style={styles.logoItem}>
+                <Text
+                  style={styles.logoText}
+                  numberOfLines={1}
+                  ellipsizeMode="middle">
+                  {fileName}
+                </Text>
+                <IconButton
+                  icon="eye"
+                  size={20}
+                  iconColor="#000"
+                  style={styles.viewIcon}
+                />
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    );
+  };
+
   // Função para renderizar valores de forma segura
   renderSafeValue(value) {
     // Se for null ou undefined
@@ -273,9 +391,21 @@ class MyOrders extends Component {
                 fontWeight: 'bold',
                 marginBottom: 8,
                 color:
-                  currentItem.type === 'uniform' ? '#01411EFF' : '#D46103FF',
+                  currentItem.type === 'uniform'
+                    ? '#01411EFF'
+                    : currentItem.type === 'exclusive'
+                    ? '#D46103FF'
+                    : currentItem.type === 'store'
+                    ? '#0066CCFF'
+                    : '#000000',
               }}>
-              {currentItem.type === 'uniform' ? 'Uniforme' : 'Peça Exclusiva'}
+              {currentItem.type === 'uniform'
+                ? 'Uniforme'
+                : currentItem.type === 'exclusive'
+                ? 'Peça Exclusiva'
+                : currentItem.type === 'store'
+                ? 'Compra Peça Exclusiva'
+                : '-'}
             </Text>
 
             <Divider style={{marginBottom: 8}} />
@@ -307,14 +437,42 @@ class MyOrders extends Component {
               </View>
             </View>
 
-            <View style={{marginBottom: 4}}>
-              <Text variant="bodyMedium">
-                <Text style={{fontWeight: 'bold'}}>Segmento: </Text>
-                {this.renderSafeValue(currentItem.segment)}
-              </Text>
-            </View>
+            {/* Exibição das logos como links clicáveis */}
+            {currentItem.type === 'uniform' && currentItem.logos && (
+              <View style={styles.infoRow}>
+                <Text style={styles.boldText}>Logo(s):</Text>
+                {this.renderLogos(currentItem.logos)}
+              </View>
+            )}
 
-            {currentItem.type === 'exclusive' && (
+            {currentItem.type === 'store' && (
+              <View style={{marginBottom: 4}}>
+                <Text variant="bodyMedium">
+                  <Text style={{fontWeight: 'bold'}}>Produto: </Text>
+                  {this.renderSafeValue(currentItem.product.name)}
+                </Text>
+              </View>
+            )}
+
+            {currentItem.type === 'store' && currentItem.product.images && (
+              <View style={styles.infoRow}>
+                <Text style={styles.boldText}>Imagem(s):</Text>
+                {this.renderImagesProduct(currentItem.product.images)}
+              </View>
+            )}
+
+            {(currentItem.type === 'uniform' ||
+              currentItem.type === 'exclusive') && (
+              <View style={{marginBottom: 4}}>
+                <Text variant="bodyMedium">
+                  <Text style={{fontWeight: 'bold'}}>Segmento: </Text>
+                  {this.renderSafeValue(currentItem.segment)}
+                </Text>
+              </View>
+            )}
+
+            {(currentItem.type === 'store' ||
+              currentItem.type === 'exclusive') && (
               <View style={{marginBottom: 4}}>
                 <Text variant="bodyMedium">
                   <Text style={{fontWeight: 'bold'}}>Tamanho: </Text>
@@ -346,12 +504,15 @@ class MyOrders extends Component {
               </View>
             )}
 
-            <View style={{marginBottom: 4}}>
-              <Text variant="bodyMedium">
-                <Text style={{fontWeight: 'bold'}}>Descrição: </Text>
-                {this.renderSafeValue(currentItem.description)}
-              </Text>
-            </View>
+            {(currentItem.type === 'uniform' ||
+              currentItem.type === 'exclusive') && (
+              <View style={{marginBottom: 4}}>
+                <Text variant="bodyMedium">
+                  <Text style={{fontWeight: 'bold'}}>Descrição: </Text>
+                  {this.renderSafeValue(currentItem.description)}
+                </Text>
+              </View>
+            )}
 
             {/* Motivo de cancelamento (se existir) */}
             {currentItem.reason_cancellation && (
@@ -385,7 +546,16 @@ class MyOrders extends Component {
                     mode="contained"
                     onPress={() =>
                       this.handlePayment(
-                        currentItem.value_order,
+                        (
+                          parseFloat(
+                            currentItem.value_order.replace(',', '.'),
+                          ) +
+                          parseFloat(
+                            currentItem.shipping.price.replace(',', '.'),
+                          )
+                        )
+                          .toFixed(2)
+                          .replace('.', ','),
                         item[0],
                         currentItem.type === 'uniform'
                           ? 'Uniforme'
@@ -395,6 +565,31 @@ class MyOrders extends Component {
                     Pagar
                   </Button>
                 )}
+              </View>
+            )}
+
+            {currentItem.shipping && (
+              <View style={{marginBottom: 4}}>
+                <Text variant="bodyMedium">
+                  <Text style={{fontWeight: 'bold'}}>Envio: </Text>
+                  {currentItem.shipping.name} - R$ {currentItem.shipping.price}{' '}
+                  - Prazo: {currentItem.shipping.delivery_time} dias
+                </Text>
+              </View>
+            )}
+
+            {currentItem.value_order && currentItem.shipping && (
+              <View style={{marginBottom: 4}}>
+                <Text variant="bodyMedium">
+                  <Text style={{fontWeight: 'bold'}}>Total: </Text>
+                  <Text>R$ </Text>
+                  {(
+                    parseFloat(currentItem.value_order.replace(',', '.')) +
+                    parseFloat(currentItem.shipping.price.replace(',', '.'))
+                  )
+                    .toFixed(2)
+                    .replace('.', ',')}
+                </Text>
               </View>
             )}
 
@@ -413,7 +608,7 @@ class MyOrders extends Component {
               <View style={{marginBottom: 4}}>
                 <Text variant="bodyMedium">
                   <Text style={{fontWeight: 'bold'}}>
-                    Data estimada para finalização:{' '}
+                    Data estimada para finalizar produção:{' '}
                   </Text>
                   {currentItem.estimated_finish}
                 </Text>
@@ -658,6 +853,41 @@ class MyOrders extends Component {
             Próxima
           </Button>
         </View>
+        {/* Modal para exibir a imagem */}
+        <Modal
+          visible={this.state.modalVisible}
+          onDismiss={this.closeImageModal}
+          contentContainerStyle={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            {/* Título */}
+            <Text style={styles.modalTitle}>{this.state.currentImageName}</Text>
+
+            {/* Imagem ocupando o máximo do espaço */}
+            <View style={{flex: 1, justifyContent: 'center'}}>
+              <ShimmerPlaceholder
+                LinearGradient={LinearGradient}
+                visible={!this.state.imageLoading}
+                style={{flex: 1}}>
+                <Image
+                  source={{uri: this.state.currentImageUrl}}
+                  style={styles.modalImage}
+                  resizeMode="contain"
+                  onLoadStart={() => this.setState({imageLoading: true})}
+                  onLoadEnd={() => this.setState({imageLoading: false})}
+                />
+              </ShimmerPlaceholder>
+            </View>
+
+            {/* Botão fixo na parte de baixo */}
+            <Button
+              mode="contained"
+              onPress={this.closeImageModal}
+              style={{marginTop: 30}}
+              labelStyle={styles.closeButtonLabel}>
+              Fechar
+            </Button>
+          </View>
+        </Modal>
       </View>
     );
   }

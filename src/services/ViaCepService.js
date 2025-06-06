@@ -25,10 +25,9 @@ const searchAddressCompletedByCep = async cep => {
       logradouro: response.data.logradouro,
       bairro: response.data.bairro,
       localidade: response.data.localidade,
-      estado: response.data.estado,
+      uf: response.data.uf,
     };
   } catch (err) {
-    console.log(`Erro ao recuperar os dados ${err}`);
     return null;
   }
 

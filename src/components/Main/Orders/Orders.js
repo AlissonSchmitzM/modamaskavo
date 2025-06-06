@@ -8,7 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
-  Linking,
+  StyleSheet,
 } from 'react-native';
 import {
   Text,
@@ -25,7 +25,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import styles from './Styles';
 import {colors} from '../../../styles/Styles';
-import {launchImageLibrary} from 'react-native-image-picker'; // Biblioteca que você já tem
+import {launchImageLibrary} from 'react-native-image-picker';
 import {connect} from 'react-redux';
 import {
   createOrder,
@@ -37,6 +37,8 @@ import {
 } from '../../../store/actions/orderActions';
 import {readDataUser} from '../../../store/actions/userActions';
 import toastr, {ERROR, toastConfig} from '../../../services/toastr';
+import {SuperFreteService} from '../../../services/SuperFreteService';
+import modalStyles from './ModalStyles';
 
 class Orders extends Component {
   constructor(props) {
@@ -51,7 +53,12 @@ class Orders extends Component {
         width: 0,
         height: 0,
       },
-      selectedLogos: [], // Array para armazenar os arquivos de logo selecionados
+      selectedLogos: [],
+      showShippingModal: false,
+      shippingLoading: false,
+      shippingOptions: [],
+      selectedShippingOption: null,
+      shippingError: null,
     };
 
     this.inputRef = React.createRef();
@@ -64,18 +71,27 @@ class Orders extends Component {
 
   componentDidMount() {
     this.props.onReadDataUser();
+    if (!this.props.type) {
+      this.props.onModifyType(this.state.selectedOption);
+    }
   }
 
   renderBtnRegister() {
     if (this.props.registerOrderInProgress) {
-      return <ActivityIndicator size="large" color={colors.PRIMARY} />;
+      return (
+        <ActivityIndicator
+          size="large"
+          style={{marginBottom: 20}}
+          color={colors.PRIMARY}
+        />
+      );
     }
     return (
       <Button
         ref={this.btnRegisterRef}
         mode="contained"
         style={styles.button}
-        onPress={this.handleSubmit}>
+        onPress={this.handleOpenShippingModal}>
         Enviar
       </Button>
     );
@@ -89,10 +105,9 @@ class Orders extends Component {
       toastr.showToast('Tamanho é obrigatório!', ERROR);
       return false;
     } else if (!this.props.description) {
-      toastr.showToast('Descrição é obrigatório!', ERROR);
+      toastr.showToast('Descrição é obrigatória!', ERROR);
       return false;
     }
-
     return true;
   }
 
@@ -110,7 +125,7 @@ class Orders extends Component {
       );
       return false;
     } else if (!this.props.description) {
-      toastr.showToast('Descrição é obrigatório!', ERROR);
+      toastr.showToast('Descrição é obrigatória!', ERROR);
       return false;
     }
 
@@ -121,30 +136,33 @@ class Orders extends Component {
     if (this.state.showDropdown && !prevState.showDropdown) {
       this.measureInput();
     }
+    if (this.state.showShippingModal && !prevState.showShippingModal) {
+      this.handleCalculateShipping();
+    }
   }
 
-  // Medir a posição e tamanho do input quando necessário
   measureInput = () => {
     if (this.inputRef.current) {
       this.inputRef.current.measureInWindow((x, y, width, height) => {
-        this.setState({
-          inputLayout: {x, y, width, height},
-        });
+        this.setState({inputLayout: {x, y, width, height}});
       });
     }
   };
 
   setSelectedOption = value => {
     this.setState({selectedOption: value});
-
     this.props.onModifySegment('');
     this.props.onModifyDescription('');
-    this.props.onModifyType(value);
+    this.props.onModifyType(value); // Atualiza o tipo no Redux
+    if (value === 'exclusive') {
+      this.props.onModifyAmountPieces('');
+      this.setState({selectedLogos: []});
+    } else {
+      this.props.onModifyTam('');
+    }
   };
 
   setSelectedTamanho = value => {
-    this.setState({selectedTamanho: value});
-
     this.props.onModifyTam(value);
   };
 
@@ -152,26 +170,95 @@ class Orders extends Component {
     this.setState({showDropdown: value});
   };
 
-  handleSubmit = () => {
+  handleOpenShippingModal = () => {
+    let isValid = false;
     if (this.state.selectedOption === 'uniform') {
-      if (this.validateFieldsUniform()) {
-        this.props.onCreateOrder({
-          ...this.props,
-          selectedLogos: this.state.selectedLogos, // Passa os arquivos selecionados
-        });
-      }
+      isValid = this.validateFieldsUniform();
     } else {
-      if (this.validateFieldsExclusive()) {
-        this.props.onCreateOrder(this.props);
+      isValid = this.validateFieldsExclusive();
+    }
+
+    if (isValid) {
+      if (!this.props.userCep) {
+        toastr.showToast(
+          'CEP do usuário não encontrado. Verifique o cadastro.',
+          ERROR,
+        );
+        return;
       }
+
+      this.setState({
+        showShippingModal: true,
+        shippingOptions: [],
+        selectedShippingOption: null,
+        shippingError: null,
+        shippingLoading: false,
+      });
     }
   };
 
-  // Função para selecionar arquivos de logo
+  handleCloseShippingModal = () => {
+    this.setState({showShippingModal: false});
+  };
+
+  handleCalculateShipping = async () => {
+    this.setState({
+      shippingLoading: true,
+      shippingError: null,
+      shippingOptions: [],
+    });
+    try {
+      const options = await SuperFreteService.calculateShipping(
+        this.props.userCep,
+      );
+      if (Array.isArray(options) && options.length > 0) {
+        this.setState({shippingOptions: options, shippingLoading: false});
+      } else {
+        console.warn('Nenhuma opção de frete retornada pela API.', options);
+        this.setState({
+          shippingError: 'Nenhuma opção de frete encontrada para este CEP.',
+          shippingLoading: false,
+        });
+      }
+    } catch (err) {
+      console.error('Erro ao calcular frete na modal:', err);
+      this.setState({
+        shippingError: err.message || 'Erro ao calcular frete.',
+        shippingLoading: false,
+      });
+    }
+  };
+
+  handleSelectShippingOption = option => {
+    this.setState({selectedShippingOption: option}, () => {
+      this.handleCloseShippingModal();
+      this.proceedWithOrderCreation();
+    });
+  };
+
+  proceedWithOrderCreation = () => {
+    const {selectedShippingOption, selectedLogos} = this.state;
+
+    const orderData = {
+      ...this.props,
+      selectedLogos:
+        this.state.selectedOption === 'uniform' ? selectedLogos : [],
+      selectedShipping: {
+        id: selectedShippingOption.id,
+        name: selectedShippingOption.name,
+        price: selectedShippingOption.price.toFixed(2).replace('.', ','),
+        delivery_time: selectedShippingOption.delivery_time,
+        company: selectedShippingOption.company?.name,
+      },
+    };
+
+    this.props.onCreateOrder(orderData);
+  };
+
   pickLogoFiles = () => {
     const options = {
-      mediaType: 'mixed', // permite imagens e vídeos
-      selectionLimit: 0, // 0 significa sem limite
+      mediaType: 'mixed',
+      selectionLimit: 0,
       includeBase64: false,
     };
 
@@ -180,9 +267,8 @@ class Orders extends Component {
         console.log('Usuário cancelou a seleção de imagens');
       } else if (response.errorCode) {
         console.log('Erro ao selecionar imagem: ', response.errorMessage);
-        alert('Erro ao selecionar arquivo. Tente novamente.');
+        toastr.showToast('Erro ao selecionar arquivo. Tente novamente.', ERROR);
       } else {
-        // Adicionar novos arquivos ao array existente
         if (response.assets && response.assets.length > 0) {
           this.setState(prevState => ({
             selectedLogos: [...prevState.selectedLogos, ...response.assets],
@@ -192,7 +278,6 @@ class Orders extends Component {
     });
   };
 
-  // Função para remover um arquivo dos arquivos selecionados
   removeFile = fileToRemove => {
     this.setState(prevState => ({
       selectedLogos: prevState.selectedLogos.filter(
@@ -201,7 +286,6 @@ class Orders extends Component {
     }));
   };
 
-  // Função para renderizar a pré-visualização do arquivo
   renderFilePreview = file => {
     return (
       <View style={styles.filePreviewContainer} key={file.uri}>
@@ -226,16 +310,18 @@ class Orders extends Component {
     );
   };
 
-  // Exemplo de itens para o dropdown
   tamanhos = ['P', 'M', 'G', 'GG', 'T-Nobres'];
 
   render() {
     const {
       selectedOption,
-      selectedTamanho,
       showDropdown,
       inputLayout,
       selectedLogos,
+      showShippingModal,
+      shippingLoading,
+      shippingOptions,
+      shippingError,
     } = this.state;
 
     return (
@@ -298,19 +384,18 @@ class Orders extends Component {
                       style={styles.inputWrapper}
                       ref={this.inputRef}
                       onLayout={this.measureInput}>
-                      {/* ComboBox somente seleção (não permite digitação) */}
                       <TouchableOpacity
                         activeOpacity={0.7}
                         onPress={() => this.setShowDropdown(true)}>
                         <TextInput
                           label="Tamanho"
-                          ref={this.tamRef}
+                          ref={this.tamRef} // Mantido para referência se necessário, mas valor vem de props
                           style={styles.input}
                           mode="outlined"
                           theme={{colors: {primary: '#000000'}}}
-                          value={this.props.tam}
-                          editable={false} // Impede a digitação
-                          pointerEvents="none" // Impede interação direta com o input
+                          value={this.props.tam} // Usar valor do Redux
+                          editable={false}
+                          pointerEvents="none"
                           right={
                             <TextInput.Icon
                               icon="chevron-down"
@@ -340,8 +425,6 @@ class Orders extends Component {
                       theme={{colors: {primary: '#000000'}}}
                       keyboardType="numeric"
                     />
-
-                    {/* Seletor de arquivos para logo */}
                     <View style={styles.fileUploadContainer}>
                       <Text style={styles.fileUploadLabel}>Logo</Text>
                       <View style={styles.fileUploadControls}>
@@ -358,8 +441,6 @@ class Orders extends Component {
                             : 'Selecionar arquivos'}
                         </Button>
                       </View>
-
-                      {/* Exibir arquivos selecionados */}
                       {selectedLogos.length > 0 && (
                         <View style={styles.selectedFilesContainer}>
                           <Text style={styles.selectedFilesTitle}>
@@ -378,6 +459,7 @@ class Orders extends Component {
 
                 <TextInput
                   label="Breve descrição"
+                  ref={this.descriptionRef} // Adicionado ref
                   style={styles.input}
                   mode="outlined"
                   value={this.props.description}
@@ -386,13 +468,15 @@ class Orders extends Component {
                   multiline={true}
                   numberOfLines={5}
                   textAlignVertical="top"
+                  returnKeyType="done"
+                  onSubmitEditing={this.handleOpenShippingModal}
                 />
               </View>
               {this.renderBtnRegister()}
             </View>
           </ScrollView>
 
-          {/* Modal para exibir as opções do dropdown */}
+          {/* Modal Dropdown Tamanho */}
           <Modal
             visible={showDropdown}
             transparent={true}
@@ -422,6 +506,7 @@ class Orders extends Component {
                       onPress={() => {
                         this.setSelectedTamanho(item);
                         this.setShowDropdown(false);
+                        this.descriptionRef.current?.focus();
                       }}>
                       <Text>{item}</Text>
                     </TouchableOpacity>
@@ -430,6 +515,93 @@ class Orders extends Component {
                 />
               </Surface>
             </TouchableOpacity>
+          </Modal>
+
+          {/* Modal Cálculo de Frete */}
+          <Modal
+            visible={showShippingModal}
+            transparent={true}
+            animationType="slide"
+            onRequestClose={this.handleCloseShippingModal}>
+            <View style={modalStyles.modalContainer}>
+              <Surface style={modalStyles.modalContent}>
+                <Text style={modalStyles.modalTitle}>Selecionar Frete</Text>
+                <Text style={modalStyles.modalCepInfo}>
+                  Calculando para o CEP: {this.props.userCep || 'N/A'}
+                </Text>
+                <Text style={[modalStyles.modalCepInfo, {fontWeight: 'bold'}]}>
+                  Obs: O prazo é calculado a partir do fim da produção, ou seja,
+                  quando o pedido for concluido. O código de rastreio será
+                  enviado após o envio da mercadoria.
+                </Text>
+
+                {shippingLoading && (
+                  <View style={modalStyles.centeredView}>
+                    <ActivityIndicator size="large" color={colors.PRIMARY} />
+                    <Text style={modalStyles.loadingText}>
+                      Calculando opções...
+                    </Text>
+                  </View>
+                )}
+
+                {shippingError && (
+                  <View style={modalStyles.centeredView}>
+                    <Text style={modalStyles.errorText}>
+                      Erro: {shippingError}
+                    </Text>
+                    <Button onPress={this.handleCalculateShipping}>
+                      Tentar Novamente
+                    </Button>
+                  </View>
+                )}
+
+                {!shippingLoading &&
+                  !shippingError &&
+                  shippingOptions.length > 0 && (
+                    <FlatList
+                      data={shippingOptions}
+                      keyExtractor={item => item.id.toString()} // Usa o ID do serviço como chave
+                      renderItem={({item}) => (
+                        <TouchableOpacity
+                          style={modalStyles.optionItem}
+                          onPress={() => this.handleSelectShippingOption(item)}>
+                          <View style={modalStyles.optionDetails}>
+                            <Text style={modalStyles.optionName}>
+                              {item.name} ({item.company?.name || 'N/A'})
+                            </Text>
+                            <Text style={modalStyles.optionPrice}>
+                              R${' '}
+                              {item.price?.toFixed(2).replace('.', ',') ||
+                                'N/A'}
+                            </Text>
+                          </View>
+                          <Text style={modalStyles.optionDelivery}>
+                            Prazo: {item.delivery_time || 'N/A'} dias
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                      style={modalStyles.optionsList}
+                    />
+                  )}
+
+                {!shippingLoading &&
+                  !shippingError &&
+                  shippingOptions.length === 0 && (
+                    <View style={modalStyles.centeredView}>
+                      <Text>Nenhuma opção de frete encontrada.</Text>
+                    </View>
+                  )}
+
+                <Button
+                  mode="outlined"
+                  onPress={this.handleCloseShippingModal}
+                  style={modalStyles.closeButton}
+                  disabled={shippingLoading}
+                  theme={{colors: {primary: '#000000'}}}>
+                  Cancelar
+                </Button>
+              </Surface>
+            </View>
           </Modal>
         </KeyboardAvoidingView>
         <Toast config={toastConfig} />
@@ -456,6 +628,7 @@ const mapStateToProps = state => ({
   tam: state.orderReducer.tam,
   amountPieces: state.orderReducer.amountPieces,
   description: state.orderReducer.description,
+  userCep: state.userReducer.cep,
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(Orders);
