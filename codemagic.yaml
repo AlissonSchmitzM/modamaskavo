@@ -19,19 +19,18 @@ workflows:
         XCODE_SCHEME: 'modamaskavo'
 
     scripts:
-      - name: Verify Node.js and npm
-        script: |
-          node -v
-          npm -v
-          which npm
-
       - name: Install npm dependencies
         script: |
           npm install
 
-      - name: Install CocoaPods
+      - name: Clean and Install CocoaPods
         script: |
           cd ios
+          # Limpeza agressiva do CocoaPods
+          pod deintegrate || true # Deintegrate se já estiver integrado
+          rm -rf Pods
+          rm -f Podfile.lock
+          pod clean || true # Limpa o cache do pod
           pod install
 
       - name: Set up code signing settings on Xcode project
