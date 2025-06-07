@@ -6,24 +6,20 @@ workflows:
     name: iOS Build
     instance_type: mac_mini_m1
     integrations:
-      # Substitua 'your-github-integration-id' pelo ID da sua integração GitHub no CodeMagic
-      # Você pode encontrar isso nas configurações do seu aplicativo no CodeMagic, em 'Integrations'
-      # Se você conectou via GitHub, o CodeMagic geralmente detecta automaticamente.
-      # Se não tiver certeza, pode deixar essa linha comentada por enquanto e o CodeMagic pode pedir para configurar.
-      # github:
-      #   integration_id: your-github-integration-id
+      github:
+        integration_id: NYzgXQlItsMW8Bb3kUrUKN4Ev3rwStaOBfuvFr4FwM0
 
     environment:
-      # Versão do Node.js que seu projeto usa
       node: 18.x
-      # Versão do Ruby para CocoaPods (geralmente a padrão do CodeMagic funciona)
       ruby: 3.x
-      # Variáveis de ambiente para credenciais de assinatura (serão configuradas no CodeMagic UI)
       groups:
-        - apple_developer_portal_credentials # Grupo de credenciais da Apple que você configurou no CodeMagic UI
+        - apple_developer_portal_credentials
       vars:
-        XCODE_WORKSPACE: 'modamaskavo.xcworkspace' # Nome do seu arquivo .xcworkspace (verifique na pasta ios/)
-        XCODE_SCHEME: 'modamaskavo' # Nome do seu esquema (geralmente o nome do projeto)
+        # Tenta usar .xcworkspace, se não encontrar, usa .xcodeproj
+        XCODE_PROJECT_OR_WORKSPACE:
+          - modamaskavo.xcworkspace
+          - modamaskavo.xcodeproj
+        XCODE_SCHEME: modamaskavo
 
     scripts:
       - name: Install npm dependencies
@@ -41,8 +37,20 @@ workflows:
 
       - name: Build iOS app
         script: |
+          # Usa o primeiro arquivo encontrado na lista XCODE_PROJECT_OR_WORKSPACE
+          if [ -d "ios/$XCODE_PROJECT_OR_WORKSPACE" ]; then
+            PROJECT_PATH="ios/$XCODE_PROJECT_OR_WORKSPACE"
+          elif [ -d "ios/modamaskavo.xcworkspace" ]; then
+            PROJECT_PATH="ios/modamaskavo.xcworkspace"
+          elif [ -f "ios/modamaskavo.xcodeproj/project.pbxproj" ]; then
+            PROJECT_PATH="ios/modamaskavo.xcodeproj"
+          else
+            echo "Erro: Não foi encontrado .xcworkspace nem .xcodeproj na pasta ios/"
+            exit 1
+          fi
+
           xcode-project build-ipa \
-            --workspace "$XCODE_WORKSPACE" \
+            --project "$PROJECT_PATH" \
             --scheme "$XCODE_SCHEME"
 
     artifacts:
@@ -52,8 +60,6 @@ workflows:
       - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
 
     publishing:
-      # Configurações de publicação (opcional, para App Store Connect, TestFlight, etc.)
-      # Você pode configurar isso mais tarde no CodeMagic UI
       # apple_app_store:
       #   api_key:
       #     id: Encrypted
