@@ -13,18 +13,20 @@ workflows:
 
     environment:
       # Versão do Node.js que seu projeto usa (verifique seu package.json ou use a que funciona localmente)
-      node: lts
-      # Versão do Ruby para CocoaPods (geralmente a padrão do CodeMagic funciona bem)
+      node: 16.x # Ou 18.x se você tiver certeza que seu projeto precisa dela e o CodeMagic a suporta
       ruby: default
-      # Grupo de variáveis de ambiente para credenciais de assinatura (configurado no CodeMagic UI)
       groups:
-        - apple_developer_portal_credentials # Certifique-se de que este nome corresponde ao que você configurou
+        - apple_developer_portal_credentials
       vars:
-        # Nome do seu esquema Xcode (geralmente o nome do projeto)
         XCODE_SCHEME: 'modamaskavo'
-        # Não precisamos de XCODE_WORKSPACE aqui, vamos detectá-lo no script de build
 
     scripts:
+      - name: Verify Node.js and npm
+        script: |
+          node -v
+          npm -v
+          which npm
+
       - name: Install npm dependencies
         script: |
           npm install
@@ -40,7 +42,6 @@ workflows:
 
       - name: Build iOS app
         script: |
-          # Verifica se o .xcworkspace existe (gerado pelo pod install)
           if [ -d "ios/modamaskavo.xcworkspace" ]; then
             echo "Usando .xcworkspace"
             xcode-project build-ipa \
