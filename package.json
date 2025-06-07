@@ -8,7 +8,7 @@
     "lint": "eslint .",
     "start": "react-native start",
     "test": "jest",
-    "postinstall": "react-native-vector-icons"
+    "postinstall": "npx react-native link"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^1.24.0",
