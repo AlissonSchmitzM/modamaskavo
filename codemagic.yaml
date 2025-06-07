@@ -1,0 +1,63 @@
+# codemagic.yaml
+# Este arquivo define o fluxo de build para o CodeMagic
+
+workflows:
+  ios-build:
+    name: iOS Build
+    instance_type: mac_mini_m1
+    integrations:
+      # Substitua 'your-github-integration-id' pelo ID da sua integração GitHub no CodeMagic
+      # Você pode encontrar isso nas configurações do seu aplicativo no CodeMagic, em 'Integrations'
+      # Se você conectou via GitHub, o CodeMagic geralmente detecta automaticamente.
+      # Se não tiver certeza, pode deixar essa linha comentada por enquanto e o CodeMagic pode pedir para configurar.
+      # github:
+      #   integration_id: your-github-integration-id
+
+    environment:
+      # Versão do Node.js que seu projeto usa
+      node: 18.x
+      # Versão do Ruby para CocoaPods (geralmente a padrão do CodeMagic funciona)
+      ruby: 3.x
+      # Variáveis de ambiente para credenciais de assinatura (serão configuradas no CodeMagic UI)
+      groups:
+        - apple_developer_portal_credentials # Grupo de credenciais da Apple que você configurou no CodeMagic UI
+      vars:
+        XCODE_WORKSPACE: 'modamaskavo.xcworkspace' # Nome do seu arquivo .xcworkspace (verifique na pasta ios/)
+        XCODE_SCHEME: 'modamaskavo' # Nome do seu esquema (geralmente o nome do projeto)
+
+    scripts:
+      - name: Install npm dependencies
+        script: |
+          npm install
+
+      - name: Install CocoaPods
+        script: |
+          cd ios
+          pod install
+
+      - name: Set up code signing settings on Xcode project
+        script: |
+          xcode-project use-profiles
+
+      - name: Build iOS app
+        script: |
+          xcode-project build-ipa \
+            --workspace "$XCODE_WORKSPACE" \
+            --scheme "$XCODE_SCHEME"
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+
+    publishing:
+      # Configurações de publicação (opcional, para App Store Connect, TestFlight, etc.)
+      # Você pode configurar isso mais tarde no CodeMagic UI
+      # apple_app_store:
+      #   api_key:
+      #     id: Encrypted
+      #     issuer_id: Encrypted
+      #   track: TestFlight
+      #   submit_for_review: false
+      #   automatic_release: false
