@@ -4,22 +4,25 @@
 workflows:
   ios-build:
     name: iOS Build
-    instance_type: mac_mini_m1
-    integrations:
-      github:
-        integration_id: NYzgXQlItsMW8Bb3kUrUKN4Ev3rwStaOBfuvFr4FwM0
+    instance_type: mac_mini_m1 # ou mac_mini_m2, dependendo da sua necessidade e plano
+
+    # Removendo o bloco 'integrations' pois a conexão GitHub já é feita na UI do CodeMagic
+    # integrations:
+    #   github:
+    #     integration_id: SEU_ID_AQUI # Esta linha não é necessária se a integração já foi feita na UI
 
     environment:
+      # Versão do Node.js que seu projeto usa (verifique seu package.json ou use a que funciona localmente)
       node: 18.x
+      # Versão do Ruby para CocoaPods (geralmente a padrão do CodeMagic funciona bem)
       ruby: 3.x
+      # Grupo de variáveis de ambiente para credenciais de assinatura (configurado no CodeMagic UI)
       groups:
-        - apple_developer_portal_credentials
+        - apple_developer_portal_credentials # Certifique-se de que este nome corresponde ao que você configurou
       vars:
-        # Tenta usar .xcworkspace, se não encontrar, usa .xcodeproj
-        XCODE_PROJECT_OR_WORKSPACE:
-          - modamaskavo.xcworkspace
-          - modamaskavo.xcodeproj
-        XCODE_SCHEME: modamaskavo
+        # Nome do seu esquema Xcode (geralmente o nome do projeto)
+        XCODE_SCHEME: 'modamaskavo'
+        # Não precisamos de XCODE_WORKSPACE aqui, vamos detectá-lo no script de build
 
     scripts:
       - name: Install npm dependencies
@@ -37,21 +40,21 @@ workflows:
 
       - name: Build iOS app
         script: |
-          # Usa o primeiro arquivo encontrado na lista XCODE_PROJECT_OR_WORKSPACE
-          if [ -d "ios/$XCODE_PROJECT_OR_WORKSPACE" ]; then
-            PROJECT_PATH="ios/$XCODE_PROJECT_OR_WORKSPACE"
-          elif [ -d "ios/modamaskavo.xcworkspace" ]; then
-            PROJECT_PATH="ios/modamaskavo.xcworkspace"
-          elif [ -f "ios/modamaskavo.xcodeproj/project.pbxproj" ]; then
-            PROJECT_PATH="ios/modamaskavo.xcodeproj"
+          # Verifica se o .xcworkspace existe (gerado pelo pod install)
+          if [ -d "ios/modamaskavo.xcworkspace" ]; then
+            echo "Usando .xcworkspace"
+            xcode-project build-ipa \
+              --workspace "ios/modamaskavo.xcworkspace" \
+              --scheme "$XCODE_SCHEME"
+          elif [ -d "ios/modamaskavo.xcodeproj" ]; then
+            echo "Usando .xcodeproj"
+            xcode-project build-ipa \
+              --project "ios/modamaskavo.xcodeproj" \
+              --scheme "$XCODE_SCHEME"
           else
             echo "Erro: Não foi encontrado .xcworkspace nem .xcodeproj na pasta ios/"
             exit 1
           fi
-
-          xcode-project build-ipa \
-            --project "$PROJECT_PATH" \
-            --scheme "$XCODE_SCHEME"
 
     artifacts:
       - build/ios/ipa/*.ipa
@@ -59,11 +62,13 @@ workflows:
       - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app
       - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
 
-    publishing:
-      # apple_app_store:
-      #   api_key:
-      #     id: Encrypted
-      #     issuer_id: Encrypted
-      #   track: TestFlight
-      #   submit_for_review: false
-      #   automatic_release: false
+    # Removendo o bloco 'publishing' para evitar o erro 'none is not an allowed value'
+    # Se você quiser configurar a publicação, adicione o bloco completo aqui com as configurações corretas.
+    # publishing:
+    #   apple_app_store:
+    #     api_key:
+    #       id: Encrypted
+    #       issuer_id: Encrypted
+    #     track: TestFlight
+    #     submit_for_review: false
+    #     automatic_release: false
