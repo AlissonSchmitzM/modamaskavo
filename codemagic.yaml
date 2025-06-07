@@ -15,7 +15,7 @@ workflows:
       # Versão do Node.js que seu projeto usa (verifique seu package.json ou use a que funciona localmente)
       node: lts
       # Versão do Ruby para CocoaPods (geralmente a padrão do CodeMagic funciona bem)
-      ruby: 3.x
+      ruby: default
       # Grupo de variáveis de ambiente para credenciais de assinatura (configurado no CodeMagic UI)
       groups:
         - apple_developer_portal_credentials # Certifique-se de que este nome corresponde ao que você configurou
