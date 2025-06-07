@@ -30,7 +30,6 @@ workflows:
           pod deintegrate || true # Deintegrate se já estiver integrado
           rm -rf Pods
           rm -f Podfile.lock
-          pod clean || true # Limpa o cache do pod
           pod install
 
       - name: Set up code signing settings on Xcode project
