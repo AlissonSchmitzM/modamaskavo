@@ -13,7 +13,7 @@ workflows:
 
     environment:
       # Versão do Node.js que seu projeto usa (verifique seu package.json ou use a que funciona localmente)
-      node: 18.x
+      node: lts
       # Versão do Ruby para CocoaPods (geralmente a padrão do CodeMagic funciona bem)
       ruby: 3.x
       # Grupo de variáveis de ambiente para credenciais de assinatura (configurado no CodeMagic UI)
