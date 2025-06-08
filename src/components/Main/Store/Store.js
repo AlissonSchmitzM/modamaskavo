@@ -23,7 +23,6 @@ import {
   toggleDropdown,
   setDropdownLayout,
 } from '../../../store/actions/productActions';
-import {readDataConfig} from '../../../store/actions/configActions';
 import Toast from 'react-native-toast-message';
 import toastr, {ERROR, toastConfig} from '../../../services/toastr';
 import styles from './Styles';
@@ -122,6 +121,10 @@ class Store extends Component {
     this.dropdownRefs = {};
   }
 
+  componentDidMount() {
+    this.props.onReadDataProducts();
+  }
+
   componentDidUpdate(prevProps, prevState) {
     if (this.state.showShippingModal && !prevState.showShippingModal) {
       this.handleCalculateShipping();
@@ -129,6 +132,11 @@ class Store extends Component {
   }
 
   handleOpenShippingModal = product => {
+    if (product.stock_quantity < 1) {
+      toastr.showToast('Produto sem estoque.', ERROR);
+      return;
+    }
+
     if (!this.props.userCep) {
       toastr.showToast(
         'CEP do usuário não encontrado. Verifique o cadastro.',
@@ -221,14 +229,7 @@ class Store extends Component {
 
   proceedWithOrderCreation = () => {
     const {selectedShippingOption, selectedLogos} = this.state;
-    /*
- type: state.orderReducer.type,
-  segment: state.orderReducer.segment,
-  tam: state.orderReducer.tam,
-  amountPieces: state.orderReducer.amountPieces,
-  description: state.orderReducer.description,
 
-*/
     const orderData = {
       ...this.props,
       selectedLogos:
@@ -248,7 +249,7 @@ class Store extends Component {
   measureDropdown = productId => {
     if (this.dropdownRefs[productId]) {
       this.dropdownRefs[productId].measureInWindow((x, y, width, height) => {
-        this.props.setDropdownLayout(productId, {x, y, width, height});
+        this.props.onSetDropdownLayout(productId, {x, y, width, height});
       });
     }
   };
@@ -283,13 +284,13 @@ class Store extends Component {
         animated: true,
       });
     }
-    this.props.setActiveImageIndex(productId, prevIndex);
+    this.props.onSetActiveImageIndex(productId, prevIndex);
   };
 
   handleScroll = (event, productId) => {
     const scrollPosition = event.nativeEvent.contentOffset.x;
     const index = Math.round(scrollPosition / CARD_WIDTH);
-    this.props.setActiveImageIndex(productId, index);
+    this.props.onSetActiveImageIndex(productId, index);
   };
 
   onScrollToIndexFailed = (info, productId) => {
@@ -529,7 +530,7 @@ class Store extends Component {
                       }}
                       activeOpacity={0.7}
                       onPress={() => {
-                        this.props.toggleDropdown(item.id);
+                        this.props.onToggleDropdown(item.id);
                         this.measureDropdown(item.id);
                       }}
                       style={styles.dropdownField}
@@ -588,13 +589,13 @@ class Store extends Component {
               transparent={true}
               animationType="none"
               onRequestClose={() => {
-                this.props.toggleDropdown(productId);
+                this.props.onToggleDropdown(productId);
               }}>
               <TouchableOpacity
                 style={styles.modalOverlay}
                 activeOpacity={1}
                 onPress={() => {
-                  this.props.toggleDropdown(productId);
+                  this.props.onToggleDropdown(productId);
                 }}>
                 <View
                   style={[
@@ -643,7 +644,7 @@ class Store extends Component {
                         <TouchableOpacity
                           style={styles.dropdownItem}
                           onPress={() =>
-                            this.props.selectVariation(productId, item)
+                            this.props.onSelectVariation(productId, item)
                           }>
                           <Text style={styles.dropdownItemText}>
                             {this.formatarAtributos(item)}
@@ -772,14 +773,16 @@ const mapStateToProps = state => ({
   userCep: state.userReducer.cep,
 });
 
-const mapDispatchToProps = {
-  fetchProducts,
-  loadMoreProducts,
-  selectVariation,
-  setActiveImageIndex,
-  toggleDropdown,
-  setDropdownLayout,
-  readDataConfig,
-};
+const mapDispatchToProps = dispatch => ({
+  onReadDataProducts: () => dispatch(fetchProducts()),
+  onLoadMoreProducts: () => dispatch(loadMoreProducts()),
+  onSelectVariation: (productId, item) =>
+    dispatch(selectVariation(productId, item)),
+  onToggleDropdown: productId => dispatch(toggleDropdown(productId)),
+  onSetDropdownLayout: (productId, layout) =>
+    dispatch(setDropdownLayout(productId, layout)),
+  onSetActiveImageIndex: (productId, index) =>
+    dispatch(setActiveImageIndex(productId, index)),
+});
 
 export default connect(mapStateToProps, mapDispatchToProps)(Store);
