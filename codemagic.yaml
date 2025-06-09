@@ -8,7 +8,7 @@ workflows:
         - apple_developer_portal_credentials
       vars:
         XCODE_SCHEME: 'modamaskavo'
-        BUNDLE_ID: 'modamaskavo' # Substitua pelo seu bundle identifier real
+        BUNDLE_ID: 'modamaskavo.app' # Substitua pelo seu bundle identifier real
       ios_signing:
         distribution_type: development # ou ad-hoc, app-store, enterprise
         bundle_identifier: $BUNDLE_ID
