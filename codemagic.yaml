@@ -1,17 +1,22 @@
+# codemagic.yaml
+# Este arquivo define o fluxo de build para o CodeMagic
+
 workflows:
   ios-build:
     name: iOS Build
-    instance_type: mac_mini_m1
+    instance_type: mac_mini_m1 # ou mac_mini_m2, dependendo da sua necessidade e plano
+
+    # Removendo o bloco 'integrations' pois a conexão GitHub já é feita na UI do CodeMagic
+    # integrations:
+    #   github:
+    #     integration_id: SEU_ID_AQUI # Esta linha não é necessária se a integração já foi feita na UI
 
     environment:
+      # Versão do Node.js que seu projeto usa (verifique seu package.json ou use a que funciona localmente)
       groups:
         - apple_developer_portal_credentials
       vars:
         XCODE_SCHEME: 'modamaskavo'
-        BUNDLE_ID: 'modamaskavo.app' # Substitua pelo seu bundle identifier real
-      ios_signing:
-        distribution_type: development # ou ad-hoc, app-store, enterprise
-        bundle_identifier: $BUNDLE_ID
 
     scripts:
       - name: Install npm dependencies
@@ -21,24 +26,14 @@ workflows:
       - name: Clean and Install CocoaPods
         script: |
           cd ios
-          pod deintegrate || true
+          # Limpeza agressiva do CocoaPods
+          pod deintegrate || true # Deintegrate se já estiver integrado
           rm -rf Pods
           rm -f Podfile.lock
           pod install
 
       - name: Set up code signing settings on Xcode project
         script: |
-          # Inicializa o keychain
-          keychain initialize
-
-          # Busca os arquivos de assinatura do Apple Developer Portal
-          # Substitua o tipo conforme sua necessidade (IOS_APP_DEVELOPMENT, IOS_APP_ADHOC, IOS_APP_STORE)
-          app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_DEVELOPMENT
-
-          # Adiciona os certificados ao keychain
-          keychain add-certificates
-
-          # Configura o projeto Xcode para usar os perfis
           xcode-project use-profiles
 
       - name: Build iOS app
@@ -63,3 +58,14 @@ workflows:
       - /tmp/xcodebuild_logs/*.log
       - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app
       - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+
+    # Removendo o bloco 'publishing' para evitar o erro 'none is not an allowed value'
+    # Se você quiser configurar a publicação, adicione o bloco completo aqui com as configurações corretas.
+    # publishing:
+    #   apple_app_store:
+    #     api_key:
+    #       id: Encrypted
+    #       issuer_id: Encrypted
+    #     track: TestFlight
+    #     submit_for_review: false
+    #     automatic_release: false
