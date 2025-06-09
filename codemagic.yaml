@@ -10,7 +10,7 @@ workflows:
         XCODE_SCHEME: 'modamaskavo'
         BUNDLE_ID: 'com.modamaskavo.app' # Substitua pelo seu bundle identifier real
       ios_signing:
-        distribution_type: ad-hoc # ou ad-hoc, app-store, enterprise
+        distribution_type: development # ou ad-hoc, app-store, enterprise
         bundle_identifier: $BUNDLE_ID
 
     scripts:
