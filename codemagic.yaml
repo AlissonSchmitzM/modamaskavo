@@ -18,7 +18,7 @@ workflows:
       vars:
         XCODE_SCHEME: 'modamaskavo'
 
-    scripts:
+        scripts:
       - name: Install npm dependencies
         script: |
           npm install
@@ -34,7 +34,16 @@ workflows:
 
       - name: Set up code signing settings on Xcode project
         script: |
+          # Esta linha usa as credenciais do Codemagic para configurar a assinatura de código automaticamente.
           xcode-project use-profiles
+
+          # Adicione esta linha para definir explicitamente o ID da sua equipe de desenvolvimento e o estilo de assinatura.
+          # SUBSTITUA 'YOUR_DEVELOPMENT_TEAM_ID' PELO SEU REAL TEAM ID DA APPLE DEVELOPER.
+          xcode-project set-project-build-settings \
+            --project "ios/modamaskavo.xcodeproj" \
+            --target "modamaskavo" \
+            --setting "DEVELOPMENT_TEAM=YOUR_DEVELOPMENT_TEAM_ID" \
+            --setting "CODE_SIGN_STYLE=Automatic" # 'Automatic' é geralmente o mais fácil para CI/CD
 
       - name: Build iOS app
         script: |
@@ -42,12 +51,14 @@ workflows:
             echo "Usando .xcworkspace"
             xcode-project build-ipa \
               --workspace "ios/modamaskavo.xcworkspace" \
-              --scheme "$XCODE_SCHEME"
+              --scheme "$XCODE_SCHEME" \
+              --clean # Adicionar --clean para garantir um build limpo
           elif [ -d "ios/modamaskavo.xcodeproj" ]; then
             echo "Usando .xcodeproj"
             xcode-project build-ipa \
               --project "ios/modamaskavo.xcodeproj" \
-              --scheme "$XCODE_SCHEME"
+              --scheme "$XCODE_SCHEME" \
+              --clean # Adicionar --clean para garantir um build limpo
           else
             echo "Erro: Não foi encontrado .xcworkspace nem .xcodeproj na pasta ios/"
             exit 1
