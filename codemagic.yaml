@@ -18,7 +18,7 @@ workflows:
       vars:
         XCODE_SCHEME: 'modamaskavo'
 
-        scripts:
+    scripts:
       - name: Install npm dependencies
         script: |
           npm install
