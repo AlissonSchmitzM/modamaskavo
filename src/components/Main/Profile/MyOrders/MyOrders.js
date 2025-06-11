@@ -548,14 +548,19 @@ class MyOrders extends Component {
                       this.handlePayment(
                         (
                           parseFloat(
-                            currentItem.value_order.replace(',', '.'),
+                            currentItem.value_order
+                              .replace(/\./g, '')
+                              .replace(',', '.'),
                           ) +
                           parseFloat(
-                            currentItem.shipping.price.replace(',', '.'),
+                            currentItem.shipping.price
+                              .replace(/\./g, '')
+                              .replace(',', '.'),
                           )
-                        )
-                          .toFixed(2)
-                          .replace('.', ','),
+                        ).toLocaleString('pt-BR', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        }),
                         item[0],
                         currentItem.type === 'uniform'
                           ? 'Uniforme'
@@ -584,11 +589,20 @@ class MyOrders extends Component {
                   <Text style={{fontWeight: 'bold'}}>Total: </Text>
                   <Text>R$ </Text>
                   {(
-                    parseFloat(currentItem.value_order.replace(',', '.')) +
-                    parseFloat(currentItem.shipping.price.replace(',', '.'))
-                  )
-                    .toFixed(2)
-                    .replace('.', ',')}
+                    parseFloat(
+                      currentItem.value_order
+                        .replace(/\./g, '')
+                        .replace(',', '.'),
+                    ) +
+                    parseFloat(
+                      currentItem.shipping.price
+                        .replace(/\./g, '')
+                        .replace(',', '.'),
+                    )
+                  ).toLocaleString('pt-BR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </Text>
               </View>
             )}

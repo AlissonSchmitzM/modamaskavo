@@ -458,33 +458,32 @@ class ManagerOrdersDetails extends Component {
           </Button>
         )}
 
-        {situation === 'Em Produção' ||
-          (situation === 'Aguardando Envio' && (
-            <View>
-              <Button
-                mode="contained"
-                icon="truck-outline"
-                disabled={this.state.loadingGenerateLabel}
-                onPress={() => this.handleGenerateLabel(userData, orderId)}
-                labelStyle={this.state.loadingGenerateLabel && {color: '#fff'}}
-                style={[
-                  actionButtonStyle,
-                  {backgroundColor: '#0fae79'},
-                  this.state.loadingGenerateLabel && {opacity: 0.8},
-                ]}>
-                {this.state.loadingGenerateLabel
-                  ? 'Gerando Etiqueta...'
-                  : 'Gerar Etiqueta SuperFrete'}
-              </Button>
-              <Button
-                mode="contained"
-                icon="check-circle"
-                onPress={this.handleCompleteOrder}
-                style={[actionButtonStyle, {backgroundColor: '#4CAF50'}]}>
-                Finalizar Pedido
-              </Button>
-            </View>
-          ))}
+        {(situation === 'Em Produção' || situation === 'Aguardando Envio') && (
+          <View>
+            <Button
+              mode="contained"
+              icon="truck-outline"
+              disabled={this.state.loadingGenerateLabel}
+              onPress={() => this.handleGenerateLabel(userData, orderId)}
+              labelStyle={this.state.loadingGenerateLabel && {color: '#fff'}}
+              style={[
+                actionButtonStyle,
+                {backgroundColor: '#0fae79'},
+                this.state.loadingGenerateLabel && {opacity: 0.8},
+              ]}>
+              {this.state.loadingGenerateLabel
+                ? 'Gerando Etiqueta...'
+                : 'Gerar Etiqueta SuperFrete'}
+            </Button>
+            <Button
+              mode="contained"
+              icon="check-circle"
+              onPress={this.handleCompleteOrder}
+              style={[actionButtonStyle, {backgroundColor: '#4CAF50'}]}>
+              Finalizar Pedido
+            </Button>
+          </View>
+        )}
       </View>
     );
   };
@@ -677,11 +676,20 @@ class ManagerOrdersDetails extends Component {
                     <Text style={{fontWeight: 'bold'}}>Total: </Text>
                     <Text>R$ </Text>
                     {(
-                      parseFloat(currentItem.value_order.replace(',', '.')) +
-                      parseFloat(currentItem.shipping.price.replace(',', '.'))
-                    )
-                      .toFixed(2)
-                      .replace('.', ',')}
+                      parseFloat(
+                        currentItem.value_order
+                          .replace(/\./g, '')
+                          .replace(',', '.'),
+                      ) +
+                      parseFloat(
+                        currentItem.shipping.price
+                          .replace(/\./g, '')
+                          .replace(',', '.'),
+                      )
+                    ).toLocaleString('pt-BR', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
                   </Text>
                 </View>
               )}
@@ -848,7 +856,7 @@ class ManagerOrdersDetails extends Component {
               <View style={styles.infoRow}>
                 <Text variant="bodyMedium">
                   <Text style={styles.boldText}>Cidade/UF: </Text>
-                  {userData.city ? `${userData.city}/${userData.state}` : '-'}
+                  {userData.uf ? `${userData.city}/${userData.uf}` : '-'}
                 </Text>
               </View>
             </Card.Content>

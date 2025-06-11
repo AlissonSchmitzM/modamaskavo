@@ -503,11 +503,20 @@ class ManagerOrders extends Component {
                   <Text style={{fontWeight: 'bold'}}>Total: </Text>
                   <Text>R$ </Text>
                   {(
-                    parseFloat(currentItem.value_order.replace(',', '.')) +
-                    parseFloat(currentItem.shipping.price.replace(',', '.'))
-                  )
-                    .toFixed(2)
-                    .replace('.', ',')}
+                    parseFloat(
+                      currentItem.value_order
+                        .replace(/\./g, '')
+                        .replace(',', '.'),
+                    ) +
+                    parseFloat(
+                      currentItem.shipping.price
+                        .replace(/\./g, '')
+                        .replace(',', '.'),
+                    )
+                  ).toLocaleString('pt-BR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </Text>
               </View>
             )}
