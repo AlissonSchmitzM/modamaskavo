@@ -132,7 +132,10 @@ class Store extends Component {
   }
 
   handleOpenShippingModal = product => {
-    if (product.stock_quantity < 1) {
+    const stock_quantity = product.variation
+      ? product.variation.stock_quantity
+      : product.stock_quantity;
+    if (stock_quantity < 1) {
       toastr.showToast('Produto sem estoque.', ERROR);
       return;
     }

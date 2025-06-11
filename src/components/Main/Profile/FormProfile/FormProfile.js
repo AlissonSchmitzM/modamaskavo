@@ -55,6 +55,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import imageMenuStyles from './ImageMenuStyles';
 import ShimmerPlaceholder from 'react-native-shimmer-placeholder';
 import LinearGradient from 'react-native-linear-gradient';
+import {request, PERMISSIONS, RESULTS} from 'react-native-permissions';
 
 class FormProfile extends Component {
   constructor(props) {
@@ -110,75 +111,90 @@ class FormProfile extends Component {
 
   // Função para solicitar permissão de câmera
   requestCameraPermission = async () => {
-    if (Platform.OS !== 'android') return true;
+    if (Platform.OS === 'android') {
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.CAMERA,
+          {
+            title: 'Permissão de Câmera',
+            message:
+              'Este aplicativo precisa de acesso à sua câmera para tirar fotos de perfil.',
+            buttonNeutral: 'Pergunte-me depois',
+            buttonNegative: 'Cancelar',
+            buttonPositive: 'OK',
+          },
+        );
 
-    try {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.CAMERA,
-        {
-          title: 'Permissão de Câmera',
-          message:
-            'Este aplicativo precisa de acesso à sua câmera para tirar fotos de perfil.',
-          buttonNeutral: 'Pergunte-me depois',
-          buttonNegative: 'Cancelar',
-          buttonPositive: 'OK',
-        },
-      );
-
-      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-        console.log('Permissão de câmera concedida');
-        return true;
-      } else {
-        console.log('Permissão de câmera negada');
+        return granted === PermissionsAndroid.RESULTS.GRANTED;
+      } catch (err) {
+        console.warn(err);
         return false;
       }
-    } catch (err) {
-      console.warn(err);
-      return false;
+    } else if (Platform.OS === 'ios') {
+      try {
+        const result = await request(PERMISSIONS.IOS.CAMERA);
+        return result === RESULTS.GRANTED;
+      } catch (err) {
+        console.warn(err);
+        return false;
+      }
     }
+
+    return true; // Para outras plataformas (web, etc.)
   };
 
   // Função para solicitar permissão de galeria/armazenamento
   requestStoragePermission = async () => {
-    if (Platform.OS !== 'android') return true;
+    if (Platform.OS === 'android') {
+      try {
+        // Para Android 13+ (API 33+)
+        if (parseInt(Platform.Version, 10) >= 33) {
+          const granted = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
+            {
+              title: 'Permissão de Acesso às Fotos',
+              message:
+                'Este aplicativo precisa de acesso às suas fotos para selecionar imagens de perfil.',
+              buttonNeutral: 'Pergunte-me depois',
+              buttonNegative: 'Cancelar',
+              buttonPositive: 'OK',
+            },
+          );
 
-    try {
-      // Para Android 13+ (API 33+)
-      if (parseInt(Platform.Version, 10) >= 33) {
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
-          {
-            title: 'Permissão de Acesso às Fotos',
-            message:
-              'Este aplicativo precisa de acesso às suas fotos para selecionar imagens de perfil.',
-            buttonNeutral: 'Pergunte-me depois',
-            buttonNegative: 'Cancelar',
-            buttonPositive: 'OK',
-          },
-        );
+          return granted === PermissionsAndroid.RESULTS.GRANTED;
+        }
+        // Para Android 12 e anteriores
+        else {
+          const granted = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+            {
+              title: 'Permissão de Acesso às Fotos',
+              message:
+                'Este aplicativo precisa de acesso às suas fotos para selecionar imagens de perfil.',
+              buttonNeutral: 'Pergunte-me depois',
+              buttonNegative: 'Cancelar',
+              buttonPositive: 'OK',
+            },
+          );
 
-        return granted === PermissionsAndroid.RESULTS.GRANTED;
+          return granted === PermissionsAndroid.RESULTS.GRANTED;
+        }
+      } catch (err) {
+        console.warn(err);
+        return false;
       }
-      // Para Android 12 e anteriores
-      else {
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-          {
-            title: 'Permissão de Acesso às Fotos',
-            message:
-              'Este aplicativo precisa de acesso às suas fotos para selecionar imagens de perfil.',
-            buttonNeutral: 'Pergunte-me depois',
-            buttonNegative: 'Cancelar',
-            buttonPositive: 'OK',
-          },
-        );
-
-        return granted === PermissionsAndroid.RESULTS.GRANTED;
+    } else if (Platform.OS === 'ios') {
+      try {
+        // No iOS, usamos PHOTO_LIBRARY ou MEDIA_LIBRARY dependendo da necessidade
+        const result = await request(PERMISSIONS.IOS.PHOTO_LIBRARY);
+        return result === RESULTS.GRANTED;
+      } catch (err) {
+        console.warn(err);
+        return false;
       }
-    } catch (err) {
-      console.warn(err);
-      return false;
     }
+
+    return true; // Para outras plataformas (web, etc.)
   };
 
   // Método para abrir a câmera com verificação de permissão

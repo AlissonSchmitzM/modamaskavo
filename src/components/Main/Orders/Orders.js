@@ -39,6 +39,7 @@ import {readDataUser} from '../../../store/actions/userActions';
 import toastr, {ERROR, toastConfig} from '../../../services/toastr';
 import {SuperFreteService} from '../../../services/SuperFreteService';
 import modalStyles from './ModalStyles';
+import {request, PERMISSIONS, RESULTS} from 'react-native-permissions';
 
 class Orders extends Component {
   constructor(props) {
@@ -255,7 +256,72 @@ class Orders extends Component {
     this.props.onCreateOrder(orderData);
   };
 
-  pickLogoFiles = () => {
+  // Função para solicitar permissão de galeria/armazenamento
+  requestStoragePermission = async () => {
+    if (Platform.OS === 'android') {
+      try {
+        // Para Android 13+ (API 33+)
+        if (parseInt(Platform.Version, 10) >= 33) {
+          const granted = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
+            {
+              title: 'Permissão de Acesso às Fotos',
+              message:
+                'Este aplicativo precisa de acesso às suas fotos para selecionar imagens de perfil.',
+              buttonNeutral: 'Pergunte-me depois',
+              buttonNegative: 'Cancelar',
+              buttonPositive: 'OK',
+            },
+          );
+
+          return granted === PermissionsAndroid.RESULTS.GRANTED;
+        }
+        // Para Android 12 e anteriores
+        else {
+          const granted = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+            {
+              title: 'Permissão de Acesso às Fotos',
+              message:
+                'Este aplicativo precisa de acesso às suas fotos para selecionar imagens de perfil.',
+              buttonNeutral: 'Pergunte-me depois',
+              buttonNegative: 'Cancelar',
+              buttonPositive: 'OK',
+            },
+          );
+
+          return granted === PermissionsAndroid.RESULTS.GRANTED;
+        }
+      } catch (err) {
+        console.warn(err);
+        return false;
+      }
+    } else if (Platform.OS === 'ios') {
+      try {
+        // No iOS, usamos PHOTO_LIBRARY ou MEDIA_LIBRARY dependendo da necessidade
+        const result = await request(PERMISSIONS.IOS.PHOTO_LIBRARY);
+        return result === RESULTS.GRANTED;
+      } catch (err) {
+        console.warn(err);
+        return false;
+      }
+    }
+
+    return true; // Para outras plataformas (web, etc.)
+  };
+
+  pickLogoFiles = async () => {
+    // Primeiro, solicita permissão
+    const hasStoragePermission = await this.requestStoragePermission();
+
+    if (!hasStoragePermission) {
+      toastr.showToast(
+        'Permissão de acesso às fotos necessária para esta funcionalidade',
+        ERROR,
+      );
+      return;
+    }
+
     const options = {
       mediaType: 'mixed',
       selectionLimit: 0,

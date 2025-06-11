@@ -70,6 +70,7 @@ class ManagerOrdersDetails extends Component {
       estimatedCompletionDate: '',
       selectedDate: undefined,
       loadingGenerateLabel: false,
+      imageLoading: true,
     };
   }
 
@@ -762,10 +763,21 @@ class ManagerOrdersDetails extends Component {
               <View style={styles.userHeaderContainer}>
                 <View style={styles.avatarContainer}>
                   {userData.fileImgPath ? (
-                    <Avatar.Image
-                      size={80}
-                      source={{uri: userData.fileImgPath}}
-                    />
+                    <ShimmerPlaceholder
+                      LinearGradient={LinearGradient}
+                      visible={!this.state.imageLoading}
+                      height={80}
+                      width={80}
+                      style={{
+                        borderRadius: 50,
+                      }}>
+                      <Avatar.Image
+                        size={80}
+                        source={{uri: userData.fileImgPath}}
+                        onLoadStart={() => this.setState({imageLoading: true})}
+                        onLoadEnd={() => this.setState({imageLoading: false})}
+                      />
+                    </ShimmerPlaceholder>
                   ) : (
                     <Avatar.Text
                       size={80}

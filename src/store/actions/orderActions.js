@@ -1,4 +1,4 @@
-import {Linking} from 'react-native';
+import {Linking, Platform} from 'react-native';
 import toastr, {ERROR, SUCCESS} from '../../services/toastr';
 import {getDatabase, ref, set} from '@react-native-firebase/database';
 import storage from '@react-native-firebase/storage';
@@ -61,6 +61,7 @@ export const createOrder = data => (dispatch, getState) => {
   
   `;
   const {phone_orders} = getState().configReducer;
+  const phone_orders_whatsapp = phone_orders.replace(/\D/g, '');
 
   // Em comum
   const {segment, description} = data;
@@ -97,9 +98,13 @@ export const createOrder = data => (dispatch, getState) => {
 
         NavigatorService.navigate('OrdersInProgress'),
           Linking.openURL(
-            `whatsapp://send?phone=55${phone_orders}&text=${encodeURIComponent(
-              message,
-            )}`,
+            Platform.OS === 'ios'
+              ? `https://wa.me/+55${phone_orders_whatsapp}?text=${encodeURIComponent(
+                  message,
+                )}`
+              : `whatsapp://send?phone=+55${phone_orders_whatsapp}&text=${encodeURIComponent(
+                  message,
+                )}`,
           );
       })
       .catch(err => orderSaveError(err, dispatch));
@@ -177,9 +182,13 @@ export const createOrder = data => (dispatch, getState) => {
         });
 
         Linking.openURL(
-          `whatsapp://send?phone=55${phone_orders}&text=${encodeURIComponent(
-            message,
-          )}`,
+          Platform.OS === 'ios'
+            ? `https://wa.me/+55${phone_orders_whatsapp}?text=${encodeURIComponent(
+                message,
+              )}`
+            : `whatsapp://send?phone=+55${phone_orders_whatsapp}&text=${encodeURIComponent(
+                message,
+              )}`,
         );
       })
       .catch(error => {
@@ -238,9 +247,13 @@ export const createOrder = data => (dispatch, getState) => {
         });
 
         Linking.openURL(
-          `whatsapp://send?phone=55${phone_orders}&text=${encodeURIComponent(
-            message,
-          )}`,
+          Platform.OS === 'ios'
+            ? `https://wa.me/+55${phone_orders_whatsapp}?text=${encodeURIComponent(
+                message,
+              )}`
+            : `whatsapp://send?phone=+55${phone_orders_whatsapp}&text=${encodeURIComponent(
+                message,
+              )}`,
         );
       })
       .catch(err => orderSaveError(err, dispatch));

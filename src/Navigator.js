@@ -91,7 +91,9 @@ const TabNavigator = () => {
 
 const MainStackNavigator = () => {
   return (
-    <Stack.Navigator initialRouteName="SplashScreen">
+    <Stack.Navigator
+      initialRouteName="SplashScreen"
+      screenOptions={{headerBackTitle: 'Voltar'}}>
       <Stack.Screen
         name="FormLogin"
         component={FormLogin}
