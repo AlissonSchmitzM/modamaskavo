@@ -9,6 +9,7 @@ import {
   Platform,
   Image,
   StyleSheet,
+  PermissionsAndroid,
 } from 'react-native';
 import {
   Text,
@@ -267,7 +268,7 @@ class Orders extends Component {
             {
               title: 'Permissão de Acesso às Fotos',
               message:
-                'Este aplicativo precisa de acesso às suas fotos para selecionar imagens de perfil.',
+                'Este aplicativo precisa de acesso às suas fotos para selecionar imagens de logo.',
               buttonNeutral: 'Pergunte-me depois',
               buttonNegative: 'Cancelar',
               buttonPositive: 'OK',
@@ -283,7 +284,7 @@ class Orders extends Component {
             {
               title: 'Permissão de Acesso às Fotos',
               message:
-                'Este aplicativo precisa de acesso às suas fotos para selecionar imagens de perfil.',
+                'Este aplicativo precisa de acesso às suas fotos para selecionar imagens de logo.',
               buttonNeutral: 'Pergunte-me depois',
               buttonNegative: 'Cancelar',
               buttonPositive: 'OK',
