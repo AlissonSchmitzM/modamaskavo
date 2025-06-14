@@ -87,6 +87,7 @@ android {
         versionCode 1
         versionName "1.0"
         resValue "string", "server_client_id", "329619581456-b5c20pf7c1i86jdumpss7i8go7mop1f0.apps.googleusercontent.com"
+        multiDexEnabled true
     }
     signingConfigs {
         debug {
@@ -94,6 +95,12 @@ android {
             storePassword 'android'
             keyAlias 'androiddebugkey'
             keyPassword 'android'
+        }
+        release {
+            storeFile file('modamaskavo.keystore')
+            storePassword "Medeiros@3155"
+            keyAlias "my-key-alias"
+            keyPassword "Medeiros@3155"
         }
     }
     buildTypes {
@@ -103,9 +110,10 @@ android {
         release {
             // Caution! In production, you need to generate your own keystore file.
             // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
-            minifyEnabled enableProguardInReleaseBuilds
+            signingConfig signingConfigs.release
+            minifyEnabled true
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+            shrinkResources true
         }
     }
 }
@@ -122,6 +130,9 @@ dependencies {
     implementation 'com.google.firebase:firebase-database'
     implementation 'com.google.gms:google-services:4.3.15'
     implementation platform('com.google.firebase:firebase-bom:33.13.0')
+
+    // Google Sign-In (adicione se estiver usando)
+    implementation 'com.google.android.gms:play-services-auth:20.7.0'
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")

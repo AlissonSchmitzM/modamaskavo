@@ -15,11 +15,11 @@
       },
       "oauth_client": [
         {
-          "client_id": "582893482320-msrk5649gnsg9818rh8s5etpcdbu4ab1.apps.googleusercontent.com",
+          "client_id": "582893482320-c31sd01j0ea0to3k9qb71g9h3pnn3v9l.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.modamaskavo",
-            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+            "certificate_hash": "a54c2b72a30cd6e784fa7fc6f7bfd2da1e2c1ff8"
           }
         },
         {

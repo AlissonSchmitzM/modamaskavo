@@ -28,7 +28,7 @@ export default class SplashScreen extends Component {
       await GoogleSignin.hasPlayServices();
       GoogleSignin.configure({
         webClientId:
-          '582893482320-l3ch1sjuirvr57qm5boll0lsfjs1nmrd.apps.googleusercontent.com',
+          '582893482320-35hmr955sm4fm3dudgu1dg7ouvge3d44.apps.googleusercontent.com',
         offlineAccess: true,
       });
     } catch (error) {
