@@ -30,6 +30,8 @@ import modalStyles from './ModalStyles';
 import {Button, Surface} from 'react-native-paper';
 import {SuperFreteService} from '../../../services/SuperFreteService';
 import {colors} from '../../../styles/Styles';
+import LottieView from 'lottie-react-native';
+import {store_comming} from '../../../assets';
 
 const ShimmerPlaceholder = createShimmerPlaceholder(LinearGradient);
 const {width} = Dimensions.get('window');
@@ -308,7 +310,11 @@ class Store extends Component {
   };
 
   loadMoreProductsHandler = () => {
-    if (!this.props.loading && this.props.hasMoreProducts) {
+    if (
+      !this.props.loading &&
+      this.props.hasMoreProducts &&
+      !this.props.error
+    ) {
       this.props.loadMoreProducts(this.props.page);
     }
   };
@@ -376,12 +382,30 @@ class Store extends Component {
       activeImageIndexes,
       dropdownLayout,
       userCep,
+      error,
     } = this.props;
 
     const {showShippingModal, shippingLoading, shippingError, shippingOptions} =
       this.state;
 
-    if (loading && products.length === 0) {
+    console.log('erroraaa ', error);
+    if (error) {
+      return (
+        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+          <Text style={{fontSize: 28, fontWeight: 'bold', textAlign: 'center'}}>
+            Loja em manutenção
+          </Text>
+          <LottieView
+            source={store_comming}
+            autoPlay
+            loop
+            style={{width: '110%', height: 500, marginLeft: 100}}
+          />
+        </View>
+      );
+    }
+
+    if (loading && products.length === 0 && !error) {
       return (
         <View style={styles.container}>
           <FlatList
@@ -774,6 +798,7 @@ const mapStateToProps = state => ({
   activeImageIndexes: state.productReducer.activeImageIndexes,
   dropdownLayout: state.productReducer.dropdownLayout,
   userCep: state.userReducer.cep,
+  error: state.productReducer.error,
 });
 
 const mapDispatchToProps = dispatch => ({

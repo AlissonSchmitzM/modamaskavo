@@ -5,6 +5,7 @@ import {
   FormLogin,
   FormSignUp,
   FormProfile,
+  FormForgotPassword,
   Home,
   Orders,
   OrdersInProgress,
@@ -22,7 +23,6 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import {StatusBar, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import PaymentScreen from './components/Main/Payment/PaymentScreen';
-import FormForgotPassword from './components/Login/FormLogin/FormForgotPassword/FormForgotPassword';
 const Stack = createNativeStackNavigator();
 
 const Tab = createBottomTabNavigator();

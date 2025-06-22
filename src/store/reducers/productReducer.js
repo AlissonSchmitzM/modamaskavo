@@ -19,6 +19,7 @@ import {
 const INITIAL_STATE = {
   products: [],
   loading: false,
+  error: false,
   page: 1,
   hasMoreProducts: true,
   updatingProductId: null,
@@ -51,6 +52,7 @@ const productReducer = (state = INITIAL_STATE, action) => {
         page: action.payload.page,
         hasMoreProducts: action.payload.hasMoreProducts,
         loading: false,
+        error: false,
         activeImageIndexes: initialActiveIndexes,
       };
     }
@@ -59,6 +61,7 @@ const productReducer = (state = INITIAL_STATE, action) => {
       return {
         ...state,
         loading: false,
+        error: true,
       };
 
     case LOAD_MORE_PRODUCTS: {

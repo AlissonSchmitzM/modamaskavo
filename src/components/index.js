@@ -13,11 +13,13 @@ import ManagerOrdersDetails from './Main/Profile/ManagerOrders/ManagerOrdersDeta
 import WooCommerceProducts from './Main/Home/WooCommerceProducts.js';
 import SplashScreen from './SplashScreen.js';
 import WhoWeAre from './Main/Profile/WhoWeAre/WhoWeAre.js';
+import FormForgotPassword from './Login/FormLogin/FormForgotPassword/FormForgotPassword.js';
 
 export {
   FormLogin,
   FormSignUp,
   FormProfile,
+  FormForgotPassword,
   Home,
   Orders,
   OrdersInProgress,

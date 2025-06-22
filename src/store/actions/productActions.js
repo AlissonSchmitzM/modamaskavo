@@ -68,12 +68,12 @@ export const fetchProducts =
         });
       }
     } catch (error) {
-      console.error(
+      /*console.error(
         'Erro ao buscar produtos:',
         error.response?.data || error.message,
-      );
+      );*/
       dispatch({type: FETCH_PRODUCTS_ERROR});
-      toastr.showToast('Não foi possível carregar os produtos.', ERROR);
+      //toastr.showToast('Não foi possível carregar os produtos.', ERROR);
     }
   };
 

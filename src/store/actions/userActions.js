@@ -257,6 +257,9 @@ const loginUserGoogleError = (err, dispatch) => {
     case 'getTokens':
       message = 'Login cancelado.';
       break;
+    case '10':
+      message = 'Ocorreu um erro ao fazer login.';
+      break;
     default:
       message = err.code;
   }
