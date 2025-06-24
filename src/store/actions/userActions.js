@@ -1,6 +1,12 @@
 import toastr, {SUCCESS, ERROR} from '../../services/toastr';
 import b64 from 'base-64';
-import {getAuth, GoogleAuthProvider} from '@react-native-firebase/auth';
+import {
+  EmailAuthProvider,
+  getAuth,
+  GoogleAuthProvider,
+  reauthenticateWithCredential,
+  reauthenticateWithRedirect,
+} from '@react-native-firebase/auth';
 import {getDatabase, ref, set} from '@react-native-firebase/database';
 import storage from '@react-native-firebase/storage';
 import navigationService from '../../services/NavigatorService';
@@ -43,6 +49,9 @@ import {
   FORGOT_PASSWORD_SUCCESS,
   FORGOT_PASSWORD_ERROR,
   MODIFY_UF,
+  DELETE_ACCOUNT_IN_PROGRESS,
+  DELETE_ACCOUNT_SUCCESS,
+  DELETE_ACCOUNT_ERROR,
 } from './actionTypes';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -139,6 +148,11 @@ export const authUserEmail =
 
 const loginUserSuccess = dispatch => {
   store.save('userLogged', true);
+  const deleteAccount =
+    navigationService.getPreviousRouteName() === 'FormProfile';
+  if (deleteAccount === true) {
+    store.save('deleteAccount', true);
+  }
 
   const {currentUser} = getAuth();
   const userEmailB64 = b64.encode(currentUser.email);
@@ -149,10 +163,14 @@ const loginUserSuccess = dispatch => {
     .then(async snapshot => {
       const saveProfile = await snapshot.val();
 
-      dispatch(
-        {type: LOGIN_SUCCESS},
-        navigationService.reset(saveProfile ? 'Main' : 'FormProfile'),
-      );
+      if (deleteAccount === true) {
+        dispatch({type: LOGIN_SUCCESS}, navigationService.reset('FormProfile'));
+      } else {
+        dispatch(
+          {type: LOGIN_SUCCESS},
+          navigationService.reset(saveProfile ? 'Main' : 'FormProfile'),
+        );
+      }
     })
     .catch(() =>
       toastr.showToast('Problema ao carregar informação do usuário.', ERROR),
@@ -218,9 +236,10 @@ export const authUserGoogle = () => async dispatch => {
             const fileName = `${emailB64}.jpg`;
             const storagePath = `photos_profile/${fileName}`;
 
-            const storageRef = storage().ref(storagePath).put(blob);
+            const storageRef = await storage().ref(storagePath).put(blob);
 
-            photoURL = await storageRef.getDownloadURL();
+            //photoURL = await storageRef.getDownloadURL();
+            //console.log('photoURL', photoURL);
           } catch (error) {
             console.error('Erro ao salvar a foto:', error);
           }
@@ -407,11 +426,82 @@ const saveProfileUserSuccess = dispatch => {
   dispatch(
     {type: SAVE_PROFILE_SUCCESS},
     toastr.showToast('Perfil salvo com sucesso!', SUCCESS),
+    store.delete('deleteAccount'),
   );
 };
 
 const saveProfileUserError = (err, dispatch) => {
   dispatch({type: SAVE_PROFILE_ERROR}, err, ERROR);
+};
+
+export const deleteAccount = () => async (dispatch, getState) => {
+  dispatch({type: DELETE_ACCOUNT_IN_PROGRESS});
+
+  const auth = getAuth();
+  const user = auth.currentUser;
+  const emailB64 = b64.encode(getState().userReducer.email);
+
+  try {
+    await Promise.all([
+      getDatabase().ref(`/users/${emailB64}`).remove(),
+      deleteFilesByPrefix('orders_logos', emailB64),
+      getDatabase().ref(`/orders/${emailB64}`).remove(),
+      deleteFilesByPrefix('photos_profile', emailB64),
+    ]);
+
+    try {
+      await user.delete();
+    } catch (error) {
+      if (error.code === 'auth/requires-recent-login') {
+        await reauthenticateWithRedirect(user, EmailAuthProvider.PROVIDER_ID);
+        await user.delete();
+      }
+    }
+
+    await Promise.all([
+      store.delete(['userLogged', 'emailUserLogged', 'asaas_cliente_id']),
+    ]);
+
+    dispatch({type: DELETE_ACCOUNT_SUCCESS});
+    toastr.showToast('Conta excluída com sucesso!', SUCCESS);
+    navigationService.reset('FormLogin');
+  } catch (err) {
+    dispatch({type: DELETE_ACCOUNT_ERROR});
+    toastr.showToast(err.message, ERROR);
+    console.error('Erro na exclusão:', err);
+  }
+};
+
+const deleteFilesByPrefix = async (folder, exactPrefix) => {
+  try {
+    const storageRef = storage().ref(folder);
+    const {items} = await storageRef.listAll();
+
+    const filesToDelete = items.filter(item => {
+      const fileName = item.name;
+      return fileName.startsWith(exactPrefix);
+    });
+
+    if (filesToDelete.length === 0) {
+      console.log(
+        `Nenhum arquivo encontrado com prefixo "${exactPrefix}" em ${folder}`,
+      );
+      return true;
+    }
+
+    await Promise.all(filesToDelete.map(fileRef => fileRef.delete()));
+
+    console.log(
+      `🗑️ ${filesToDelete.length} arquivos deletados (prefixo: "${exactPrefix}")`,
+    );
+    return true;
+  } catch (error) {
+    console.error(`❌ Erro ao deletar arquivos em ${folder}:`, {
+      code: error.code,
+      message: error.message,
+    });
+    throw error;
+  }
 };
 
 export const readDataUser = () => async dispatch => {

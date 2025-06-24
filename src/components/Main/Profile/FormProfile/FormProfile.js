@@ -43,6 +43,7 @@ import {
   readDataUser,
   modifyPhoto,
   modifyUf,
+  deleteAccount,
 } from '../../../../store/actions/userActions';
 import toastr, {ERROR, toastConfig} from '../../../../services/toastr';
 import Toast from 'react-native-toast-message';
@@ -56,6 +57,9 @@ import imageMenuStyles from './ImageMenuStyles';
 import ShimmerPlaceholder from 'react-native-shimmer-placeholder';
 import LinearGradient from 'react-native-linear-gradient';
 import {request, PERMISSIONS, RESULTS} from 'react-native-permissions';
+import {DeleteAccountModal} from './DeleteAccountModal';
+import store from '../../../../services/AsyncStorage';
+import NavigatorService from '../../../../services/NavigatorService';
 
 class FormProfile extends Component {
   constructor(props) {
@@ -66,6 +70,8 @@ class FormProfile extends Component {
       menuVisible: false,
       imageMenuVisible: false,
       imageLoading: true,
+      deleteAccountModalVisible: false,
+      processingDeleteAccount: false,
     };
 
     this.btnRegisterRef = React.createRef();
@@ -82,7 +88,9 @@ class FormProfile extends Component {
   }
 
   componentDidMount() {
-    this.props.onReadDataUser();
+    if (this.state.processingDeleteAccount === false) {
+      this.props.onReadDataUser();
+    }
   }
 
   isGoogleUser = () => {
@@ -274,7 +282,13 @@ class FormProfile extends Component {
 
   renderBtnRegister() {
     if (this.props.saveProfileInProgress) {
-      return <ActivityIndicator size="large" color={colors.PRIMARY} />;
+      return (
+        <ActivityIndicator
+          size="large"
+          color={colors.PRIMARY}
+          style={{marginBottom: 10}}
+        />
+      );
     }
     return (
       <Button
@@ -288,6 +302,44 @@ class FormProfile extends Component {
     );
   }
 
+  renderBtnDeleteAccount() {
+    if (this.props.deleteAccountInProgress) {
+      return (
+        <ActivityIndicator
+          size="large"
+          color="#D32F2F"
+          style={{marginBottom: 10}}
+        />
+      );
+    }
+    return (
+      <Button
+        mode="contained"
+        style={[styles.button, {backgroundColor: '#D32F2F'}]}
+        textColor="#FFF"
+        onPress={() => this.setState({deleteAccountModalVisible: true})}>
+        Excluir conta
+      </Button>
+    );
+  }
+
+  getTextModalDeleteAccount = async () => {
+    const deleteAccount = await store.get('deleteAccount');
+    if (deleteAccount === true) {
+      return 'Tem certeza que deseja excluir sua conta? Esta ação é irreversível e todos os seus dados serão perdidos.';
+    } else {
+      return 'Tem certeza que deseja excluir sua conta? É necessário fazer login novamente antes de excluir totalmente sua conta.';
+    }
+  };
+
+  getTextButtonDeleteAccount = async () => {
+    const deleteAccount = await store.get('deleteAccount');
+    if (deleteAccount === true) {
+      return 'Excluir conta';
+    } else {
+      return 'Sair';
+    }
+  };
   validateFields() {
     if (!this.props.name) {
       toastr.showToast('Nome é obrigatório!', ERROR);
@@ -327,6 +379,22 @@ class FormProfile extends Component {
   handleSubmit = () => {
     if (this.validateFields()) {
       this.props.onSaveProfileUser(this.props);
+    }
+  };
+
+  handleDeleteAccount = async () => {
+    const deleteAccount = await store.get('deleteAccount');
+
+    if (deleteAccount === true) {
+      this.setState({processingDeleteAccount: true});
+      new Promise(resolve => setTimeout(resolve, 3000));
+      this.props.onDeleteAccount();
+      this.setState({deleteAccountModalVisible: false});
+      toastr.showToast('Conta excluída com sucesso!', SUCCESS);
+      store.delete('deleteAccount');
+    } else {
+      this.setState({deleteAccountModalVisible: false});
+      NavigatorService.navigate('FormLogin');
     }
   };
 
@@ -546,8 +614,20 @@ class FormProfile extends Component {
                     }}
                   />
                   {this.renderBtnRegister()}
+                  {this.renderBtnDeleteAccount()}
                 </View>
               </ScrollView>
+
+              <DeleteAccountModal
+                visible={this.state.deleteAccountModalVisible}
+                onClose={() =>
+                  this.setState({deleteAccountModalVisible: false})
+                }
+                onConfirm={this.handleDeleteAccount}
+                textModal={this.getTextModalDeleteAccount()}
+                textButtonDelete={this.getTextButtonDeleteAccount()}>
+                Excluir Conta
+              </DeleteAccountModal>
 
               {/* Menu personalizado para seleção de imagem */}
               <Portal>
@@ -635,6 +715,7 @@ const mapDispatchToProps = dispatch => ({
   onModifyComplement: complement => dispatch(modifyComplement(complement)),
   onModifyPhoto: (fileImgPath, fileImgType) =>
     dispatch(modifyPhoto(fileImgPath, fileImgType)),
+  onDeleteAccount: () => dispatch(deleteAccount()),
 });
 
 const mapStateToProps = state => ({
@@ -655,6 +736,7 @@ const mapStateToProps = state => ({
   fileImgPath: state.userReducer.fileImgPath,
   fileImgType: state.userReducer.fileImgType,
   profileImage: state.userReducer.profileImage,
+  deleteAccountInProgress: state.userReducer.deleteAccountInProgress,
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(FormProfile);

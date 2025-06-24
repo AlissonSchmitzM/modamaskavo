@@ -33,6 +33,9 @@ import {
   FORGOT_PASSWORD_IN_PROGRESS,
   FORGOT_PASSWORD_SUCCESS,
   FORGOT_PASSWORD_ERROR,
+  DELETE_ACCOUNT_IN_PROGRESS,
+  DELETE_ACCOUNT_SUCCESS,
+  DELETE_ACCOUNT_ERROR,
 } from '../actions/actionTypes';
 
 // Estado inicial
@@ -43,6 +46,7 @@ const INITIAL_STATE = {
   saveProfileInProgress: false,
   loginGoogleInProgress: false,
   forgotPasswordInProgress: false,
+  deleteAccountInProgress: false,
   photoModify: false,
   admin: false,
   name: '',
@@ -137,7 +141,12 @@ const userReducer = (state = INITIAL_STATE, action) => {
     case LOGIN_IN_PROGRESS:
       return {...state, loginInProgress: true};
     case LOGIN_SUCCESS:
-      return {...state, password: '', loginInProgress: false};
+      return {
+        ...state,
+        password: '',
+        loginInProgress: false,
+        loginGoogleInProgress: false,
+      };
     case LOGIN_ERROR:
       return {...state, loginInProgress: false};
     case LOGIN_GOOGLE_IN_PROGRESS:
@@ -152,6 +161,18 @@ const userReducer = (state = INITIAL_STATE, action) => {
       return {...state, saveProfileInProgress: false};
     case SAVE_PROFILE_SUCCESS:
       return {...state, saveProfileInProgress: false};
+    case DELETE_ACCOUNT_IN_PROGRESS:
+      return {...state, deleteAccountInProgress: true};
+    case DELETE_ACCOUNT_SUCCESS:
+      return {
+        ...INITIAL_STATE,
+        deleteAccountInProgress: false,
+      };
+    case DELETE_ACCOUNT_ERROR:
+      return {
+        ...state,
+        deleteAccountInProgress: false,
+      };
     case DATA_USER:
       return {
         ...state,

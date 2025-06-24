@@ -26,11 +26,7 @@ export default class SplashScreen extends Component {
   async configureGoogleSignin() {
     try {
       await GoogleSignin.hasPlayServices();
-      GoogleSignin.configure({
-        webClientId:
-          '582893482320-35hmr955sm4fm3dudgu1dg7ouvge3d44.apps.googleusercontent.com',
-        offlineAccess: true,
-      });
+      GoogleSignin.configure();
     } catch (error) {
       toastr.showToast(`Erro na configuração Google Sign-In: ${error}`, ERROR);
     }
@@ -112,8 +108,10 @@ export default class SplashScreen extends Component {
           source={require('../imgs/logo.png')}
           style={styles.splashImage}
         />
-        <Text style={styles.splashText}>© 2025 Maskavo</Text>
-        <Text style={styles.splashText}>v1.0.0</Text>
+        <Text style={styles.splashText}>
+          © {new Date().getFullYear()} Maskavo
+        </Text>
+        <Text style={styles.splashText}>v1.0.3</Text>
       </View>
     );
   }
