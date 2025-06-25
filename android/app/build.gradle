@@ -84,9 +84,9 @@ android {
         applicationId "com.modamaskavo"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 4
-        versionName "1.0.3"
-        resValue "string", "server_client_id", "329619581456-b5c20pf7c1i86jdumpss7i8go7mop1f0.apps.googleusercontent.com"
+        versionCode 5
+        versionName "1.0.5"
+        resValue "string", "server_client_id", "582893482320-35hmr955sm4fm3dudgu1dg7ouvge3d44.apps.googleusercontent.com"
         multiDexEnabled true
     }
     signingConfigs {
