@@ -24,13 +24,13 @@ export default class SplashScreen extends Component {
   }
 
   async configureGoogleSignin() {
-    const { RNConfig } = NativeModules;
-    const webClientId = Platform.OS === 'android' ? RNConfig.server_client_id : '';
+    //const { RNConfig } = NativeModules;
+    //const webClientId = Platform.OS === 'android' ? RNConfig.server_client_id : '';
     
     try {
       await GoogleSignin.hasPlayServices();
       GoogleSignin.configure({
-        webClientId: webClientId,
+        webClientId: '582893482320-35hmr955sm4fm3dudgu1dg7ouvge3d44.apps.googleusercontent.com',
         offlineAccess: true,
       });
     } catch (error) {
