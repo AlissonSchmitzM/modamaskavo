@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {View, Image, StyleSheet, Text} from 'react-native';
+import {View, Image, StyleSheet, Text, Platform, NativeModules} from 'react-native';
 import navigationService from '../services/NavigatorService';
 import store from '../services/AsyncStorage';
 import {getDatabase, ref, get} from '@react-native-firebase/database';
@@ -24,9 +24,15 @@ export default class SplashScreen extends Component {
   }
 
   async configureGoogleSignin() {
+    const { RNConfig } = NativeModules;
+    const webClientId = Platform.OS === 'android' ? RNConfig.server_client_id : '';
+    
     try {
       await GoogleSignin.hasPlayServices();
-      GoogleSignin.configure();
+      GoogleSignin.configure({
+        webClientId: webClientId,
+        offlineAccess: true,
+      });
     } catch (error) {
       toastr.showToast(`Erro na configuração Google Sign-In: ${error}`, ERROR);
     }
