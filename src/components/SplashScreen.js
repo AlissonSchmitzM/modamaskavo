@@ -117,7 +117,7 @@ export default class SplashScreen extends Component {
         <Text style={styles.splashText}>
           © {new Date().getFullYear()} Maskavo
         </Text>
-        <Text style={styles.splashText}>v1.0.3</Text>
+        <Text style={styles.splashText}>v1.0.5</Text>
       </View>
     );
   }
