@@ -7,6 +7,7 @@ import b64 from 'base-64';
 import toastr, {ERROR} from '../services/toastr';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
 import DeviceInfo from 'react-native-device-info';
+import {logo} from '../imgs';
 
 export default class SplashScreen extends Component {
   constructor(props) {
@@ -109,10 +110,7 @@ export default class SplashScreen extends Component {
   render() {
     return (
       <View style={styles.splashContainer}>
-        <Image
-          source={require('../imgs/logo.png')}
-          style={styles.splashImage}
-        />
+        <Image source={logo} style={styles.splashImage} />
         <Text style={styles.splashText}>
           © {new Date().getFullYear()} Maskavo
         </Text>

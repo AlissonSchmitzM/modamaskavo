@@ -17,7 +17,8 @@ const data = [
   {id: 3, title: 'Gerenciar Pedidos', icon: 'reader-outline'},
   {id: 4, title: 'Configurações', icon: 'build-outline'},
   {id: 5, title: 'Quem somos', icon: 'briefcase-outline'},
-  {id: 6, title: 'Finalizar Sessão', icon: 'log-out-outline'},
+  {id: 6, title: 'Sobre o App', icon: 'information-circle-outline'},
+  {id: 7, title: 'Finalizar Sessão', icon: 'log-out-outline'},
 ];
 
 class Profile extends Component {
@@ -40,6 +41,8 @@ class Profile extends Component {
       navigation.navigate('FormConfig');
     } else if (item.title === 'Quem somos') {
       navigation.navigate('WhoWeAre');
+    } else if (item.title === 'Sobre o App') {
+      navigation.navigate('AboutApp');
     } else if (item.title === 'Finalizar Sessão') {
       this.props.onSignout();
     }

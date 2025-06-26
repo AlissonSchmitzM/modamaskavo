@@ -18,6 +18,7 @@ import {
   ManagerOrders,
   ManagerOrdersDetails,
   WhoWeAre,
+  AboutApp,
 } from './components';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {StatusBar, View} from 'react-native';
@@ -104,6 +105,20 @@ const MainStackNavigator = () => {
         component={WhoWeAre}
         options={{
           title: 'Quem somos',
+          headerStyle: {
+            backgroundColor: '#000000',
+          },
+          headerTintColor: '#ffffff',
+          headerTitleStyle: {
+            color: '#ffffff',
+          },
+        }}
+      />
+      <Stack.Screen
+        name="AboutApp"
+        component={AboutApp}
+        options={{
+          title: 'Sobre o App',
           headerStyle: {
             backgroundColor: '#000000',
           },
