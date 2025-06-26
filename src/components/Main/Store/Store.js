@@ -272,7 +272,7 @@ class Store extends Component {
         animated: true,
       });
     }
-    this.props.setActiveImageIndex(productId, nextIndex);
+    this.props.onSetActiveImageIndex(productId, nextIndex);
   };
 
   goToPrevSlide = productId => {
@@ -310,14 +310,14 @@ class Store extends Component {
   };
 
   loadMoreProductsHandler = () => {
-    if (
+    /*if (
       !this.props.loading &&
       this.props.hasMoreProducts &&
       !this.props.error
     ) {
       this.props.loadMoreProducts(this.props.page);
     }
-  };
+  };*/
 
   renderFooter = () => {
     if (!this.props.loading) return null;
