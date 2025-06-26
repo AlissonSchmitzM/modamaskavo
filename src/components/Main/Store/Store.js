@@ -317,7 +317,8 @@ class Store extends Component {
     ) {
       this.props.loadMoreProducts(this.props.page);
     }
-  };*/
+    */
+  };
 
   renderFooter = () => {
     if (!this.props.loading) return null;
