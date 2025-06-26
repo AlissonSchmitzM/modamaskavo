@@ -1,11 +1,12 @@
 import React, {Component} from 'react';
-import {View, Image, StyleSheet, Text, Platform, NativeModules} from 'react-native';
+import {View, Image, StyleSheet, Text} from 'react-native';
 import navigationService from '../services/NavigatorService';
 import store from '../services/AsyncStorage';
 import {getDatabase, ref, get} from '@react-native-firebase/database';
 import b64 from 'base-64';
 import toastr, {ERROR} from '../services/toastr';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
+import DeviceInfo from 'react-native-device-info';
 
 export default class SplashScreen extends Component {
   constructor(props) {
@@ -24,13 +25,11 @@ export default class SplashScreen extends Component {
   }
 
   async configureGoogleSignin() {
-    //const { RNConfig } = NativeModules;
-    //const webClientId = Platform.OS === 'android' ? RNConfig.server_client_id : '';
-    
     try {
       await GoogleSignin.hasPlayServices();
       GoogleSignin.configure({
-        webClientId: '582893482320-35hmr955sm4fm3dudgu1dg7ouvge3d44.apps.googleusercontent.com',
+        webClientId:
+          '582893482320-35hmr955sm4fm3dudgu1dg7ouvge3d44.apps.googleusercontent.com',
         offlineAccess: true,
       });
     } catch (error) {
@@ -117,7 +116,7 @@ export default class SplashScreen extends Component {
         <Text style={styles.splashText}>
           © {new Date().getFullYear()} Maskavo
         </Text>
-        <Text style={styles.splashText}>v1.0.5</Text>
+        <Text style={styles.splashText}>v{DeviceInfo.getVersion()}</Text>
       </View>
     );
   }
