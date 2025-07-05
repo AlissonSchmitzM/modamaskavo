@@ -5,13 +5,13 @@
 Um app desenvolvido em **React Native** para pedidos de peças exclusívas e uniformes da Maskavo!
 
 <p align="center">
-  <img src=".github/screenshot1.png" width="200" />
-  <img src=".github/screenshot2.png" width="200" />
-  <img src=".github/screenshot3.png" width="200" />
-  <img src=".github/screenshot4.png" width="200" />
-  <img src=".github/screenshot5.png" width="200" />
-  <img src=".github/screenshot6.png" width="200" />
-  <img src=".github/screenshot7.png" width="200" />
+  <img src=".github/screenshot1.jpeg" width="200" />
+  <img src=".github/screenshot2.jpeg" width="200" />
+  <img src=".github/screenshot3.jpeg" width="200" />
+  <img src=".github/screenshot4.jpeg" width="200" />
+  <img src=".github/screenshot5.jpeg" width="200" />
+  <img src=".github/screenshot6.jpeg" width="200" />
+  <img src=".github/screenshot7.jpeg" width="200" />
 </p>
 
 ---
