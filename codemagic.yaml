@@ -1,7 +1,7 @@
 # codemagic.yaml
 workflows:
   ios-build:
-    name: iOS Build (iOS 12+)
+    name: iOS Build Universal
     instance_type: mac_mini_m1
 
     environment:
@@ -18,8 +18,6 @@ workflows:
           cd ios
           cat > .xcode.env << EOF
           export NODE_BINARY=node
-          export RCT_NEW_ARCH_ENABLED=0
-          export HERMES_ENABLED=0
           EOF
 
       - name: Clean and Install CocoaPods
@@ -39,9 +37,6 @@ workflows:
             -sdk iphoneos \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
-            ONLY_ACTIVE_ARCH=NO \
-            VALID_ARCHS=arm64 \
-            IPHONEOS_DEPLOYMENT_TARGET=12.0 \
             build
 
     artifacts:
