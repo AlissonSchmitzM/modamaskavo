@@ -8,11 +8,17 @@ target 'modamaskavo' do
 
   use_react_native!(
     :path => config[:reactNativePath],
-    :hermes_enabled => false
+    :hermes_enabled => false,
+    :fabric_enabled => false,
+    :new_arch_enabled => false
   )
 
   post_install do |installer|
-    react_native_post_install(installer)
+    react_native_post_install(
+      installer,
+      config[:reactNativePath],
+      :mac_catalyst_enabled => false
+    )
     
     # Forçar iOS 15.0 em todos os targets
     installer.pods_project.targets.each do |target|
