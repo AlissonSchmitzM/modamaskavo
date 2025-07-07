@@ -1,7 +1,7 @@
 # codemagic.yaml
 workflows:
   ios-build:
-    name: iOS Build (RN 0.68 - iOS 11 Compatible)
+    name: iOS Build (iOS 12+)
     instance_type: mac_mini_m1
 
     environment:
@@ -9,16 +9,8 @@ workflows:
         XCODE_SCHEME: 'modamaskavo'
 
     scripts:
-      - name: Downgrade React Native to 0.68.x
+      - name: Install npm dependencies
         script: |
-          # Fazer backup do package.json atual
-          cp package.json package.json.backup
-          
-          # Instalar React Native 0.68.7 (última versão que suporta iOS 11)
-          npm install react-native@0.68.7 --save
-          npm install react@18.1.0 --save
-          
-          # Instalar dependências
           npm install
 
       - name: Setup environment
@@ -49,7 +41,7 @@ workflows:
             CODE_SIGNING_REQUIRED=NO \
             ONLY_ACTIVE_ARCH=NO \
             VALID_ARCHS=arm64 \
-            IPHONEOS_DEPLOYMENT_TARGET=11.0 \
+            IPHONEOS_DEPLOYMENT_TARGET=12.0 \
             build
 
     artifacts:
