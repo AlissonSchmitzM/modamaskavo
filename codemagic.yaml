@@ -1,4 +1,4 @@
-# codemagic.yaml - ADICIONANDO REACT-NATIVEMODULESAPPLE
+# codemagic.yaml - ADICIONANDO YOGA PODSPEC
 workflows:
   ios-workflow:
     name: iOS Workflow
@@ -15,7 +15,7 @@ workflows:
       - name: Install npm dependencies
         script: |
           npm ci
-      - name: Create ALL React Native podspecs
+      - name: Create ALL React Native podspecs including Yoga
         script: |
           # Função para criar podspecs
           create_podspec() {
@@ -62,14 +62,31 @@ workflows:
           end
           EOF
           
-          # Criar TODOS os podspecs problemáticos
+          # Criar Yoga.podspec específico
+          cat > node_modules/react-native/ReactCommon/yoga/Yoga.podspec << 'EOF'
+          Pod::Spec.new do |s|
+            s.name                   = "Yoga"
+            s.version                = "1000.0.0"
+            s.summary                = "Yoga layout engine"
+            s.homepage               = "https://yogalayout.com/"
+            s.license                = "MIT"
+            s.author                 = "Meta Platforms, Inc."
+            s.platforms              = { :ios => "13.0" }
+            s.source                 = { :path => "." }
+            s.source_files           = "**/*.{h,m,mm,cpp,c}"
+            s.header_dir             = "yoga"
+            s.public_header_files    = "**/*.h"
+          end
+          EOF
+          
+          # Criar TODOS os outros podspecs problemáticos
           create_podspec "React-logger" "node_modules/react-native/ReactCommon/logger"
           create_podspec "React-oscompat" "node_modules/react-native/ReactCommon/oscompat"
           create_podspec "React-RuntimeApple" "node_modules/react-native/ReactCommon/react/runtime/platform/ios"
           create_podspec "React-RuntimeCore" "node_modules/react-native/ReactCommon/react/runtime"
           create_podspec "React-NativeModulesApple" "node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios"
           
-          echo "✅ Todos os podspecs criados!"
+          echo "✅ Todos os podspecs criados incluindo Yoga!"
           
       - name: Create Podfile with iOS 13.0
         script: |
