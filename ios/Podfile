@@ -10,8 +10,7 @@ target 'modamaskavo' do
   use_react_native!(
     :path => config[:reactNativePath],
     :hermes_enabled => false,
-    :fabric_enabled => false,
-    :flipper_configuration => FlipperConfiguration.disabled
+    :fabric_enabled => false
   )
 
   post_install do |installer|
