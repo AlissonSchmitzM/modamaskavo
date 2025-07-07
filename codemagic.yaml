@@ -1,4 +1,4 @@
-# codemagic.yaml - ACEITANDO iOS 15.0+ DEFINITIVAMENTE
+# codemagic.yaml - ADICIONANDO REACT-RCTNETWORK
 workflows:
   ios-workflow:
     name: iOS Workflow
@@ -79,6 +79,23 @@ workflows:
           end
           EOF
           
+          # Criar React-RCTNetwork.podspec específico
+          cat > node_modules/react-native/Libraries/Network/React-RCTNetwork.podspec << 'EOF'
+          Pod::Spec.new do |s|
+            s.name                   = "React-RCTNetwork"
+            s.version                = "1000.0.0"
+            s.summary                = "React Native Network module"
+            s.homepage               = "https://reactnative.dev/"
+            s.license                = "MIT"
+            s.author                 = "Meta Platforms, Inc."
+            s.platforms              = { :ios => "15.0" }
+            s.source                 = { :path => "." }
+            s.source_files           = "**/*.{h,m,mm,cpp,c}"
+            s.header_dir             = "React"
+            s.public_header_files    = "**/*.h"
+          end
+          EOF
+          
           # Criar TODOS os outros podspecs problemáticos
           create_podspec "React-logger" "node_modules/react-native/ReactCommon/logger"
           create_podspec "React-oscompat" "node_modules/react-native/ReactCommon/oscompat"
@@ -86,12 +103,7 @@ workflows:
           create_podspec "React-RuntimeCore" "node_modules/react-native/ReactCommon/react/runtime"
           create_podspec "React-NativeModulesApple" "node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios"
           
-          echo "✅ Todos os podspecs criados com iOS 15.0!"
-          
-      - name: Update iOS deployment target in project
-        script: |
-          # Atualizar o projeto Xcode para iOS 15.0
-          sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = [0-9][0-9]*\.[0-9]*/IPHONEOS_DEPLOYMENT_TARGET = 15.0/g' ios/modamaskavo.xcodeproj/project.pbxproj
+          echo "✅ Todos os podspecs criados incluindo React-RCTNetwork!"
           
       - name: Create Podfile with iOS 15.0
         script: |
