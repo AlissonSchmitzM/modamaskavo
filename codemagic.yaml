@@ -15,17 +15,30 @@ workflows:
       - name: Install npm dependencies
         script: |
           npm ci
-      - name: Remove React Runtime Apple
+      - name: Fix React RuntimeApple
         script: |
-          # Remover diretório React-RuntimeApple
-          rm -rf node_modules/react-native/ReactCommon/react/runtime/platform/ios
+          # Criar diretório se não existir
+          mkdir -p node_modules/react-native/ReactCommon/react/runtime/platform/ios
           
-          # Modificar react_native_pods.rb para não incluir RuntimeApple
-          sed -i '' '/React-RuntimeApple/d' node_modules/react-native/scripts/react_native_pods.rb
+          # Criar podspec vazio
+          cat > node_modules/react-native/ReactCommon/react/runtime/platform/ios/React-RuntimeApple.podspec << 'EOF'
+          Pod::Spec.new do |s|
+            s.name                   = "React-RuntimeApple"
+            s.version                = "1000.0.0"
+            s.summary                = "Dummy podspec for compatibility"
+            s.homepage               = "https://reactnative.dev/"
+            s.license                = "MIT"
+            s.author                 = "Meta Platforms, Inc."
+            s.platforms              = { :ios => "13.0" }
+            s.source                 = { :path => "." }
+            s.source_files           = "**/*.{h,m,mm,cpp,c}"
+            s.header_dir             = "React"
+            s.pod_target_xcconfig    = { "HEADER_SEARCH_PATHS" => "\"$(PODS_ROOT)/Headers/Private/React-Core\"" }
+          end
+          EOF
           
-          # Verificar se foi removido
-          echo "Verificando se Runtime foi removido:"
-          grep -n "RuntimeApple" node_modules/react-native/scripts/react_native_pods.rb || echo "RuntimeApple removido com sucesso"
+          # Criar arquivo fonte vazio
+          touch node_modules/react-native/ReactCommon/react/runtime/platform/ios/dummy.cpp
           
       - name: Clean CocoaPods
         script: |
