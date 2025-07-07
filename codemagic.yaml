@@ -1,4 +1,4 @@
-# codemagic.yaml - CRIANDO REACTCOMMON COMPLETO
+# codemagic.yaml - FIREBASE EXIGE iOS 13.0+
 workflows:
   ios-workflow:
     name: iOS Workflow
@@ -26,7 +26,7 @@ workflows:
             s.homepage               = "https://reactnative.dev/"
             s.license                = "MIT"
             s.author                 = "Meta Platforms, Inc."
-            s.platforms              = { :ios => "12.0" }
+            s.platforms              = { :ios => "13.0" }
             s.source                 = { :path => "." }
             s.source_files           = "**/*.{h,m,mm,cpp,c}"
             s.header_dir             = "ReactCommon"
@@ -54,7 +54,7 @@ workflows:
             s.homepage               = "https://reactnative.dev/"
             s.license                = "MIT"
             s.author                 = "Meta Platforms, Inc."
-            s.platforms              = { :ios => "12.0" }
+            s.platforms              = { :ios => "13.0" }
             s.source                 = { :path => "." }
             s.source_files           = "*.{h,m,mm,cpp,c}"
             s.header_dir             = "React"
@@ -71,16 +71,12 @@ workflows:
           
           echo "✅ Todos os podspecs criados!"
           
-      - name: Update pod repo
-        script: |
-          pod repo update
-          
-      - name: Create Podfile with iOS 12.0
+      - name: Create Podfile with iOS 13.0 (Firebase requirement)
         script: |
           cat > ios/Podfile << 'EOF'
           require_relative '../node_modules/react-native/scripts/react_native_pods'
           
-          platform :ios, '12.0'
+          platform :ios, '13.0'
           
           target 'modamaskavo' do
             config = use_native_modules!
@@ -97,7 +93,7 @@ workflows:
               
               installer.pods_project.targets.each do |target|
                 target.build_configurations.each do |config|
-                  config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.0'
+                  config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
                   config.build_settings['RCT_NEW_ARCH_ENABLED'] = 'NO'
                 end
               end
