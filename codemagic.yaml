@@ -16,6 +16,19 @@ workflows:
       - name: Install npm dependencies
         script: |
           npm ci
+      - name: Hack React Native Pods
+        script: |
+          # Backup original
+          cp node_modules/react-native/scripts/react_native_pods.rb node_modules/react-native/scripts/react_native_pods.rb.backup
+          
+          # Remove todas as referências ao RuntimeApple
+          sed -i '' '/RuntimeApple/d' node_modules/react-native/scripts/react_native_pods.rb
+          sed -i '' '/React-RCTRuntime/d' node_modules/react-native/scripts/react_native_pods.rb
+          
+          # Verificar o que foi removido
+          echo "=== Verificando remoções ==="
+          grep -n "Runtime" node_modules/react-native/scripts/react_native_pods.rb || echo "Runtime removido com sucesso"
+          
       - name: Create .xcode.env
         script: |
           echo "export RCT_NEW_ARCH_ENABLED=0" > ios/.xcode.env
