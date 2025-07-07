@@ -16,25 +16,26 @@ if linkage != nil
   use_frameworks! :linkage => linkage.to_sym
 end
 
-target 'modamaskavo' do # Modamaskavo
+target 'modamaskavo' do
   config = use_native_modules!
 
   use_react_native!(
     :path => config[:reactNativePath],
     # An absolute path to your application root.
-    :app_path => "#{Pod::Config.instance.installation_root}/.."
+    :app_path => "#{Pod::Config.instance.installation_root}/..",
+    # 🔧 DESABILITAR NEW ARCHITECTURE
+    :fabric_enabled => false,
+    :hermes_enabled => true
   )
 
   post_install do |installer|
-    # https://github.com/facebook/react-native/blob/main/packages/react-native/scripts/react_native_pods.rb#L197-L202
     react_native_post_install(
       installer,
       config[:reactNativePath],
-      :mac_catalyst_enabled => false,
-      # :ccache_enabled => true
+      :mac_catalyst_enabled => false
     )
     
-    # 🔧 CORREÇÃO: Configurar build settings para evitar erros de warning
+    # 🔧 Configurações para evitar erros de compilação
     installer.pods_project.targets.each do |target|
       target.build_configurations.each do |config|
         # Não tratar warnings como erros
@@ -42,32 +43,18 @@ target 'modamaskavo' do # Modamaskavo
         config.build_settings['CLANG_WARN_DOCUMENTATION_COMMENTS'] = 'NO'
         config.build_settings['CLANG_WARN_STRICT_PROTOTYPES'] = 'NO'
         config.build_settings['CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS'] = 'NO'
-        config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
         
-        # Configurações específicas para React Native
-        config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
-        config.build_settings['ENABLE_BITCODE'] = 'NO'
+        # Configurações específicas para C++
+        config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
+        config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
         
         # Configurar arquiteturas
         config.build_settings['ONLY_ACTIVE_ARCH'] = 'NO'
         config.build_settings['VALID_ARCHS'] = 'arm64'
         
-        # Configurações de deployment target
+        # Deployment target
         if config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'].to_f < 12.0
           config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.0'
-        end
-      end
-    end
-    
-    # 🔧 CORREÇÃO: Configurações específicas para React-Fabric
-    installer.pods_project.targets.each do |target|
-      if target.name == 'React-Fabric'
-        target.build_configurations.each do |config|
-          config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= []
-          config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'FOLLY_NO_CONFIG=1'
-          config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'FOLLY_MOBILE=1'
-          config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'FOLLY_USE_LIBCPP=1'
-          config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
         end
       end
     end
