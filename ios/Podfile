@@ -6,7 +6,8 @@ require Pod::Executable.execute_command('node', ['-p',
     {paths: [process.argv[1]]},
   )', __dir__]).strip
 
-platform :ios, '12.0'
+# 🔧 AUMENTAR DEPLOYMENT TARGET PARA 13.0
+platform :ios, '13.0'
 use_modular_headers!
 prepare_react_native_project!
 
@@ -28,8 +29,8 @@ target 'modamaskavo' do
     # 🔧 Configurações para resolver problemas de compilação
     installer.pods_project.targets.each do |target|
       target.build_configurations.each do |config|
-        # Configurações gerais
-        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.0'
+        # 🔧 DEFINIR DEPLOYMENT TARGET PARA 13.0
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
         config.build_settings['GCC_TREAT_WARNINGS_AS_ERRORS'] = 'NO'
         config.build_settings['SWIFT_TREAT_WARNINGS_AS_ERRORS'] = 'NO'
         config.build_settings['ONLY_ACTIVE_ARCH'] = 'NO'
