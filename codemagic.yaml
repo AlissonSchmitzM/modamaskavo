@@ -6,17 +6,17 @@ workflows:
     name: iOS Build
     instance_type: mac_mini_m1
 
+    integrations:
+      app_store_connect: codemagic
+
     environment:
       groups:
         - apple_developer_portal_credentials
       vars:
         XCODE_SCHEME: 'modamaskavo'
-        # Configurações do App Store Connect
-        APP_STORE_CONNECT_KEY_IDENTIFIER: CL49L4J3WD
-        APP_STORE_CONNECT_ISSUER_ID: c2fddb00-7914-4c86-aed9-dbc0c242dad8
       ios_signing:
         distribution_type: app_store
-        bundle_identifier: com.modamaskavo 
+        bundle_identifier: com.techmitz.modamaskavo  # Substitua pelo seu bundle ID real
 
     scripts:
       - name: Install npm dependencies
