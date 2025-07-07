@@ -6,7 +6,7 @@ require Pod::Executable.execute_command('node', ['-p',
     {paths: [process.argv[1]]},
   )', __dir__]).strip
 
-platform :ios, min_ios_version_supported
+platform :ios, '12.0'
 use_modular_headers!
 prepare_react_native_project!
 
@@ -21,11 +21,11 @@ target 'modamaskavo' do
 
   use_react_native!(
     :path => config[:reactNativePath],
-    # An absolute path to your application root.
     :app_path => "#{Pod::Config.instance.installation_root}/..",
     # 🔧 DESABILITAR NEW ARCHITECTURE
     :fabric_enabled => false,
-    :hermes_enabled => true
+    :hermes_enabled => true,
+    :flipper_configuration => FlipperConfiguration.disabled
   )
 
   post_install do |installer|
@@ -35,27 +35,33 @@ target 'modamaskavo' do
       :mac_catalyst_enabled => false
     )
     
-    # 🔧 Configurações para evitar erros de compilação
+    # 🔧 REMOVER MÓDULOS PROBLEMÁTICOS
     installer.pods_project.targets.each do |target|
+      if target.name == 'React-performancetimeline'
+        target.remove_from_project
+        next
+      end
+      
       target.build_configurations.each do |config|
-        # Não tratar warnings como erros
+        # Configurações gerais
         config.build_settings['GCC_TREAT_WARNINGS_AS_ERRORS'] = 'NO'
         config.build_settings['CLANG_WARN_DOCUMENTATION_COMMENTS'] = 'NO'
         config.build_settings['CLANG_WARN_STRICT_PROTOTYPES'] = 'NO'
-        config.build_settings['CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS'] = 'NO'
+        config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
         
-        # Configurações específicas para C++
+        # C++ settings
         config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
         config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
         
-        # Configurar arquiteturas
+        # Arquiteturas
         config.build_settings['ONLY_ACTIVE_ARCH'] = 'NO'
         config.build_settings['VALID_ARCHS'] = 'arm64'
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.0'
         
-        # Deployment target
-        if config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'].to_f < 12.0
-          config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.0'
-        end
+        # Desabilitar New Architecture
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= []
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'RCT_NEW_ARCH_ENABLED=0'
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'RCT_FABRIC_ENABLED=0'
       end
     end
   end
