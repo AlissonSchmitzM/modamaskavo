@@ -1,7 +1,7 @@
 # codemagic.yaml
 workflows:
   ios-build:
-    name: iOS Build (Create Empty Podspec)
+    name: iOS Build (Fix All Runtime Issues)
     instance_type: mac_mini_m1
 
     environment:
@@ -13,12 +13,10 @@ workflows:
         script: |
           npm install
 
-      - name: Fix React Native for iOS 11
+      - name: Fix React Native Runtime modules for iOS 11
         script: |
-          # Criar diretório se não existir
+          # 1. Criar React-RuntimeApple vazio
           mkdir -p node_modules/react-native/ReactCommon/react/runtime/platform/ios
-          
-          # Criar podspec vazio que não faz nada
           cat > node_modules/react-native/ReactCommon/react/runtime/platform/ios/React-RuntimeApple.podspec << 'EOF'
           Pod::Spec.new do |s|
             s.name                   = "React-RuntimeApple"
@@ -31,12 +29,23 @@ workflows:
             s.source                 = { :path => "." }
             s.source_files           = "**/*.{h,m,mm,cpp,c}"
             s.header_dir             = "React"
-            s.pod_target_xcconfig    = { "USE_HEADERMAP" => "YES" }
           end
           EOF
-          
-          # Criar arquivo fonte vazio
           touch node_modules/react-native/ReactCommon/react/runtime/platform/ios/dummy.cpp
+
+          # 2. Modificar React-RCTRuntime para iOS 11
+          if [ -f "node_modules/react-native/React/Runtime/React-RCTRuntime.podspec" ]; then
+            sed -i '' 's/s.platforms.*= { :ios => "[0-9.]*" }/s.platforms = { :ios => "11.0" }/g' node_modules/react-native/React/Runtime/React-RCTRuntime.podspec
+          fi
+
+          # 3. Criar arquivo dummy se não existir
+          mkdir -p node_modules/react-native/React/Runtime
+          touch node_modules/react-native/React/Runtime/dummy.cpp
+
+          # 4. Verificar se os arquivos foram criados
+          echo "Verificando arquivos criados:"
+          ls -la node_modules/react-native/ReactCommon/react/runtime/platform/ios/ || echo "Diretório RuntimeApple não encontrado"
+          ls -la node_modules/react-native/React/Runtime/ || echo "Diretório RCTRuntime não encontrado"
 
       - name: Setup environment
         script: |
