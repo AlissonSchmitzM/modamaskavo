@@ -1,4 +1,4 @@
-# codemagic.yaml
+# codemagic.yaml - SOLUÇÃO DEFINITIVA
 workflows:
   ios-workflow:
     name: iOS Workflow
@@ -8,7 +8,6 @@ workflows:
       vars:
         XCODE_WORKSPACE: "modamaskavo.xcworkspace"
         XCODE_SCHEME: "modamaskavo"
-        RCT_NEW_ARCH_ENABLED: 0
       node: 18.17.0
       xcode: latest
       cocoapods: default
@@ -16,23 +15,95 @@ workflows:
       - name: Install npm dependencies
         script: |
           npm ci
-      - name: Hack React Native Pods
+      - name: DESTRUIR React RuntimeApple
         script: |
-          # Backup original
-          cp node_modules/react-native/scripts/react_native_pods.rb node_modules/react-native/scripts/react_native_pods.rb.backup
+          # DELETAR COMPLETAMENTE o diretório problemático
+          rm -rf node_modules/react-native/ReactCommon/react/runtime
           
-          # Remove todas as referências ao RuntimeApple
-          sed -i '' '/RuntimeApple/d' node_modules/react-native/scripts/react_native_pods.rb
-          sed -i '' '/React-RCTRuntime/d' node_modules/react-native/scripts/react_native_pods.rb
+          # REESCREVER o react_native_pods.rb SEM RuntimeApple
+          cat > node_modules/react-native/scripts/react_native_pods.rb << 'EOF'
+          def use_react_native!(options = {})
+            # Configuração básica sem Runtime
+            pod 'React-Core', :path => "#{options[:path]}/React"
+            pod 'React-RCTText', :path => "#{options[:path]}/Libraries/Text"
+            pod 'React-RCTImage', :path => "#{options[:path]}/Libraries/Image"
+            pod 'React-RCTNetwork', :path => "#{options[:path]}/Libraries/Network"
+            pod 'React-RCTWebSocket', :path => "#{options[:path]}/Libraries/WebSocket"
+            pod 'React-RCTLinking', :path => "#{options[:path]}/Libraries/LinkingIOS"
+            pod 'React-RCTSettings', :path => "#{options[:path]}/Libraries/Settings"
+            pod 'React-RCTAnimation', :path => "#{options[:path]}/Libraries/NativeAnimation"
+            pod 'React-RCTBlob', :path => "#{options[:path]}/Libraries/Blob"
+            pod 'React-RCTVibration', :path => "#{options[:path]}/Libraries/Vibration"
+            pod 'React-RCTActionSheet', :path => "#{options[:path]}/Libraries/ActionSheetIOS"
+            
+            # Codegen
+            pod 'ReactCodegen', :path => "#{options[:path]}/ReactCommon/react/renderer/components/rncore"
+            pod 'React-jsi', :path => "#{options[:path]}/ReactCommon/jsi"
+            pod 'React-jsiexecutor', :path => "#{options[:path]}/ReactCommon/jsiexecutor"
+            pod 'React-jsinspector', :path => "#{options[:path]}/ReactCommon/jsinspector"
+            pod 'React-callinvoker', :path => "#{options[:path]}/ReactCommon/callinvoker"
+            pod 'React-runtimeexecutor', :path => "#{options[:path]}/ReactCommon/runtimeexecutor"
+            pod 'React-perflogger', :path => "#{options[:path]}/ReactCommon/reactperflogger"
+            pod 'React-logger', :path => "#{options[:path]}/ReactCommon/logger"
+            pod 'ReactCommon', :path => "#{options[:path]}/ReactCommon"
+            pod 'React-NativeModulesApple', :path => "#{options[:path]}/ReactCommon/react/nativemodule/core/platform/ios"
+            pod 'React-RCTAppDelegate', :path => "#{options[:path]}/Libraries/AppDelegate"
+            pod 'React-CoreModules', :path => "#{options[:path]}/React/CoreModules"
+            pod 'React-RCTFabric', :path => "#{options[:path]}/React/Fabric"
+            pod 'React-graphics', :path => "#{options[:path]}/ReactCommon/react/renderer/graphics"
+            pod 'React-jsc', :path => "#{options[:path]}/ReactCommon/jsc"
+            pod 'React-RCTNetwork', :path => "#{options[:path]}/Libraries/Network"
+            pod 'React-RCTText', :path => "#{options[:path]}/Libraries/Text"
+            pod 'React-RCTImage', :path => "#{options[:path]}/Libraries/Image"
+            pod 'React-RCTLinking', :path => "#{options[:path]}/Libraries/LinkingIOS"
+            pod 'React-RCTSettings', :path => "#{options[:path]}/Libraries/Settings"
+            pod 'React-RCTVibration', :path => "#{options[:path]}/Libraries/Vibration"
+            pod 'React-RCTActionSheet', :path => "#{options[:path]}/Libraries/ActionSheetIOS"
+            pod 'React-RCTAnimation', :path => "#{options[:path]}/Libraries/NativeAnimation"
+            pod 'React-RCTBlob', :path => "#{options[:path]}/Libraries/Blob"
+            pod 'React-RCTWebSocket', :path => "#{options[:path]}/Libraries/WebSocket"
+            pod 'React-Codegen', :path => "#{options[:path]}/ReactCommon/react/renderer/components/rncore"
+            pod 'ReactCommon/turbomodule/core', :path => "#{options[:path]}/ReactCommon"
+            pod 'Yoga', :path => "#{options[:path]}/ReactCommon/yoga"
+            pod 'DoubleConversion', :podspec => "#{options[:path]}/third-party-podspecs/DoubleConversion.podspec"
+            pod 'RCT-Folly', :podspec => "#{options[:path]}/third-party-podspecs/RCT-Folly.podspec"
+            pod 'boost', :podspec => "#{options[:path]}/third-party-podspecs/boost.podspec"
+            pod 'glog', :podspec => "#{options[:path]}/third-party-podspecs/glog.podspec"
+            pod 'fmt', :podspec => "#{options[:path]}/third-party-podspecs/fmt.podspec"
+            pod 'fast_float', :podspec => "#{options[:path]}/third-party-podspecs/fast_float.podspec"
+          end
           
-          # Verificar o que foi removido
-          echo "=== Verificando remoções ==="
-          grep -n "Runtime" node_modules/react-native/scripts/react_native_pods.rb || echo "Runtime removido com sucesso"
+          def react_native_post_install(installer)
+            installer.pods_project.targets.each do |target|
+              target.build_configurations.each do |config|
+                config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.0'
+              end
+            end
+          end
           
-      - name: Create .xcode.env
+          def use_native_modules!
+            return {
+              :reactNativePath => "../node_modules/react-native"
+            }
+          end
+          EOF
+          
+      - name: Podfile SUPER SIMPLES
         script: |
-          echo "export RCT_NEW_ARCH_ENABLED=0" > ios/.xcode.env
-          echo "export NODE_BINARY=node" >> ios/.xcode.env
+          cat > ios/Podfile << 'EOF'
+          require_relative '../node_modules/react-native/scripts/react_native_pods'
+          
+          platform :ios, '12.0'
+          
+          target 'modamaskavo' do
+            config = use_native_modules!
+            use_react_native!(:path => config[:reactNativePath])
+            
+            post_install do |installer|
+              react_native_post_install(installer)
+            end
+          end
+          EOF
       - name: Clean CocoaPods
         script: |
           cd ios
