@@ -1,4 +1,4 @@
-# codemagic.yaml - SOLUÇÃO DEFINITIVA (DE VERDADE)
+# codemagic.yaml - SOLUÇÃO FINAL DEFINITIVA
 workflows:
   ios-workflow:
     name: iOS Workflow
@@ -15,28 +15,44 @@ workflows:
       - name: Install npm dependencies
         script: |
           npm ci
-      - name: PATCH React Native Pods (Cirúrgico)
+      - name: DESTRUIR RuntimeApple COMPLETAMENTE
         script: |
-          # Backup do arquivo original
-          cp node_modules/react-native/scripts/react_native_pods.rb node_modules/react-native/scripts/react_native_pods.rb.backup
+          # 1. DELETAR o diretório físico
+          rm -rf node_modules/react-native/ReactCommon/react/runtime
           
-          # Remover SOMENTE as linhas do RuntimeApple
-          sed -i '' '/React-RuntimeApple/d' node_modules/react-native/scripts/react_native_pods.rb
-          sed -i '' '/React-RCTRuntime/d' node_modules/react-native/scripts/react_native_pods.rb
+          # 2. REESCREVER o react_native_pods.rb usando Python (mais confiável)
+          python3 << 'EOF'
+          import re
           
-          # Verificar se foi removido
-          echo "=== Verificando se Runtime foi removido ==="
+          # Ler o arquivo original
+          with open('node_modules/react-native/scripts/react_native_pods.rb', 'r') as f:
+              content = f.read()
+          
+          # Remover todas as linhas que contêm RuntimeApple ou RCTRuntime
+          lines = content.split('\n')
+          filtered_lines = []
+          
+          for line in lines:
+              if 'RuntimeApple' not in line and 'RCTRuntime' not in line:
+                  filtered_lines.append(line)
+          
+          # Escrever o arquivo modificado
+          with open('node_modules/react-native/scripts/react_native_pods.rb', 'w') as f:
+              f.write('\n'.join(filtered_lines))
+          
+          print("✅ RuntimeApple removido com Python!")
+          EOF
+          
+          # 3. Verificar se foi removido
+          echo "=== Verificando remoção ==="
           if grep -q "RuntimeApple" node_modules/react-native/scripts/react_native_pods.rb; then
             echo "❌ RuntimeApple ainda está lá"
+            exit 1
           else
             echo "✅ RuntimeApple removido com sucesso"
           fi
           
-          # Mostrar as linhas que contêm "pod" para debug
-          echo "=== Pods restantes ==="
-          grep "pod '" node_modules/react-native/scripts/react_native_pods.rb | head -10
-          
-      - name: Criar Podfile COMPATÍVEL
+      - name: Criar Podfile SUPER SIMPLES
         script: |
           cat > ios/Podfile << 'EOF'
           require_relative '../node_modules/react-native/scripts/react_native_pods'
@@ -56,7 +72,6 @@ workflows:
             post_install do |installer|
               react_native_post_install(installer)
               
-              # Forçar iOS 12.0 em todos os pods
               installer.pods_project.targets.each do |target|
                 target.build_configurations.each do |config|
                   config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.0'
