@@ -1,56 +1,52 @@
 # codemagic.yaml
 workflows:
   ios-build:
-    name: iOS Build
+    name: iOS Build (Expo-like)
     instance_type: mac_mini_m1
 
     environment:
       vars:
         XCODE_SCHEME: 'modamaskavo'
-        RCT_NEW_ARCH_ENABLED: 0
 
     scripts:
       - name: Install npm dependencies
         script: |
           npm install
 
-      - name: Setup React Native environment
+      - name: Setup environment (Expo-like)
         script: |
           cd ios
           cat > .xcode.env << EOF
           export NODE_BINARY=node
           export RCT_NEW_ARCH_ENABLED=0
           export RCT_FABRIC_ENABLED=0
+          export HERMES_ENABLED=0
           EOF
 
       - name: Clean and Install CocoaPods
         script: |
           cd ios
-          pod deintegrate || true
           rm -rf Pods
           rm -f Podfile.lock
-          rm -rf ~/Library/Developer/Xcode/DerivedData
-          pod install --verbose
+          # Usar --repo-update para garantir versões compatíveis
+          pod install --repo-update --verbose
 
-      - name: Build iOS app (Device - Debug)
+      - name: Build iOS app
         script: |
           cd ios
           xcodebuild -workspace modamaskavo.xcworkspace \
             -scheme "$XCODE_SCHEME" \
-            -configuration Debug \
+            -configuration Release \
             -destination generic/platform=iOS \
             -sdk iphoneos \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             ONLY_ACTIVE_ARCH=NO \
             VALID_ARCHS=arm64 \
-            EXCLUDED_ARCHS=i386 \
-            GCC_TREAT_WARNINGS_AS_ERRORS=NO \
-            SWIFT_TREAT_WARNINGS_AS_ERRORS=NO \
-            SWIFT_SUPPRESS_WARNINGS=YES \
-            ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS=NO \
-            clean build
+            IPHONEOS_DEPLOYMENT_TARGET=11.0 \
+            RCT_NEW_ARCH_ENABLED=0 \
+            build
 
     artifacts:
       - /tmp/xcodebuild_logs/*.log
-      - ios/build/Build/Products/Debug-iphoneos/*.app
+      - ios/build/Build/Products/Release-iphoneos/*.app
