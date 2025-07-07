@@ -1,5 +1,4 @@
 # ios/Podfile
-# Resolve react_native_pods.rb with node to allow for hoisting
 require Pod::Executable.execute_command('node', ['-p',
   'require.resolve(
     "react-native/scripts/react_native_pods.rb",
@@ -7,9 +6,6 @@ require Pod::Executable.execute_command('node', ['-p',
   )', __dir__]).strip
 
 platform :ios, '11.0'
-use_modular_headers!
-
-# 🔧 REMOVER prepare_react_native_project! - não disponível nesta versão
 
 target 'modamaskavo' do
   config = use_native_modules!
@@ -17,8 +13,9 @@ target 'modamaskavo' do
   use_react_native!(
     :path => config[:reactNativePath],
     :app_path => "#{Pod::Config.instance.installation_root}/..",
-    # 🔧 DESABILITAR HERMES para manter iOS 11
-    :hermes_enabled => false
+    # 🔧 Configurações similares ao Expo
+    :hermes_enabled => false,
+    :fabric_enabled => false
   )
 
   post_install do |installer|
@@ -28,37 +25,25 @@ target 'modamaskavo' do
       :mac_catalyst_enabled => false
     )
     
-    # 🔧 Configurações para iOS 11 e resolver problemas de compilação
+    # 🔧 Forçar iOS 11 em todos os pods
     installer.pods_project.targets.each do |target|
       target.build_configurations.each do |config|
         config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '11.0'
         config.build_settings['GCC_TREAT_WARNINGS_AS_ERRORS'] = 'NO'
         config.build_settings['SWIFT_TREAT_WARNINGS_AS_ERRORS'] = 'NO'
-        config.build_settings['ONLY_ACTIVE_ARCH'] = 'NO'
-        config.build_settings['VALID_ARCHS'] = 'arm64'
-        config.build_settings['EXCLUDED_ARCHS'] = 'i386'
         
-        # Swift settings
-        config.build_settings['SWIFT_VERSION'] = '5.0'
-        config.build_settings['SWIFT_OPTIMIZATION_LEVEL'] = '-Onone'
-        
-        # Asset Catalog (se disponível)
-        if config.build_settings['ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS']
-          config.build_settings['ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS'] = 'NO'
-        end
+        # 🔧 Desabilitar recursos que requerem iOS 13+
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= []
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'RCT_NEW_ARCH_ENABLED=0'
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'RCT_FABRIC_ENABLED=0'
       end
     end
     
-    # 🔧 Configurações específicas para lottie-ios
+    # 🔧 Remover dependências problemáticas
     installer.pods_project.targets.each do |target|
-      if target.name == 'lottie-ios'
-        target.build_configurations.each do |config|
-          config.build_settings['BUILD_LIBRARY_FOR_DISTRIBUTION'] = 'NO'
-          config.build_settings['SWIFT_COMPILATION_MODE'] = 'singlefile'
-          config.build_settings['SWIFT_OPTIMIZATION_LEVEL'] = '-Onone'
-          config.build_settings['SWIFT_VERSION'] = '5.0'
-          config.build_settings['ENABLE_MODULE_VERIFIER'] = 'NO'
-        end
+      if target.name.include?('React-RuntimeApple') || 
+         target.name.include?('React-RuntimeHermes')
+        target.remove_from_project
       end
     end
   end
