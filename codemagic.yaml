@@ -1,7 +1,7 @@
 # codemagic.yaml
 workflows:
   ios-build:
-    name: iOS Build (Expo-like)
+    name: iOS Build (Manual Exclusion)
     instance_type: mac_mini_m1
 
     environment:
@@ -13,23 +13,29 @@ workflows:
         script: |
           npm install
 
-      - name: Setup environment (Expo-like)
+      - name: Setup environment
         script: |
           cd ios
           cat > .xcode.env << EOF
           export NODE_BINARY=node
           export RCT_NEW_ARCH_ENABLED=0
-          export RCT_FABRIC_ENABLED=0
           export HERMES_ENABLED=0
           EOF
+
+      - name: Modify React Native to exclude RuntimeApple
+        script: |
+          cd node_modules/react-native/ReactCommon/react/runtime/platform/ios
+          # Renomear ou remover o podspec problemático
+          if [ -f "React-RuntimeApple.podspec" ]; then
+            mv React-RuntimeApple.podspec React-RuntimeApple.podspec.bak
+          fi
 
       - name: Clean and Install CocoaPods
         script: |
           cd ios
           rm -rf Pods
           rm -f Podfile.lock
-          # Usar --repo-update para garantir versões compatíveis
-          pod install --repo-update --verbose
+          pod install --verbose
 
       - name: Build iOS app
         script: |
@@ -44,7 +50,6 @@ workflows:
             ONLY_ACTIVE_ARCH=NO \
             VALID_ARCHS=arm64 \
             IPHONEOS_DEPLOYMENT_TARGET=11.0 \
-            RCT_NEW_ARCH_ENABLED=0 \
             build
 
     artifacts:
