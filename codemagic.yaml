@@ -16,7 +16,7 @@ workflows:
         XCODE_SCHEME: 'modamaskavo'
       ios_signing:
         distribution_type: app_store
-        bundle_identifier: com.techmitz.modamaskavo  # Substitua pelo seu bundle ID real
+        bundle_identifier: com.modamaskavo
 
     scripts:
       - name: Install npm dependencies
