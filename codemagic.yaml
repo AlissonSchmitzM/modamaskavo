@@ -13,13 +13,20 @@ workflows:
         script: |
           npm install
 
-      - name: Remove problematic React Runtime
+      - name: Patch React Native pods script
         script: |
-          # Remover completamente o diretório React-RuntimeApple
-          rm -rf node_modules/react-native/ReactCommon/react/runtime/platform/ios
+          # Fazer backup
+          cp node_modules/react-native/scripts/react_native_pods.rb node_modules/react-native/scripts/react_native_pods.rb.backup
           
-          # Remover React-RCTRuntime também
-          rm -rf node_modules/react-native/React/Runtime
+          # Remover todas as linhas que incluem Runtime
+          sed -i '' '/React-RuntimeApple/d' node_modules/react-native/scripts/react_native_pods.rb
+          sed -i '' '/React-RCTRuntime/d' node_modules/react-native/scripts/react_native_pods.rb
+          sed -i '' '/RuntimeApple/d' node_modules/react-native/scripts/react_native_pods.rb
+          sed -i '' '/RCTRuntime/d' node_modules/react-native/scripts/react_native_pods.rb
+          
+          # Verificar o que foi removido
+          echo "Verificando se Runtime foi removido:"
+          grep -n "Runtime" node_modules/react-native/scripts/react_native_pods.rb || echo "Runtime removido com sucesso"
 
       - name: Setup environment
         script: |
