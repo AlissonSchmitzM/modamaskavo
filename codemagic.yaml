@@ -4,19 +4,19 @@
 workflows:
   ios-build:
     name: iOS Build
-    instance_type: mac_mini_m1 # ou mac_mini_m2, dependendo da sua necessidade e plano
-
-    # Removendo o bloco 'integrations' pois a conexão GitHub já é feita na UI do CodeMagic
-    # integrations:
-    #   github:
-    #     integration_id: SEU_ID_AQUI # Esta linha não é necessária se a integração já foi feita na UI
+    instance_type: mac_mini_m1
 
     environment:
-      # Versão do Node.js que seu projeto usa (verifique seu package.json ou use a que funciona localmente)
       groups:
         - apple_developer_portal_credentials
       vars:
         XCODE_SCHEME: 'modamaskavo'
+        # Configurações do App Store Connect
+        APP_STORE_CONNECT_KEY_IDENTIFIER: CL49L4J3WD
+        APP_STORE_CONNECT_ISSUER_ID: c2fddb00-7914-4c86-aed9-dbc0c242dad8
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.modamaskavo 
 
     scripts:
       - name: Install npm dependencies
@@ -27,23 +27,15 @@ workflows:
         script: |
           cd ios
           # Limpeza agressiva do CocoaPods
-          pod deintegrate || true # Deintegrate se já estiver integrado
+          pod deintegrate || true
           rm -rf Pods
           rm -f Podfile.lock
           pod install
 
       - name: Set up code signing settings on Xcode project
         script: |
-          # Esta linha usa as credenciais do Codemagic para configurar a assinatura de código automaticamente.
+          # Configurar assinatura de código automaticamente
           xcode-project use-profiles
-
-          # Adicione esta linha para definir explicitamente o ID da sua equipe de desenvolvimento e o estilo de assinatura.
-          # SUBSTITUA 'YOUR_DEVELOPMENT_TEAM_ID' PELO SEU REAL TEAM ID DA APPLE DEVELOPER.
-          xcode-project set-project-build-settings \
-            --project "ios/modamaskavo.xcodeproj" \
-            --target "modamaskavo" \
-            --setting "DEVELOPMENT_TEAM=YOUR_DEVELOPMENT_TEAM_ID" \
-            --setting "CODE_SIGN_STYLE=Automatic" # 'Automatic' é geralmente o mais fácil para CI/CD
 
       - name: Build iOS app
         script: |
@@ -52,13 +44,13 @@ workflows:
             xcode-project build-ipa \
               --workspace "ios/modamaskavo.xcworkspace" \
               --scheme "$XCODE_SCHEME" \
-              --clean # Adicionar --clean para garantir um build limpo
+              --clean
           elif [ -d "ios/modamaskavo.xcodeproj" ]; then
             echo "Usando .xcodeproj"
             xcode-project build-ipa \
               --project "ios/modamaskavo.xcodeproj" \
               --scheme "$XCODE_SCHEME" \
-              --clean # Adicionar --clean para garantir um build limpo
+              --clean
           else
             echo "Erro: Não foi encontrado .xcworkspace nem .xcodeproj na pasta ios/"
             exit 1
@@ -70,13 +62,8 @@ workflows:
       - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app
       - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
 
-    # Removendo o bloco 'publishing' para evitar o erro 'none is not an allowed value'
-    # Se você quiser configurar a publicação, adicione o bloco completo aqui com as configurações corretas.
-    # publishing:
-    #   apple_app_store:
-    #     api_key:
-    #       id: Encrypted
-    #       issuer_id: Encrypted
-    #     track: TestFlight
-    #     submit_for_review: false
-    #     automatic_release: false
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        submit_to_app_store: false
