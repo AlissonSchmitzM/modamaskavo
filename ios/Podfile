@@ -6,7 +6,7 @@ require Pod::Executable.execute_command('node', ['-p',
     {paths: [process.argv[1]]},
   )', __dir__]).strip
 
-platform :ios, '12.0'
+platform :ios, min_ios_version_supported
 use_modular_headers!
 prepare_react_native_project!
 
@@ -22,10 +22,9 @@ target 'modamaskavo' do
   use_react_native!(
     :path => config[:reactNativePath],
     :app_path => "#{Pod::Config.instance.installation_root}/..",
-    # 🔧 DESABILITAR NEW ARCHITECTURE
+    # 🔧 REMOVER FlipperConfiguration - não disponível nesta versão
     :fabric_enabled => false,
-    :hermes_enabled => true,
-    :flipper_configuration => FlipperConfiguration.disabled
+    :hermes_enabled => true
   )
 
   post_install do |installer|
@@ -35,13 +34,8 @@ target 'modamaskavo' do
       :mac_catalyst_enabled => false
     )
     
-    # 🔧 REMOVER MÓDULOS PROBLEMÁTICOS
+    # 🔧 Configurações para evitar erros de compilação
     installer.pods_project.targets.each do |target|
-      if target.name == 'React-performancetimeline'
-        target.remove_from_project
-        next
-      end
-      
       target.build_configurations.each do |config|
         # Configurações gerais
         config.build_settings['GCC_TREAT_WARNINGS_AS_ERRORS'] = 'NO'
