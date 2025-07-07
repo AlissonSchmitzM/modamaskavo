@@ -4,12 +4,7 @@ workflows:
     name: iOS Build
     instance_type: mac_mini_m1
 
-    integrations:
-      app_store_connect: Techmitz
-
     environment:
-      groups:
-        - apple_developer_portal_credentials
       vars:
         XCODE_SCHEME: 'modamaskavo'
 
@@ -26,32 +21,25 @@ workflows:
           rm -f Podfile.lock
           pod install
 
-      - name: Fetch signing files
-        script: |
-          app-store-connect fetch-signing-files com.modamaskavo \
-            --type IOS_APP_STORE \
-            --create
-
-      - name: Set up code signing settings on Xcode project
-        script: |
-          xcode-project use-profiles
-
-      - name: Build iOS app
+      - name: Build iOS app (without signing)
         script: |
           if [ -d "ios/modamaskavo.xcworkspace" ]; then
-            xcode-project build-ipa \
-              --workspace "ios/modamaskavo.xcworkspace" \
-              --scheme "$XCODE_SCHEME"
+            xcodebuild -workspace "ios/modamaskavo.xcworkspace" \
+              -scheme "$XCODE_SCHEME" \
+              -configuration Release \
+              -destination generic/platform=iOS \
+              CODE_SIGNING_ALLOWED=NO \
+              CODE_SIGNING_REQUIRED=NO \
+              build
           else
-            xcode-project build-ipa \
-              --project "ios/modamaskavo.xcodeproj" \
-              --scheme "$XCODE_SCHEME"
+            xcodebuild -project "ios/modamaskavo.xcodeproj" \
+              -scheme "$XCODE_SCHEME" \
+              -configuration Release \
+              -destination generic/platform=iOS \
+              CODE_SIGNING_ALLOWED=NO \
+              CODE_SIGNING_REQUIRED=NO \
+              build
           fi
 
     artifacts:
-      - build/ios/ipa/*.ipa
-
-    publishing:
-      app_store_connect:
-        auth: integration
-        submit_to_testflight: true
+      - /tmp/xcodebuild_logs/*.log
