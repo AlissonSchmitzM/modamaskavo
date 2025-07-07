@@ -13,6 +13,14 @@ workflows:
         script: |
           npm install
 
+      - name: Remove problematic React Runtime
+        script: |
+          # Remover completamente o diretório React-RuntimeApple
+          rm -rf node_modules/react-native/ReactCommon/react/runtime/platform/ios
+          
+          # Remover React-RCTRuntime também
+          rm -rf node_modules/react-native/React/Runtime
+
       - name: Setup environment
         script: |
           cd ios
