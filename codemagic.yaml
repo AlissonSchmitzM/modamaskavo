@@ -7,11 +7,25 @@ workflows:
     environment:
       vars:
         XCODE_SCHEME: 'modamaskavo'
+        # Desabilitar New Architecture completamente
+        RCT_NEW_ARCH_ENABLED: 0
+        RCT_FABRIC_ENABLED: 0
+        RCT_TURBO_MODULE_ENABLED: 0
 
     scripts:
       - name: Install npm dependencies
         script: |
           npm install
+
+      - name: Create .xcode.env file
+        script: |
+          cd ios
+          cat > .xcode.env << EOF
+          export NODE_BINARY=node
+          export RCT_NEW_ARCH_ENABLED=0
+          export RCT_FABRIC_ENABLED=0
+          export RCT_TURBO_MODULE_ENABLED=0
+          EOF
 
       - name: Clean and Install CocoaPods
         script: |
@@ -20,20 +34,19 @@ workflows:
           pod deintegrate || true
           rm -rf Pods
           rm -f Podfile.lock
-          rm -rf ~/Library/Caches/CocoaPods
-          rm -rf ~/.cocoapods/repos/trunk
+          rm -rf ~/Library/Developer/Xcode/DerivedData
           
           # Instalar pods
           pod install --verbose
 
-      - name: Build iOS app
+      - name: Build iOS app (Debug Configuration)
         script: |
           cd ios
           if [ -d "modamaskavo.xcworkspace" ]; then
             echo "Usando .xcworkspace"
             xcodebuild -workspace modamaskavo.xcworkspace \
               -scheme "$XCODE_SCHEME" \
-              -configuration Release \
+              -configuration Debug \
               -destination generic/platform=iOS \
               -sdk iphoneos \
               CODE_SIGNING_ALLOWED=NO \
@@ -42,12 +55,13 @@ workflows:
               VALID_ARCHS=arm64 \
               GCC_TREAT_WARNINGS_AS_ERRORS=NO \
               CLANG_WARN_DOCUMENTATION_COMMENTS=NO \
+              RCT_NEW_ARCH_ENABLED=0 \
               clean build
           else
             echo "Usando .xcodeproj"
             xcodebuild -project modamaskavo.xcodeproj \
               -scheme "$XCODE_SCHEME" \
-              -configuration Release \
+              -configuration Debug \
               -destination generic/platform=iOS \
               -sdk iphoneos \
               CODE_SIGNING_ALLOWED=NO \
@@ -56,9 +70,10 @@ workflows:
               VALID_ARCHS=arm64 \
               GCC_TREAT_WARNINGS_AS_ERRORS=NO \
               CLANG_WARN_DOCUMENTATION_COMMENTS=NO \
+              RCT_NEW_ARCH_ENABLED=0 \
               clean build
           fi
 
     artifacts:
       - /tmp/xcodebuild_logs/*.log
-      - ios/build/Build/Products/Release-iphoneos/*.app
+      - ios/build/Build/Products/Debug-iphoneos/*.app
