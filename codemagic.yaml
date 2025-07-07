@@ -13,7 +13,7 @@ workflows:
       vars:
         XCODE_SCHEME: 'modamaskavo'
       ios_signing:
-        distribution_type: app_store
+        distribution_type: ad_hoc  # ← Mudança aqui
         bundle_identifier: com.modamaskavo
 
     scripts:
@@ -58,8 +58,9 @@ workflows:
       - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app
       - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
 
-    publishing:
-      app_store_connect:
-        auth: integration
-        submit_to_testflight: true
-        submit_to_app_store: false
+    # Removendo publishing temporariamente para testar o build
+    # publishing:
+    #   app_store_connect:
+    #     auth: integration
+    #     submit_to_testflight: true
+    #     submit_to_app_store: false
