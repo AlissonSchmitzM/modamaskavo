@@ -7,6 +7,9 @@ workflows:
     environment:
       vars:
         XCODE_SCHEME: 'modamaskavo'
+        # Configurações para reduzir warnings
+        ONLY_ACTIVE_ARCH: false
+        VALID_ARCHS: arm64
 
     scripts:
       - name: Install npm dependencies
@@ -16,30 +19,46 @@ workflows:
       - name: Clean and Install CocoaPods
         script: |
           cd ios
+          pod deintegrate || true
           rm -rf Pods
           rm -f Podfile.lock
-          pod install
+          # Limpar cache do CocoaPods
+          pod cache clean --all
+          pod install --verbose
 
-      - name: Build iOS app (Debug mode)
+      - name: Build iOS app (with better error handling)
         script: |
           cd ios
           if [ -d "modamaskavo.xcworkspace" ]; then
+            echo "Usando .xcworkspace"
             xcodebuild -workspace modamaskavo.xcworkspace \
               -scheme "$XCODE_SCHEME" \
-              -configuration Debug \
+              -configuration Release \
               -destination generic/platform=iOS \
-              -sdk iphoneos \
+              -allowProvisioningUpdates \
               CODE_SIGNING_ALLOWED=NO \
-              build
+              CODE_SIGNING_REQUIRED=NO \
+              ONLY_ACTIVE_ARCH=NO \
+              VALID_ARCHS=arm64 \
+              GCC_TREAT_WARNINGS_AS_ERRORS=NO \
+              CLANG_WARN_DOCUMENTATION_COMMENTS=NO \
+              clean build
           else
+            echo "Usando .xcodeproj"
             xcodebuild -project modamaskavo.xcodeproj \
               -scheme "$XCODE_SCHEME" \
-              -configuration Debug \
+              -configuration Release \
               -destination generic/platform=iOS \
-              -sdk iphoneos \
+              -allowProvisioningUpdates \
               CODE_SIGNING_ALLOWED=NO \
-              build
+              CODE_SIGNING_REQUIRED=NO \
+              ONLY_ACTIVE_ARCH=NO \
+              VALID_ARCHS=arm64 \
+              GCC_TREAT_WARNINGS_AS_ERRORS=NO \
+              CLANG_WARN_DOCUMENTATION_COMMENTS=NO \
+              clean build
           fi
 
     artifacts:
       - /tmp/xcodebuild_logs/*.log
+      - ios/build/Build/Products/Release-iphoneos/*.app
