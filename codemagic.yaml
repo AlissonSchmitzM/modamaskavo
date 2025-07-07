@@ -1,4 +1,4 @@
-# codemagic.yaml - CRIANDO O PODSPEC FALTANTE
+# codemagic.yaml - ACEITANDO iOS 15.0+ DEFINITIVAMENTE
 workflows:
   ios-workflow:
     name: iOS Workflow
@@ -17,10 +17,8 @@ workflows:
           npm ci
       - name: Create RuntimeApple podspec
         script: |
-          # Criar o diretório que o CocoaPods está procurando
           mkdir -p node_modules/react-native/ReactCommon/react/runtime/platform/ios
           
-          # Criar o podspec que está faltando
           cat > node_modules/react-native/ReactCommon/react/runtime/platform/ios/React-RuntimeApple.podspec << 'EOF'
           Pod::Spec.new do |s|
             s.name                   = "React-RuntimeApple"
@@ -33,24 +31,19 @@ workflows:
             s.source                 = { :path => "." }
             s.source_files           = "*.{h,m,mm,cpp,c}"
             s.header_dir             = "React"
-            
-            # Dependências mínimas
             s.dependency "React-Core"
             s.dependency "React-jsi"
           end
           EOF
           
-          # Criar arquivo fonte dummy
           touch node_modules/react-native/ReactCommon/react/runtime/platform/ios/dummy.cpp
           
-          echo "✅ RuntimeApple podspec criado!"
-          
-      - name: Force disable New Architecture
+      - name: Update iOS deployment target in project
         script: |
-          echo "export RCT_NEW_ARCH_ENABLED=0" > ios/.xcode.env
-          echo "export NODE_BINARY=node" >> ios/.xcode.env
+          # Atualizar o projeto Xcode para iOS 15.0
+          sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = [0-9][0-9]*\.[0-9]*/IPHONEOS_DEPLOYMENT_TARGET = 15.0/g' ios/modamaskavo.xcodeproj/project.pbxproj
           
-      - name: Create correct Podfile
+      - name: Create Podfile with iOS 15.0
         script: |
           cat > ios/Podfile << 'EOF'
           require_relative '../node_modules/react-native/scripts/react_native_pods'
@@ -87,7 +80,7 @@ workflows:
           rm -rf build
       - name: Install CocoaPods dependencies
         script: |
-          cd ios && RCT_NEW_ARCH_ENABLED=0 pod install
+          cd ios && pod install
       - name: Build iOS
         script: |
           cd ios
