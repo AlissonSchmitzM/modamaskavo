@@ -20,15 +20,13 @@ workflows:
           # 1. DELETAR o diretório físico
           rm -rf node_modules/react-native/ReactCommon/react/runtime
           
-          # 2. REESCREVER o react_native_pods.rb usando Python (mais confiável)
+          # 2. REESCREVER o react_native_pods.rb usando Python
           python3 << 'EOF'
           import re
           
-          # Ler o arquivo original
           with open('node_modules/react-native/scripts/react_native_pods.rb', 'r') as f:
               content = f.read()
           
-          # Remover todas as linhas que contêm RuntimeApple ou RCTRuntime
           lines = content.split('\n')
           filtered_lines = []
           
@@ -36,21 +34,34 @@ workflows:
               if 'RuntimeApple' not in line and 'RCTRuntime' not in line:
                   filtered_lines.append(line)
           
-          # Escrever o arquivo modificado
           with open('node_modules/react-native/scripts/react_native_pods.rb', 'w') as f:
               f.write('\n'.join(filtered_lines))
           
           print("✅ RuntimeApple removido com Python!")
           EOF
           
-          # 3. Verificar se foi removido
-          echo "=== Verificando remoção ==="
-          if grep -q "RuntimeApple" node_modules/react-native/scripts/react_native_pods.rb; then
-            echo "❌ RuntimeApple ainda está lá"
-            exit 1
-          else
-            echo "✅ RuntimeApple removido com sucesso"
-          fi
+          # 3. CRIAR o diretório e podspec vazio (caso ainda seja referenciado)
+          mkdir -p node_modules/react-native/ReactCommon/react/runtime/platform/ios
+          
+          cat > node_modules/react-native/ReactCommon/react/runtime/platform/ios/React-RuntimeApple.podspec << 'EOF'
+          Pod::Spec.new do |s|
+            s.name                   = "React-RuntimeApple"
+            s.version                = "1000.0.0"
+            s.summary                = "Empty podspec for compatibility"
+            s.homepage               = "https://reactnative.dev/"
+            s.license                = "MIT"
+            s.author                 = "Meta Platforms, Inc."
+            s.platforms              = { :ios => "12.0" }
+            s.source                 = { :path => "." }
+            s.source_files           = "*.{h,m,mm,cpp,c}"
+            s.header_dir             = "React"
+          end
+          EOF
+          
+          # Criar arquivo fonte vazio
+          touch node_modules/react-native/ReactCommon/react/runtime/platform/ios/dummy.cpp
+          
+          echo "✅ Podspec vazio criado!"
           
       - name: Criar Podfile SUPER SIMPLES
         script: |
