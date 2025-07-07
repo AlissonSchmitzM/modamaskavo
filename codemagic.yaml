@@ -1,7 +1,7 @@
 # codemagic.yaml
 workflows:
   ios-build:
-    name: iOS Build (Manual Exclusion)
+    name: iOS Build (Create Empty Podspec)
     instance_type: mac_mini_m1
 
     environment:
@@ -13,6 +13,31 @@ workflows:
         script: |
           npm install
 
+      - name: Fix React Native for iOS 11
+        script: |
+          # Criar diretório se não existir
+          mkdir -p node_modules/react-native/ReactCommon/react/runtime/platform/ios
+          
+          # Criar podspec vazio que não faz nada
+          cat > node_modules/react-native/ReactCommon/react/runtime/platform/ios/React-RuntimeApple.podspec << 'EOF'
+          Pod::Spec.new do |s|
+            s.name                   = "React-RuntimeApple"
+            s.version                = "1000.0.0"
+            s.summary                = "Dummy podspec for iOS 11 compatibility"
+            s.homepage               = "https://reactnative.dev/"
+            s.license                = "MIT"
+            s.author                 = "Meta Platforms, Inc. and its affiliates"
+            s.platforms              = { :ios => "11.0" }
+            s.source                 = { :path => "." }
+            s.source_files           = "**/*.{h,m,mm,cpp,c}"
+            s.header_dir             = "React"
+            s.pod_target_xcconfig    = { "USE_HEADERMAP" => "YES" }
+          end
+          EOF
+          
+          # Criar arquivo fonte vazio
+          touch node_modules/react-native/ReactCommon/react/runtime/platform/ios/dummy.cpp
+
       - name: Setup environment
         script: |
           cd ios
@@ -21,14 +46,6 @@ workflows:
           export RCT_NEW_ARCH_ENABLED=0
           export HERMES_ENABLED=0
           EOF
-
-      - name: Modify React Native to exclude RuntimeApple
-        script: |
-          cd node_modules/react-native/ReactCommon/react/runtime/platform/ios
-          # Renomear ou remover o podspec problemático
-          if [ -f "React-RuntimeApple.podspec" ]; then
-            mv React-RuntimeApple.podspec React-RuntimeApple.podspec.bak
-          fi
 
       - name: Clean and Install CocoaPods
         script: |
