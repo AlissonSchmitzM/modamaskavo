@@ -1,3 +1,4 @@
+# codemagic.yaml
 workflows:
   ios-workflow:
     name: iOS Workflow
@@ -14,6 +15,18 @@ workflows:
       - name: Install npm dependencies
         script: |
           npm ci
+      - name: Remove React Runtime Apple
+        script: |
+          # Remover diretório React-RuntimeApple
+          rm -rf node_modules/react-native/ReactCommon/react/runtime/platform/ios
+          
+          # Modificar react_native_pods.rb para não incluir RuntimeApple
+          sed -i '' '/React-RuntimeApple/d' node_modules/react-native/scripts/react_native_pods.rb
+          
+          # Verificar se foi removido
+          echo "Verificando se Runtime foi removido:"
+          grep -n "RuntimeApple" node_modules/react-native/scripts/react_native_pods.rb || echo "RuntimeApple removido com sucesso"
+          
       - name: Clean CocoaPods
         script: |
           cd ios
