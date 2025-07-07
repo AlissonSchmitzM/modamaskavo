@@ -16,28 +16,28 @@ workflows:
       - name: Clean and Install CocoaPods
         script: |
           cd ios
-          pod deintegrate || true
           rm -rf Pods
           rm -f Podfile.lock
           pod install
 
-      - name: Build iOS app (without signing)
+      - name: Build iOS app (Debug mode)
         script: |
-          if [ -d "ios/modamaskavo.xcworkspace" ]; then
-            xcodebuild -workspace "ios/modamaskavo.xcworkspace" \
+          cd ios
+          if [ -d "modamaskavo.xcworkspace" ]; then
+            xcodebuild -workspace modamaskavo.xcworkspace \
               -scheme "$XCODE_SCHEME" \
-              -configuration Release \
+              -configuration Debug \
               -destination generic/platform=iOS \
+              -sdk iphoneos \
               CODE_SIGNING_ALLOWED=NO \
-              CODE_SIGNING_REQUIRED=NO \
               build
           else
-            xcodebuild -project "ios/modamaskavo.xcodeproj" \
+            xcodebuild -project modamaskavo.xcodeproj \
               -scheme "$XCODE_SCHEME" \
-              -configuration Release \
+              -configuration Debug \
               -destination generic/platform=iOS \
+              -sdk iphoneos \
               CODE_SIGNING_ALLOWED=NO \
-              CODE_SIGNING_REQUIRED=NO \
               build
           fi
 
