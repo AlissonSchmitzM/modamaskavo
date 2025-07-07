@@ -1,4 +1,4 @@
-# codemagic.yaml - SOLUÇÃO FINAL DEFINITIVA (AGORA SIM!)
+# codemagic.yaml - SOLUÇÃO FINAL DEFINITIVA
 workflows:
   ios-workflow:
     name: iOS Workflow
@@ -15,76 +15,12 @@ workflows:
       - name: Install npm dependencies
         script: |
           npm ci
-      - name: CRIAR TODOS OS RUNTIME PODSPECS
-        script: |
-          # 1. CRIAR diretórios necessários
-          mkdir -p node_modules/react-native/ReactCommon/react/runtime
-          mkdir -p node_modules/react-native/ReactCommon/react/runtime/platform/ios
-          
-          # 2. CRIAR React-RuntimeCore.podspec
-          cat > node_modules/react-native/ReactCommon/react/runtime/React-RuntimeCore.podspec << 'EOF'
-          Pod::Spec.new do |s|
-            s.name                   = "React-RuntimeCore"
-            s.version                = "1000.0.0"
-            s.summary                = "Empty podspec for compatibility"
-            s.homepage               = "https://reactnative.dev/"
-            s.license                = "MIT"
-            s.author                 = "Meta Platforms, Inc."
-            s.platforms              = { :ios => "12.0" }
-            s.source                 = { :path => "." }
-            s.source_files           = "*.{h,m,mm,cpp,c}"
-            s.header_dir             = "React"
-          end
-          EOF
-          
-          # 3. CRIAR React-RuntimeApple.podspec
-          cat > node_modules/react-native/ReactCommon/react/runtime/platform/ios/React-RuntimeApple.podspec << 'EOF'
-          Pod::Spec.new do |s|
-            s.name                   = "React-RuntimeApple"
-            s.version                = "1000.0.0"
-            s.summary                = "Empty podspec for compatibility"
-            s.homepage               = "https://reactnative.dev/"
-            s.license                = "MIT"
-            s.author                 = "Meta Platforms, Inc."
-            s.platforms              = { :ios => "12.0" }
-            s.source                 = { :path => "." }
-            s.source_files           = "*.{h,m,mm,cpp,c}"
-            s.header_dir             = "React"
-          end
-          EOF
-          
-          # 4. CRIAR arquivos fonte vazios
-          touch node_modules/react-native/ReactCommon/react/runtime/dummy.cpp
-          touch node_modules/react-native/ReactCommon/react/runtime/platform/ios/dummy.cpp
-          
-          # 5. REMOVER referências do script (usando Python)
-          python3 << 'EOF'
-          import re
-          
-          with open('node_modules/react-native/scripts/react_native_pods.rb', 'r') as f:
-              content = f.read()
-          
-          lines = content.split('\n')
-          filtered_lines = []
-          
-          for line in lines:
-              if 'RuntimeApple' not in line and 'RuntimeCore' not in line and 'RCTRuntime' not in line:
-                  filtered_lines.append(line)
-          
-          with open('node_modules/react-native/scripts/react_native_pods.rb', 'w') as f:
-              f.write('\n'.join(filtered_lines))
-          
-          print("✅ Todos os Runtime removidos!")
-          EOF
-          
-          echo "✅ Todos os podspecs criados!"
-          
-      - name: Criar Podfile SUPER SIMPLES
+      - name: Criar Podfile com iOS 15.0
         script: |
           cat > ios/Podfile << 'EOF'
           require_relative '../node_modules/react-native/scripts/react_native_pods'
           
-          platform :ios, '12.0'
+          platform :ios, '15.0'
           
           target 'modamaskavo' do
             config = use_native_modules!
@@ -101,7 +37,7 @@ workflows:
               
               installer.pods_project.targets.each do |target|
                 target.build_configurations.each do |config|
-                  config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.0'
+                  config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
                 end
               end
             end
