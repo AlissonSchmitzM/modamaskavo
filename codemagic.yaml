@@ -1,4 +1,4 @@
-# codemagic.yaml - FIREBASE EXIGE iOS 13.0+
+# codemagic.yaml - ADICIONANDO REACT-NATIVEMODULESAPPLE
 workflows:
   ios-workflow:
     name: iOS Workflow
@@ -15,33 +15,9 @@ workflows:
       - name: Install npm dependencies
         script: |
           npm ci
-      - name: Create ReactCommon podspec with all subspecs
+      - name: Create ALL React Native podspecs
         script: |
-          # Criar ReactCommon.podspec completo
-          cat > node_modules/react-native/ReactCommon/ReactCommon.podspec << 'EOF'
-          Pod::Spec.new do |s|
-            s.name                   = "ReactCommon"
-            s.version                = "1000.0.0"
-            s.summary                = "ReactCommon with all subspecs"
-            s.homepage               = "https://reactnative.dev/"
-            s.license                = "MIT"
-            s.author                 = "Meta Platforms, Inc."
-            s.platforms              = { :ios => "13.0" }
-            s.source                 = { :path => "." }
-            s.source_files           = "**/*.{h,m,mm,cpp,c}"
-            s.header_dir             = "ReactCommon"
-            
-            # Turbomodule subspec
-            s.subspec "turbomodule" do |ss|
-              ss.subspec "core" do |sss|
-                sss.source_files = "**/*.{h,m,mm,cpp,c}"
-                sss.header_dir = "ReactCommon"
-              end
-            end
-          end
-          EOF
-          
-          # Criar outros podspecs necessários
+          # Função para criar podspecs
           create_podspec() {
             local name=$1
             local path=$2
@@ -63,15 +39,39 @@ workflows:
             touch "$path/dummy.cpp"
           }
           
-          # Criar todos os podspecs problemáticos
+          # Criar ReactCommon.podspec completo
+          cat > node_modules/react-native/ReactCommon/ReactCommon.podspec << 'EOF'
+          Pod::Spec.new do |s|
+            s.name                   = "ReactCommon"
+            s.version                = "1000.0.0"
+            s.summary                = "ReactCommon with all subspecs"
+            s.homepage               = "https://reactnative.dev/"
+            s.license                = "MIT"
+            s.author                 = "Meta Platforms, Inc."
+            s.platforms              = { :ios => "13.0" }
+            s.source                 = { :path => "." }
+            s.source_files           = "**/*.{h,m,mm,cpp,c}"
+            s.header_dir             = "ReactCommon"
+            
+            s.subspec "turbomodule" do |ss|
+              ss.subspec "core" do |sss|
+                sss.source_files = "**/*.{h,m,mm,cpp,c}"
+                sss.header_dir = "ReactCommon"
+              end
+            end
+          end
+          EOF
+          
+          # Criar TODOS os podspecs problemáticos
           create_podspec "React-logger" "node_modules/react-native/ReactCommon/logger"
           create_podspec "React-oscompat" "node_modules/react-native/ReactCommon/oscompat"
           create_podspec "React-RuntimeApple" "node_modules/react-native/ReactCommon/react/runtime/platform/ios"
           create_podspec "React-RuntimeCore" "node_modules/react-native/ReactCommon/react/runtime"
+          create_podspec "React-NativeModulesApple" "node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios"
           
           echo "✅ Todos os podspecs criados!"
           
-      - name: Create Podfile with iOS 13.0 (Firebase requirement)
+      - name: Create Podfile with iOS 13.0
         script: |
           cat > ios/Podfile << 'EOF'
           require_relative '../node_modules/react-native/scripts/react_native_pods'
