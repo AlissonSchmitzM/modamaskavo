@@ -1,4 +1,4 @@
-# codemagic.yaml - ADICIONANDO REACT-RCTNETWORK
+# codemagic.yaml - CRIANDO TODOS OS PODS DO REACT NATIVE
 workflows:
   ios-workflow:
     name: iOS Workflow
@@ -79,31 +79,37 @@ workflows:
           end
           EOF
           
-          # Criar React-RCTNetwork.podspec específico
-          cat > node_modules/react-native/Libraries/Network/React-RCTNetwork.podspec << 'EOF'
-          Pod::Spec.new do |s|
-            s.name                   = "React-RCTNetwork"
-            s.version                = "1000.0.0"
-            s.summary                = "React Native Network module"
-            s.homepage               = "https://reactnative.dev/"
-            s.license                = "MIT"
-            s.author                 = "Meta Platforms, Inc."
-            s.platforms              = { :ios => "15.0" }
-            s.source                 = { :path => "." }
-            s.source_files           = "**/*.{h,m,mm,cpp,c}"
-            s.header_dir             = "React"
-            s.public_header_files    = "**/*.h"
-          end
-          EOF
-          
-          # Criar TODOS os outros podspecs problemáticos
+          # Criar TODOS os podspecs problemáticos do React Native
           create_podspec "React-logger" "node_modules/react-native/ReactCommon/logger"
           create_podspec "React-oscompat" "node_modules/react-native/ReactCommon/oscompat"
           create_podspec "React-RuntimeApple" "node_modules/react-native/ReactCommon/react/runtime/platform/ios"
           create_podspec "React-RuntimeCore" "node_modules/react-native/ReactCommon/react/runtime"
           create_podspec "React-NativeModulesApple" "node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios"
+          create_podspec "React-RCTNetwork" "node_modules/react-native/Libraries/Network"
+          create_podspec "FBLazyVector" "node_modules/react-native/Libraries/FBLazyVector"
+          create_podspec "React-Core" "node_modules/react-native/React"
+          create_podspec "React-CoreModules" "node_modules/react-native/React/CoreModules"
+          create_podspec "React-RCTAppDelegate" "node_modules/react-native/Libraries/AppDelegate"
+          create_podspec "React-RCTImage" "node_modules/react-native/Libraries/Image"
+          create_podspec "React-RCTText" "node_modules/react-native/Libraries/Text"
+          create_podspec "React-RCTVibration" "node_modules/react-native/Libraries/Vibration"
+          create_podspec "React-RCTLinking" "node_modules/react-native/Libraries/LinkingIOS"
+          create_podspec "React-RCTSettings" "node_modules/react-native/Libraries/Settings"
+          create_podspec "React-RCTBlob" "node_modules/react-native/Libraries/Blob"
+          create_podspec "React-RCTAnimation" "node_modules/react-native/Libraries/NativeAnimation"
+          create_podspec "React-jsi" "node_modules/react-native/ReactCommon/jsi"
+          create_podspec "React-jsiexecutor" "node_modules/react-native/ReactCommon/jsiexecutor"
+          create_podspec "React-jsinspector" "node_modules/react-native/ReactCommon/jsinspector"
+          create_podspec "React-callinvoker" "node_modules/react-native/ReactCommon/callinvoker"
+          create_podspec "React-runtimeexecutor" "node_modules/react-native/ReactCommon/runtimeexecutor"
+          create_podspec "React-perflogger" "node_modules/react-native/ReactCommon/reactperflogger"
+          create_podspec "React-cxxreact" "node_modules/react-native/ReactCommon/cxxreact"
+          create_podspec "React-hermes" "node_modules/react-native/ReactCommon/hermes"
+          create_podspec "React-utils" "node_modules/react-native/ReactCommon/react/utils"
+          create_podspec "React-debug" "node_modules/react-native/ReactCommon/react/debug"
+          create_podspec "React-Mapbuffer" "node_modules/react-native/ReactCommon/react/renderer/mapbuffer"
           
-          echo "✅ Todos os podspecs criados incluindo React-RCTNetwork!"
+          echo "✅ TODOS os podspecs do React Native criados!"
           
       - name: Create Podfile with iOS 15.0
         script: |
