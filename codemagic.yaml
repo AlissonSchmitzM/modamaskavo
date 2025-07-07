@@ -1,4 +1,4 @@
-# codemagic.yaml - ADICIONANDO REACT-CORE NA RAIZ
+# codemagic.yaml - REACT-CORE COM SUBSPECS COMPLETOS
 workflows:
   ios-workflow:
     name: iOS Workflow
@@ -15,7 +15,7 @@ workflows:
       - name: Install npm dependencies
         script: |
           npm ci
-      - name: HACK BRUTAL - Criar TODOS os podspecs React Native
+      - name: HACK BRUTAL - Criar React-Core com TODOS os subspecs
         script: |
           # Criar React.podspec principal
           cat > node_modules/react-native/React.podspec << 'EOF'
@@ -34,12 +34,12 @@ workflows:
           end
           EOF
           
-          # Criar React-Core.podspec na raiz
+          # Criar React-Core.podspec COMPLETO na raiz
           cat > node_modules/react-native/React-Core.podspec << 'EOF'
           Pod::Spec.new do |s|
             s.name                   = "React-Core"
             s.version                = "1000.0.0"
-            s.summary                = "React Native Core library"
+            s.summary                = "React Native Core library with all subspecs"
             s.homepage               = "https://reactnative.dev/"
             s.license                = "MIT"
             s.author                 = "Meta Platforms, Inc."
@@ -48,6 +48,58 @@ workflows:
             s.source_files           = "**/*.{h,m,mm,cpp,c}"
             s.header_dir             = "React"
             s.public_header_files    = "**/*.h"
+            
+            # Todos os subspecs do React-Core
+            s.subspec "RCTWebSocket" do |ss|
+              ss.source_files = "**/*.{h,m,mm,cpp,c}"
+              ss.header_dir = "React"
+              ss.public_header_files = "**/*.h"
+            end
+            
+            s.subspec "RCTAnimation" do |ss|
+              ss.source_files = "**/*.{h,m,mm,cpp,c}"
+              ss.header_dir = "React"
+            end
+            
+            s.subspec "RCTBlob" do |ss|
+              ss.source_files = "**/*.{h,m,mm,cpp,c}"
+              ss.header_dir = "React"
+            end
+            
+            s.subspec "RCTImage" do |ss|
+              ss.source_files = "**/*.{h,m,mm,cpp,c}"
+              ss.header_dir = "React"
+            end
+            
+            s.subspec "RCTLinking" do |ss|
+              ss.source_files = "**/*.{h,m,mm,cpp,c}"
+              ss.header_dir = "React"
+            end
+            
+            s.subspec "RCTNetwork" do |ss|
+              ss.source_files = "**/*.{h,m,mm,cpp,c}"
+              ss.header_dir = "React"
+            end
+            
+            s.subspec "RCTSettings" do |ss|
+              ss.source_files = "**/*.{h,m,mm,cpp,c}"
+              ss.header_dir = "React"
+            end
+            
+            s.subspec "RCTText" do |ss|
+              ss.source_files = "**/*.{h,m,mm,cpp,c}"
+              ss.header_dir = "React"
+            end
+            
+            s.subspec "RCTVibration" do |ss|
+              ss.source_files = "**/*.{h,m,mm,cpp,c}"
+              ss.header_dir = "React"
+            end
+            
+            s.subspec "Default" do |ss|
+              ss.source_files = "**/*.{h,m,mm,cpp,c}"
+              ss.header_dir = "React"
+            end
           end
           EOF
           
@@ -161,7 +213,7 @@ workflows:
             create_podspec(name, path)
           end
 
-          puts "✅ Todos os podspecs criados incluindo React-Core na raiz!"
+          puts "✅ Todos os podspecs criados incluindo React-Core com subspecs!"
           EOF
           
           # Executar o script Ruby
