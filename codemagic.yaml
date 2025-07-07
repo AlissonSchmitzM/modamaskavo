@@ -1,4 +1,4 @@
-# codemagic.yaml - ADICIONANDO YOGA PODSPEC
+# codemagic.yaml - ACEITANDO iOS 15.0+ DEFINITIVAMENTE
 workflows:
   ios-workflow:
     name: iOS Workflow
@@ -15,7 +15,7 @@ workflows:
       - name: Install npm dependencies
         script: |
           npm ci
-      - name: Create ALL React Native podspecs including Yoga
+      - name: Create ALL React Native podspecs with iOS 15.0
         script: |
           # Função para criar podspecs
           create_podspec() {
@@ -30,7 +30,7 @@ workflows:
             s.homepage               = "https://reactnative.dev/"
             s.license                = "MIT"
             s.author                 = "Meta Platforms, Inc."
-            s.platforms              = { :ios => "13.0" }
+            s.platforms              = { :ios => "15.0" }
             s.source                 = { :path => "." }
             s.source_files           = "*.{h,m,mm,cpp,c}"
             s.header_dir             = "React"
@@ -48,7 +48,7 @@ workflows:
             s.homepage               = "https://reactnative.dev/"
             s.license                = "MIT"
             s.author                 = "Meta Platforms, Inc."
-            s.platforms              = { :ios => "13.0" }
+            s.platforms              = { :ios => "15.0" }
             s.source                 = { :path => "." }
             s.source_files           = "**/*.{h,m,mm,cpp,c}"
             s.header_dir             = "ReactCommon"
@@ -71,7 +71,7 @@ workflows:
             s.homepage               = "https://yogalayout.com/"
             s.license                = "MIT"
             s.author                 = "Meta Platforms, Inc."
-            s.platforms              = { :ios => "13.0" }
+            s.platforms              = { :ios => "15.0" }
             s.source                 = { :path => "." }
             s.source_files           = "**/*.{h,m,mm,cpp,c}"
             s.header_dir             = "yoga"
@@ -86,14 +86,19 @@ workflows:
           create_podspec "React-RuntimeCore" "node_modules/react-native/ReactCommon/react/runtime"
           create_podspec "React-NativeModulesApple" "node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios"
           
-          echo "✅ Todos os podspecs criados incluindo Yoga!"
+          echo "✅ Todos os podspecs criados com iOS 15.0!"
           
-      - name: Create Podfile with iOS 13.0
+      - name: Update iOS deployment target in project
+        script: |
+          # Atualizar o projeto Xcode para iOS 15.0
+          sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = [0-9][0-9]*\.[0-9]*/IPHONEOS_DEPLOYMENT_TARGET = 15.0/g' ios/modamaskavo.xcodeproj/project.pbxproj
+          
+      - name: Create Podfile with iOS 15.0
         script: |
           cat > ios/Podfile << 'EOF'
           require_relative '../node_modules/react-native/scripts/react_native_pods'
           
-          platform :ios, '13.0'
+          platform :ios, '15.0'
           
           target 'modamaskavo' do
             config = use_native_modules!
@@ -110,7 +115,7 @@ workflows:
               
               installer.pods_project.targets.each do |target|
                 target.build_configurations.each do |config|
-                  config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+                  config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
                   config.build_settings['RCT_NEW_ARCH_ENABLED'] = 'NO'
                 end
               end
