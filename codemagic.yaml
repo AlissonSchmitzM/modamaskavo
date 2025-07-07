@@ -1,6 +1,4 @@
 # codemagic.yaml
-# Este arquivo define o fluxo de build para o CodeMagic
-
 workflows:
   ios-build:
     name: iOS Build
@@ -16,6 +14,7 @@ workflows:
         XCODE_SCHEME: 'modamaskavo'
       ios_signing:
         distribution_type: app_store
+        # Deixar vazio para detecção automática
 
     scripts:
       - name: Install npm dependencies
@@ -25,7 +24,6 @@ workflows:
       - name: Clean and Install CocoaPods
         script: |
           cd ios
-          # Limpeza agressiva do CocoaPods
           pod deintegrate || true
           rm -rf Pods
           rm -f Podfile.lock
@@ -33,7 +31,6 @@ workflows:
 
       - name: Set up code signing settings on Xcode project
         script: |
-          # Configurar assinatura de código automaticamente
           xcode-project use-profiles
 
       - name: Build iOS app
