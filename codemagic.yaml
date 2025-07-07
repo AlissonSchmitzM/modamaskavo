@@ -1,4 +1,4 @@
-# codemagic.yaml - ADICIONANDO REACT PRINCIPAL
+# codemagic.yaml - ADICIONANDO REACT-CORE NA RAIZ
 workflows:
   ios-workflow:
     name: iOS Workflow
@@ -23,6 +23,23 @@ workflows:
             s.name                   = "React"
             s.version                = "1000.0.0"
             s.summary                = "React Native main library"
+            s.homepage               = "https://reactnative.dev/"
+            s.license                = "MIT"
+            s.author                 = "Meta Platforms, Inc."
+            s.platforms              = { :ios => "15.0" }
+            s.source                 = { :path => "." }
+            s.source_files           = "**/*.{h,m,mm,cpp,c}"
+            s.header_dir             = "React"
+            s.public_header_files    = "**/*.h"
+          end
+          EOF
+          
+          # Criar React-Core.podspec na raiz
+          cat > node_modules/react-native/React-Core.podspec << 'EOF'
+          Pod::Spec.new do |s|
+            s.name                   = "React-Core"
+            s.version                = "1000.0.0"
+            s.summary                = "React Native Core library"
             s.homepage               = "https://reactnative.dev/"
             s.license                = "MIT"
             s.author                 = "Meta Platforms, Inc."
@@ -144,7 +161,7 @@ workflows:
             create_podspec(name, path)
           end
 
-          puts "✅ Todos os podspecs criados incluindo React principal!"
+          puts "✅ Todos os podspecs criados incluindo React-Core na raiz!"
           EOF
           
           # Executar o script Ruby
