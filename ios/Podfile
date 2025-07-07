@@ -10,21 +10,12 @@ platform :ios, min_ios_version_supported
 use_modular_headers!
 prepare_react_native_project!
 
-linkage = ENV['USE_FRAMEWORKS']
-if linkage != nil
-  Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green
-  use_frameworks! :linkage => linkage.to_sym
-end
-
 target 'modamaskavo' do
   config = use_native_modules!
 
   use_react_native!(
     :path => config[:reactNativePath],
-    :app_path => "#{Pod::Config.instance.installation_root}/..",
-    # 🔧 REMOVER FlipperConfiguration - não disponível nesta versão
-    :fabric_enabled => false,
-    :hermes_enabled => true
+    :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
 
   post_install do |installer|
@@ -34,28 +25,40 @@ target 'modamaskavo' do
       :mac_catalyst_enabled => false
     )
     
-    # 🔧 Configurações para evitar erros de compilação
+    # 🔧 Configurações específicas para resolver problemas de compilação
     installer.pods_project.targets.each do |target|
       target.build_configurations.each do |config|
         # Configurações gerais
         config.build_settings['GCC_TREAT_WARNINGS_AS_ERRORS'] = 'NO'
-        config.build_settings['CLANG_WARN_DOCUMENTATION_COMMENTS'] = 'NO'
-        config.build_settings['CLANG_WARN_STRICT_PROTOTYPES'] = 'NO'
-        config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
+        config.build_settings['SWIFT_TREAT_WARNINGS_AS_ERRORS'] = 'NO'
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.0'
         
-        # C++ settings
+        # Configurações C++
         config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
         config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
         
         # Arquiteturas
         config.build_settings['ONLY_ACTIVE_ARCH'] = 'NO'
         config.build_settings['VALID_ARCHS'] = 'arm64'
-        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.0'
+        config.build_settings['EXCLUDED_ARCHS'] = 'i386'
         
-        # Desabilitar New Architecture
-        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= []
-        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'RCT_NEW_ARCH_ENABLED=0'
-        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'RCT_FABRIC_ENABLED=0'
+        # Asset Catalog
+        config.build_settings['ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS'] = 'NO'
+      end
+    end
+    
+    # 🔧 Configurações específicas para leveldb-library
+    installer.pods_project.targets.each do |target|
+      if target.name == 'leveldb-library'
+        target.build_configurations.each do |config|
+          config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= []
+          config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'LEVELDB_PLATFORM_POSIX=1'
+          config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'LEVELDB_IS_BIG_ENDIAN=0'
+          config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
+          config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
+          config.build_settings['GCC_C_LANGUAGE_STANDARD'] = 'c11'
+          config.build_settings['CLANG_ENABLE_OBJC_ARC'] = 'NO'
+        end
       end
     end
   end
