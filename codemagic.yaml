@@ -28,7 +28,3 @@ workflows:
                      archive | xcpretty
     artifacts:
       - ios/build-output/app.xcarchive
-    publishing:
-      email:
-        recipients:
-          - alissonschmitz2@hotmail.com
