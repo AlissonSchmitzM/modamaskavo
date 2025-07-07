@@ -1,4 +1,4 @@
-# codemagic.yaml - TENTATIVA FINAL
+# codemagic.yaml - CORREÇÃO SIMPLES
 workflows:
   ios-workflow:
     name: iOS Workflow
@@ -15,25 +15,15 @@ workflows:
       - name: Install npm dependencies
         script: |
           npm ci
-      - name: Force disable New Architecture EVERYWHERE
+      - name: Force disable New Architecture
         script: |
-          # Criar .xcode.env forçando old arch
           echo "export RCT_NEW_ARCH_ENABLED=0" > ios/.xcode.env
           echo "export NODE_BINARY=node" >> ios/.xcode.env
           
-          # Forçar no package.json
-          node -e "
-          const pkg = require('./package.json');
-          pkg.codegenConfig = pkg.codegenConfig || {};
-          pkg.codegenConfig.libraries = [];
-          require('fs').writeFileSync('./package.json', JSON.stringify(pkg, null, 2));
-          "
-          
-          # Deletar TUDO relacionado ao runtime
           rm -rf node_modules/react-native/ReactCommon/react/runtime
           rm -rf ios/build/generated
           
-      - name: Create minimal Podfile
+      - name: Create correct Podfile
         script: |
           cat > ios/Podfile << 'EOF'
           require_relative '../node_modules/react-native/scripts/react_native_pods'
@@ -43,13 +33,11 @@ workflows:
           target 'modamaskavo' do
             config = use_native_modules!
             
-            # Forçar old architecture
             use_react_native!(
               :path => config[:reactNativePath],
               :hermes_enabled => false,
               :fabric_enabled => false,
-              :new_arch_enabled => false,
-              :flipper_configuration => FlipperConfiguration.disabled
+              :new_arch_enabled => false
             )
             
             post_install do |installer|
@@ -70,7 +58,6 @@ workflows:
           rm -rf Pods
           rm -f Podfile.lock
           rm -rf build
-          rm -rf DerivedData
       - name: Install CocoaPods dependencies
         script: |
           cd ios && RCT_NEW_ARCH_ENABLED=0 pod install
