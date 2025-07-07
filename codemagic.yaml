@@ -8,6 +8,7 @@ workflows:
       vars:
         XCODE_WORKSPACE: "modamaskavo.xcworkspace"
         XCODE_SCHEME: "modamaskavo"
+        RCT_NEW_ARCH_ENABLED: 0
       node: 18.17.0
       xcode: latest
       cocoapods: default
@@ -15,6 +16,10 @@ workflows:
       - name: Install npm dependencies
         script: |
           npm ci
+      - name: Create .xcode.env
+        script: |
+          echo "export RCT_NEW_ARCH_ENABLED=0" > ios/.xcode.env
+          echo "export NODE_BINARY=node" >> ios/.xcode.env
       - name: Clean CocoaPods
         script: |
           cd ios
