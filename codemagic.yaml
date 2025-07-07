@@ -14,6 +14,11 @@ workflows:
       - name: Install npm dependencies
         script: |
           npm ci
+      - name: Clean CocoaPods
+        script: |
+          cd ios
+          rm -rf Pods
+          rm -f Podfile.lock
       - name: Install CocoaPods dependencies
         script: |
           cd ios && pod install
