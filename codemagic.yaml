@@ -1,4 +1,4 @@
-# codemagic.yaml - ACEITANDO iOS 15.0+ DEFINITIVAMENTE
+# codemagic.yaml - CRIANDO TODOS OS PODSPECS NECESSÁRIOS
 workflows:
   ios-workflow:
     name: iOS Workflow
@@ -15,10 +15,10 @@ workflows:
       - name: Install npm dependencies
         script: |
           npm ci
-      - name: Create RuntimeApple podspec
+      - name: Create ALL missing podspecs
         script: |
+          # 1. React-RuntimeApple
           mkdir -p node_modules/react-native/ReactCommon/react/runtime/platform/ios
-          
           cat > node_modules/react-native/ReactCommon/react/runtime/platform/ios/React-RuntimeApple.podspec << 'EOF'
           Pod::Spec.new do |s|
             s.name                   = "React-RuntimeApple"
@@ -27,28 +27,48 @@ workflows:
             s.homepage               = "https://reactnative.dev/"
             s.license                = "MIT"
             s.author                 = "Meta Platforms, Inc."
-            s.platforms              = { :ios => "15.0" }
+            s.platforms              = { :ios => "12.0" }
             s.source                 = { :path => "." }
             s.source_files           = "*.{h,m,mm,cpp,c}"
             s.header_dir             = "React"
-            s.dependency "React-Core"
-            s.dependency "React-jsi"
           end
           EOF
-          
           touch node_modules/react-native/ReactCommon/react/runtime/platform/ios/dummy.cpp
           
-      - name: Update iOS deployment target in project
-        script: |
-          # Atualizar o projeto Xcode para iOS 15.0
-          sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = [0-9][0-9]*\.[0-9]*/IPHONEOS_DEPLOYMENT_TARGET = 15.0/g' ios/modamaskavo.xcodeproj/project.pbxproj
+          # 2. React-oscompat
+          mkdir -p node_modules/react-native/ReactCommon/oscompat
+          cat > node_modules/react-native/ReactCommon/oscompat/React-oscompat.podspec << 'EOF'
+          Pod::Spec.new do |s|
+            s.name                   = "React-oscompat"
+            s.version                = "1000.0.0"
+            s.summary                = "Empty podspec for compatibility"
+            s.homepage               = "https://reactnative.dev/"
+            s.license                = "MIT"
+            s.author                 = "Meta Platforms, Inc."
+            s.platforms              = { :ios => "12.0" }
+            s.source                 = { :path => "." }
+            s.source_files           = "*.{h,m,mm,cpp,c}"
+            s.header_dir             = "React"
+          end
+          EOF
+          touch node_modules/react-native/ReactCommon/oscompat/dummy.cpp
           
-      - name: Create Podfile with iOS 15.0
+          echo "✅ Todos os podspecs criados!"
+          
+      - name: Force iOS 12.0 in ALL podspecs
+        script: |
+          # Forçar iOS 12.0 em todos os podspecs do React Native
+          find node_modules/react-native -name "*.podspec" -exec sed -i '' 's/s\.platforms.*=.*{.*:ios.*=>.*"[0-9][0-9]*\.[0-9]*".*}/s.platforms = { :ios => "12.0" }/g' {} \;
+          find node_modules/react-native -name "*.podspec" -exec sed -i '' 's/ios\.deployment_target.*=.*"[0-9][0-9]*\.[0-9]*"/ios.deployment_target = "12.0"/g' {} \;
+          
+          echo "✅ iOS 12.0 forçado em todos os podspecs!"
+          
+      - name: Create Podfile with iOS 12.0
         script: |
           cat > ios/Podfile << 'EOF'
           require_relative '../node_modules/react-native/scripts/react_native_pods'
           
-          platform :ios, '15.0'
+          platform :ios, '12.0'
           
           target 'modamaskavo' do
             config = use_native_modules!
@@ -65,7 +85,7 @@ workflows:
               
               installer.pods_project.targets.each do |target|
                 target.build_configurations.each do |config|
-                  config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
+                  config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.0'
                   config.build_settings['RCT_NEW_ARCH_ENABLED'] = 'NO'
                 end
               end
