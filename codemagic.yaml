@@ -1,7 +1,7 @@
 # codemagic.yaml
 workflows:
   ios-build:
-    name: iOS Build (Fix All Runtime Issues)
+    name: iOS Build (RN 0.68 - iOS 11 Compatible)
     instance_type: mac_mini_m1
 
     environment:
@@ -9,43 +9,17 @@ workflows:
         XCODE_SCHEME: 'modamaskavo'
 
     scripts:
-      - name: Install npm dependencies
+      - name: Downgrade React Native to 0.68.x
         script: |
+          # Fazer backup do package.json atual
+          cp package.json package.json.backup
+          
+          # Instalar React Native 0.68.7 (última versão que suporta iOS 11)
+          npm install react-native@0.68.7 --save
+          npm install react@18.1.0 --save
+          
+          # Instalar dependências
           npm install
-
-      - name: Fix React Native Runtime modules for iOS 11
-        script: |
-          # 1. Criar React-RuntimeApple vazio
-          mkdir -p node_modules/react-native/ReactCommon/react/runtime/platform/ios
-          cat > node_modules/react-native/ReactCommon/react/runtime/platform/ios/React-RuntimeApple.podspec << 'EOF'
-          Pod::Spec.new do |s|
-            s.name                   = "React-RuntimeApple"
-            s.version                = "1000.0.0"
-            s.summary                = "Dummy podspec for iOS 11 compatibility"
-            s.homepage               = "https://reactnative.dev/"
-            s.license                = "MIT"
-            s.author                 = "Meta Platforms, Inc. and its affiliates"
-            s.platforms              = { :ios => "11.0" }
-            s.source                 = { :path => "." }
-            s.source_files           = "**/*.{h,m,mm,cpp,c}"
-            s.header_dir             = "React"
-          end
-          EOF
-          touch node_modules/react-native/ReactCommon/react/runtime/platform/ios/dummy.cpp
-
-          # 2. Modificar React-RCTRuntime para iOS 11
-          if [ -f "node_modules/react-native/React/Runtime/React-RCTRuntime.podspec" ]; then
-            sed -i '' 's/s.platforms.*= { :ios => "[0-9.]*" }/s.platforms = { :ios => "11.0" }/g' node_modules/react-native/React/Runtime/React-RCTRuntime.podspec
-          fi
-
-          # 3. Criar arquivo dummy se não existir
-          mkdir -p node_modules/react-native/React/Runtime
-          touch node_modules/react-native/React/Runtime/dummy.cpp
-
-          # 4. Verificar se os arquivos foram criados
-          echo "Verificando arquivos criados:"
-          ls -la node_modules/react-native/ReactCommon/react/runtime/platform/ios/ || echo "Diretório RuntimeApple não encontrado"
-          ls -la node_modules/react-native/React/Runtime/ || echo "Diretório RCTRuntime não encontrado"
 
       - name: Setup environment
         script: |
