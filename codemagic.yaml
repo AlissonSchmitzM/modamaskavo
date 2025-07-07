@@ -1,4 +1,4 @@
-# codemagic.yaml - SOLUÇÃO BRUTAL E DEFINITIVA
+# codemagic.yaml - REACTCOMMON COM SUBSPECS CORRETOS
 workflows:
   ios-workflow:
     name: iOS Workflow
@@ -15,9 +15,54 @@ workflows:
       - name: Install npm dependencies
         script: |
           npm ci
-      - name: HACK BRUTAL - Criar script que cria podspecs sob demanda
+      - name: HACK BRUTAL - Criar ReactCommon com subspecs corretos
         script: |
-          # Criar script que intercepta erros de podspec
+          # Criar ReactCommon.podspec com todos os subspecs
+          cat > node_modules/react-native/ReactCommon/ReactCommon.podspec << 'EOF'
+          Pod::Spec.new do |s|
+            s.name                   = "ReactCommon"
+            s.version                = "1000.0.0"
+            s.summary                = "ReactCommon with all subspecs"
+            s.homepage               = "https://reactnative.dev/"
+            s.license                = "MIT"
+            s.author                 = "Meta Platforms, Inc."
+            s.platforms              = { :ios => "15.0" }
+            s.source                 = { :path => "." }
+            s.source_files           = "**/*.{h,m,mm,cpp,c}"
+            s.header_dir             = "ReactCommon"
+            s.public_header_files    = "**/*.h"
+            
+            # Turbomodule subspecs
+            s.subspec "turbomodule" do |ss|
+              ss.source_files = "**/*.{h,m,mm,cpp,c}"
+              ss.header_dir = "ReactCommon"
+              
+              ss.subspec "core" do |sss|
+                sss.source_files = "**/*.{h,m,mm,cpp,c}"
+                sss.header_dir = "ReactCommon"
+                sss.public_header_files = "**/*.h"
+              end
+            end
+            
+            # Outros subspecs comuns
+            s.subspec "jsi" do |ss|
+              ss.source_files = "**/*.{h,m,mm,cpp,c}"
+              ss.header_dir = "ReactCommon"
+            end
+            
+            s.subspec "callinvoker" do |ss|
+              ss.source_files = "**/*.{h,m,mm,cpp,c}"
+              ss.header_dir = "ReactCommon"
+            end
+            
+            s.subspec "runtimeexecutor" do |ss|
+              ss.source_files = "**/*.{h,m,mm,cpp,c}"
+              ss.header_dir = "ReactCommon"
+            end
+          end
+          EOF
+          
+          # Criar script Ruby para criar todos os outros podspecs
           cat > fix_podspecs.rb << 'EOF'
           require 'fileutils'
 
@@ -42,7 +87,7 @@ workflows:
             puts "✅ Created #{name}.podspec"
           end
 
-          # Lista de todos os podspecs problemáticos conhecidos
+          # Lista de todos os podspecs problemáticos
           podspecs = [
             ["React-RuntimeApple", "node_modules/react-native/ReactCommon/react/runtime/platform/ios"],
             ["React-RuntimeCore", "node_modules/react-native/ReactCommon/react/runtime"],
@@ -72,8 +117,7 @@ workflows:
             ["React-utils", "node_modules/react-native/ReactCommon/react/utils"],
             ["React-debug", "node_modules/react-native/ReactCommon/react/debug"],
             ["React-Mapbuffer", "node_modules/react-native/ReactCommon/react/renderer/mapbuffer"],
-            ["Yoga", "node_modules/react-native/ReactCommon/yoga"],
-            ["ReactCommon", "node_modules/react-native/ReactCommon"]
+            ["Yoga", "node_modules/react-native/ReactCommon/yoga"]
           ]
 
           podspecs.each do |name, path|
@@ -85,19 +129,6 @@ workflows:
           
           # Executar o script Ruby
           ruby fix_podspecs.rb
-          
-      - name: Forçar iOS 15.0 em todos os podspecs existentes
-        script: |
-          # Modificar todos os podspecs existentes
-          find node_modules -name "*.podspec" -type f | while read podspec; do
-            echo "Modificando $podspec"
-            # Usar perl para modificação mais robusta
-            perl -i -pe 's/s\.platforms.*=.*\{.*:ios.*=>.*/s.platforms = { :ios => "15.0" }/' "$podspec"
-            perl -i -pe 's/ios\.deployment_target.*=.*/ios.deployment_target = "15.0"/' "$podspec"
-            perl -i -pe 's/spec\.ios\.deployment_target.*=.*/spec.ios.deployment_target = "15.0"/' "$podspec"
-          done
-          
-          echo "✅ Todos os podspecs modificados!"
           
       - name: Create Podfile with iOS 15.0
         script: |
