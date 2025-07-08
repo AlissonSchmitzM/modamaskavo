@@ -476,7 +476,40 @@ workflows:
           EOF
           
           echo "✅ Podfile criado com iOS 12.0 ULTRA FORÇADO + Firebase + Lottie!"
+      - name: HACK BRUTAL - Corrigir DoubleConversion.podspec para iOS 12.0
+        script: |
+          echo "Corrigindo DoubleConversion.podspec para iOS 12.0..."
           
+          # Criar DoubleConversion.podspec com iOS 12.0 FORÇADO
+          cat > node_modules/react-native/third-party-podspecs/DoubleConversion.podspec << 'EOF'
+          Pod::Spec.new do |s|
+            s.name                   = "DoubleConversion"
+            s.version                = "1.1.6"
+            s.summary                = "Efficient binary-decimal and decimal-binary conversion routines for IEEE doubles"
+            s.homepage               = "https://github.com/google/double-conversion"
+            s.license                = "BSD"
+            s.author                 = { "Google" => "double-conversion@googlegroups.com" }
+            s.platforms              = { :ios => "12.0", :osx => "10.15" }
+            s.source                 = { :git => "https://github.com/google/double-conversion.git", :tag => "v1.1.6" }
+            s.source_files           = "double-conversion/*.{h,cc}"
+            s.header_dir             = "double-conversion"
+            s.public_header_files    = "double-conversion/*.h"
+            s.header_mappings_dir    = "."
+            s.requires_arc           = false
+            s.ios.deployment_target  = "12.0"
+            s.pod_target_xcconfig    = {
+              'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
+              'MACOSX_DEPLOYMENT_TARGET' => '10.15',
+              'USE_HEADERMAP' => 'NO',
+              'CLANG_CXX_LANGUAGE_STANDARD' => 'c++14',
+              'CLANG_CXX_LIBRARY' => 'libc++',
+              'GCC_PREPROCESSOR_DEFINITIONS' => 'FOLLY_NO_CONFIG FOLLY_MOBILE FOLLY_USE_LIBCPP'
+            }
+            s.compiler_flags = '-fno-omit-frame-pointer', '-fexceptions', '-Wall', '-Werror', '-std=c++14', '-fPIC'
+          end
+          EOF
+          
+          echo "✅ DoubleConversion.podspec criado com iOS 12.0 FORÇADO!"    
       - name: Install CocoaPods dependencies
         script: |
           cd ios
