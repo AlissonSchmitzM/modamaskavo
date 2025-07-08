@@ -372,47 +372,65 @@ workflows:
           else
             echo "⚠️ RNBootSplash.podspec não encontrado"
           fi
-          
-           - name: HACK BRUTAL - Corrigir TODOS os podspecs para iOS 12.0 (VERSÃO SEGURA)
+            - name: Create Podfile ROBUSTO com iOS 12.0 + Firebase
         script: |
-          echo "🔥 HACK BRUTAL - Corrigindo TODOS os podspecs para iOS 12.0 (VERSÃO SEGURA)..."
+          cat > ios/Podfile << 'EOF'
+          require_relative '../node_modules/react-native/scripts/react_native_pods'
+          require_relative '../node_modules/@react-native-community/cli-platform-ios/native_modules'
           
-          # Função para corrigir qualquer podspec de forma mais segura
-          fix_podspec_safe() {
-            local podspec_file="$1"
-            local pod_name=$(basename "$podspec_file" .podspec)
+          # Tentar carregar Firebase
+          begin
+            require_relative '../node_modules/@react-native-firebase/app/scripts/RNFBCocoaPods.rb'
+            $firebase_available = true
+          rescue LoadError
+            puts "⚠️ Firebase não disponível, continuando sem Firebase"
+            $firebase_available = false
+          end
+          
+          platform :ios, '12.0'
+          prepare_react_native_project!
+          
+          target 'modamaskavo' do
+            config = use_native_modules!
             
-            echo "Corrigindo $podspec_file..."
+            use_react_native!(
+              :path => config[:reactNativePath],
+              :hermes_enabled => false,
+              :fabric_enabled => false,
+              :new_arch_enabled => false
+            )
             
-            # Backup
-            cp "$podspec_file" "$podspec_file.backup"
+            # Adicionar Firebase se disponível
+            if $firebase_available
+              use_rnfb_pods!
+            end
             
-            # Verificar se o arquivo tem sintaxe válida antes de modificar
-            if ruby -c "$podspec_file" > /dev/null 2>&1; then
-              # Usar sed para forçar iOS 12.0 em todas as linhas relevantes, mas de forma mais cuidadosa
-              sed -i '' 's/s\.ios\.deployment_target *= *"[^"]*"/s.ios.deployment_target = "12.0"/' "$podspec_file"
-              sed -i '' 's/spec\.ios\.deployment_target *= *"[^"]*"/spec.ios.deployment_target = "12.0"/' "$podspec_file"
+            post_install do |installer|
+              react_native_post_install(
+                installer,
+                config[:reactNativePath],
+                :mac_catalyst_enabled => false
+              )
               
-              # Verificar se a modificação quebrou a sintaxe
-              if ! ruby -c "$podspec_file" > /dev/null 2>&1; then
-                echo "⚠️ Sintaxe quebrada em $pod_name, restaurando backup..."
-                cp "$podspec_file.backup" "$podspec_file"
-              else
-                echo "✅ $pod_name corrigido com sucesso!"
-              fi
-            else
-              echo "⚠️ $pod_name já tem sintaxe inválida, pulando..."
-            fi
-          }
+              # Forçar iOS 12.0 em TODOS os pods SEM quebrar sintaxe
+              installer.pods_project.targets.each do |target|
+                target.build_configurations.each do |config|
+                  # Forçar iOS 12.0 apenas nas configurações de build
+                  config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.0'
+                  config.build_settings['MACOSX_DEPLOYMENT_TARGET'] = '10.15'
+                  config.build_settings['RCT_NEW_ARCH_ENABLED'] = 'NO'
+                  config.build_settings['ENABLE_BITCODE'] = 'NO'
+                  config.build_settings['CODE_SIGNING_REQUIRED'] = 'NO'
+                  config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
+                  config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
+                end
+              end
+            end
+          end
+          EOF
           
-          # Encontrar e corrigir TODOS os podspecs de forma segura
-          echo "Procurando todos os podspecs..."
-          find node_modules -name "*.podspec" -type f | while read podspec; do
-            fix_podspec_safe "$podspec"
-          done
+          echo "✅ Podfile ROBUSTO criado com iOS 12.0 + Firebase!"
           
-          echo "🎉 TODOS os podspecs processados!"
-
       - name: HACK BRUTAL - Criar React-RuntimeApple.podspec FORÇADO
         script: |
           # Criar React-RuntimeApple.podspec com iOS 12.0 FORÇADO
