@@ -292,9 +292,12 @@ workflows:
           
           echo "✅ Todos os podspecs Firebase corrigidos para iOS 12.0!"
           
-      - name: HACK BRUTAL - Corrigir DoubleConversion.podspec para iOS 12.0
+            - name: HACK BRUTAL - Corrigir DoubleConversion.podspec para iOS 12.0 (MELHORADO)
         script: |
           echo "Corrigindo DoubleConversion.podspec para iOS 12.0..."
+          
+          # Criar diretório se não existir
+          mkdir -p node_modules/react-native/third-party-podspecs
           
           # Criar DoubleConversion.podspec com iOS 12.0 FORÇADO
           cat > node_modules/react-native/third-party-podspecs/DoubleConversion.podspec << 'EOF'
@@ -305,14 +308,14 @@ workflows:
             s.homepage               = "https://github.com/google/double-conversion"
             s.license                = "BSD"
             s.author                 = { "Google" => "double-conversion@googlegroups.com" }
-            s.platforms              = { :ios => "12.0", :osx => "10.15" }
+            s.platform               = :ios, "12.0"
+            s.ios.deployment_target  = "12.0"
             s.source                 = { :git => "https://github.com/google/double-conversion.git", :tag => "v1.1.6" }
             s.source_files           = "double-conversion/*.{h,cc}"
             s.header_dir             = "double-conversion"
             s.public_header_files    = "double-conversion/*.h"
             s.header_mappings_dir    = "."
             s.requires_arc           = false
-            s.ios.deployment_target  = "12.0"
             s.pod_target_xcconfig    = {
               'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
               'MACOSX_DEPLOYMENT_TARGET' => '10.15',
@@ -325,7 +328,21 @@ workflows:
           end
           EOF
           
-          echo "✅ DoubleConversion.podspec criado com iOS 12.0 FORÇADO!"
+          # Verificar se o arquivo está válido
+          if ruby -c node_modules/react-native/third-party-podspecs/DoubleConversion.podspec > /dev/null 2>&1; then
+            echo "✅ DoubleConversion.podspec criado e válido para iOS 12.0!"
+          else
+            echo "❌ DoubleConversion.podspec inválido após criação. Conteúdo:"
+            cat node_modules/react-native/third-party-podspecs/DoubleConversion.podspec
+          fi
+          
+          # Verificar se o arquivo existe
+          if [ -f "node_modules/react-native/third-party-podspecs/DoubleConversion.podspec" ]; then
+            echo "✅ Arquivo DoubleConversion.podspec existe!"
+            ls -la node_modules/react-native/third-party-podspecs/DoubleConversion.podspec
+          else
+            echo "❌ Arquivo DoubleConversion.podspec NÃO existe!"
+          fi
           
             - name: HACK BRUTAL - Corrigir RNBootSplash.podspec para iOS 12.0 (MELHORADO)
         script: |
