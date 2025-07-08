@@ -792,6 +792,50 @@ workflows:
           fi
           
           echo "🎉 TODOS os podspecs corrigidos para iOS 12.0!"
+            - name: EMERGÊNCIA - Corrigir RNCAsyncStorage.podspec corrompido
+        script: |
+          echo "🚨 EMERGÊNCIA - Corrigindo RNCAsyncStorage.podspec corrompido..."
+          
+          # Restaurar backup se existir
+          if [ -f "node_modules/@react-native-async-storage/async-storage/RNCAsyncStorage.podspec.backup" ]; then
+            echo "Restaurando backup do RNCAsyncStorage.podspec..."
+            cp "node_modules/@react-native-async-storage/async-storage/RNCAsyncStorage.podspec.backup" "node_modules/@react-native-async-storage/async-storage/RNCAsyncStorage.podspec"
+          else
+            echo "Backup não encontrado, recriando RNCAsyncStorage.podspec..."
+            
+            # Recriar o arquivo do zero
+            cat > node_modules/@react-native-async-storage/async-storage/RNCAsyncStorage.podspec << 'EOF'
+          require 'json'
+
+          package = JSON.parse(File.read(File.join(__dir__, 'package.json')))
+
+          Pod::Spec.new do |s|
+            s.name         = "RNCAsyncStorage"
+            s.version      = package['version']
+            s.summary      = package['description']
+            s.license      = package['license']
+            s.author       = package['author']
+            s.homepage     = package['homepage']
+            s.platform     = :ios, "12.0"
+            s.ios.deployment_target = "12.0"
+            s.source       = { :git => "https://github.com/react-native-async-storage/async-storage.git", :tag => "v#{s.version}" }
+            s.source_files = "ios/**/*.{h,m}"
+            s.dependency   'React-Core'
+            s.pod_target_xcconfig = {
+              'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
+              'MACOSX_DEPLOYMENT_TARGET' => '10.15'
+            }
+          end
+          EOF
+          fi
+          
+          # Verificar se o arquivo está válido agora
+          if ruby -c node_modules/@react-native-async-storage/async-storage/RNCAsyncStorage.podspec > /dev/null 2>&1; then
+            echo "✅ RNCAsyncStorage.podspec corrigido e válido!"
+          else
+            echo "❌ RNCAsyncStorage.podspec ainda inválido. Conteúdo:"
+            cat node_modules/@react-native-async-storage/async-storage/RNCAsyncStorage.podspec
+          fi
       - name: Install CocoaPods dependencies
         script: |
           cd ios
