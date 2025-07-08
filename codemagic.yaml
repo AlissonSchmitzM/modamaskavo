@@ -35,6 +35,9 @@ workflows:
         script: |
           cd ios
           
+          # Criar pasta build se não existir
+          mkdir -p build
+          
           # Tentar build direto do projeto
           xcodebuild -project modamaskavo.xcodeproj \
                      -scheme modamaskavo \
@@ -51,11 +54,17 @@ workflows:
         script: |
           cd ios/build
           
+          # Verificar se archive foi criado
+          if [ ! -d "modamaskavo.xcarchive" ]; then
+            echo "❌ Archive não encontrado!"
+            exit 1
+          fi
+          
           # Extrair .app do archive
           cp -r modamaskavo.xcarchive/Products/Applications/modamaskavo.app ./
           
           # Criar Payload
-          mkdir Payload
+          mkdir -p Payload
           cp -r modamaskavo.app Payload/
           
           # Criar IPA
@@ -64,7 +73,91 @@ workflows:
           echo "✅ IPA criado manualmente!"
           ls -la *.ipa
           
+      - name: Verificar e preparar arquivos para download
+        script: |
+          echo "🔍 Verificando arquivos gerados..."
+          
+          # Verificar estrutura de pastas
+          echo "📁 Estrutura ios/build:"
+          ls -la ios/build/
+          
+          echo "📁 Verificando .ipa:"
+          find ios/ -name "*.ipa" -type f -exec ls -lh {} \;
+          
+          echo "📁 Verificando .app:"
+          find ios/ -name "*.app" -type d -exec du -sh {} \;
+          
+          echo "📁 Verificando .xcarchive:"
+          find ios/ -name "*.xcarchive" -type d -exec du -sh {} \;
+          
+          # Verificar se IPA foi criado corretamente
+          cd ios/build
+          if [ -f "modamaskavo.ipa" ]; then
+            echo "✅ IPA encontrado!"
+            echo "📊 Tamanho do IPA: $(du -h modamaskavo.ipa)"
+            echo "📱 Tipo do arquivo: $(file modamaskavo.ipa)"
+            
+            # Verificar conteúdo do IPA
+            echo "📦 Conteúdo do IPA:"
+            unzip -l modamaskavo.ipa | head -20
+          else
+            echo "❌ IPA não foi criado!"
+            exit 1
+          fi
+          
+          # Verificar se .app existe
+          if [ -d "modamaskavo.app" ]; then
+            echo "✅ APP encontrado!"
+            echo "📊 Tamanho do APP: $(du -sh modamaskavo.app)"
+          else
+            echo "❌ APP não encontrado!"
+          fi
+          
+          # Verificar se .xcarchive existe
+          if [ -d "modamaskavo.xcarchive" ]; then
+            echo "✅ XCARCHIVE encontrado!"
+            echo "📊 Tamanho do XCARCHIVE: $(du -sh modamaskavo.xcarchive)"
+          else
+            echo "❌ XCARCHIVE não encontrado!"
+          fi
+          
+      - name: Copiar arquivos para raiz (garantir download)
+        script: |
+          echo "📤 Copiando arquivos para facilitar download..."
+          
+          # Copiar IPA para raiz do projeto
+          if [ -f "ios/build/modamaskavo.ipa" ]; then
+            cp ios/build/modamaskavo.ipa ./modamaskavo-$(date +%Y%m%d-%H%M%S).ipa
+            echo "✅ IPA copiado para raiz!"
+          fi
+          
+          # Criar arquivo de informações
+          cat > build-info.txt << EOF
+          Build Information
+          =================
+          Date: $(date)
+          Build Type: iOS Release (No Code Signing)
+          
+          Files Generated:
+          - IPA: $(ls -lh ios/build/*.ipa 2>/dev/null || echo "Not found")
+          - APP: $(ls -ld ios/build/*.app 2>/dev/null || echo "Not found")
+          - XCARCHIVE: $(ls -ld ios/build/*.xcarchive 2>/dev/null || echo "Not found")
+          
+          Project Structure:
+          $(tree ios/build/ -L 2 2>/dev/null || ls -la ios/build/)
+          EOF
+          
+          echo "✅ Arquivo de informações criado!"
+          
+          # Mostrar arquivos finais disponíveis para download
+          echo "📥 Arquivos disponíveis para download:"
+          ls -la *.ipa 2>/dev/null || echo "Nenhum IPA na raiz"
+          ls -la ios/build/*.ipa 2>/dev/null || echo "Nenhum IPA em ios/build"
+          ls -la build-info.txt 2>/dev/null || echo "Arquivo de info não encontrado"
+          
     artifacts:
       - ios/build/*.ipa
       - ios/build/*.app
       - ios/build/*.xcarchive
+      - "*.ipa"
+      - build-info.txt
