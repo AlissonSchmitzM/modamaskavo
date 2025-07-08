@@ -99,7 +99,7 @@ workflows:
           
           echo "✅ fast_float.podspec corrigido para iOS 12.0!"
           
-      - name: HACK BRUTAL - Corrigir TODOS os third-party-podspecs
+            - name: HACK BRUTAL - Corrigir TODOS os third-party-podspecs
         script: |
           # Criar diretório third-party-podspecs se não existir
           mkdir -p node_modules/react-native/third-party-podspecs
@@ -111,7 +111,7 @@ workflows:
             s.version                = "1.76.0"
             s.summary                = "Boost C++ Libraries"
             s.homepage               = "https://www.boost.org/"
-            s.license                = { :type => "Boost Software License", :file => "LICENSE_1_0.txt" }
+            s.license                = "Boost Software License"
             s.author                 = { "Boost" => "boost@boost.org" }
             s.platforms              = { :ios => "12.0", :osx => "10.15" }
             s.source                 = { :http => "https://boostorg.jfrog.io/artifactory/main/release/1.76.0/source/boost_1_76_0.tar.bz2" }
@@ -137,7 +137,7 @@ workflows:
             s.version                = "0.3.5"
             s.summary                = "Google logging library"
             s.homepage               = "https://github.com/google/glog"
-            s.license                = { :type => "BSD", :file => "COPYING" }
+            s.license                = "BSD"
             s.author                 = { "Google" => "google-glog@googlegroups.com" }
             s.platforms              = { :ios => "12.0", :osx => "10.15" }
             s.source                 = { :git => "https://github.com/google/glog.git", :tag => "v0.3.5" }
@@ -163,7 +163,7 @@ workflows:
             s.version                = "2021.07.22.00"
             s.summary                = "Facebook's C++ library"
             s.homepage               = "https://github.com/facebook/folly"
-            s.license                = { :type => "Apache License, Version 2.0", :file => "LICENSE" }
+            s.license                = "Apache-2.0"
             s.author                 = { "Facebook" => "folly@fb.com" }
             s.platforms              = { :ios => "12.0", :osx => "10.15" }
             s.source                 = { :git => "https://github.com/facebook/folly.git", :tag => "v2021.07.22.00" }
@@ -182,14 +182,14 @@ workflows:
           end
           EOF
           
-          # Corrigir fmt.podspec
+          # Corrigir fmt.podspec - SEM :file na licença
           cat > node_modules/react-native/third-party-podspecs/fmt.podspec << 'EOF'
           Pod::Spec.new do |s|
             s.name                   = "fmt"
             s.version                = "6.2.1"
             s.summary                = "A modern formatting library"
             s.homepage               = "https://github.com/fmtlib/fmt"
-            s.license                = { :type => "MIT", :file => "LICENSE.rst" }
+            s.license                = "MIT"
             s.author                 = { "Victor Zverovich" => "victor.zverovich@gmail.com" }
             s.platforms              = { :ios => "12.0", :osx => "10.15" }
             s.source                 = { :git => "https://github.com/fmtlib/fmt.git", :tag => "6.2.1" }
@@ -593,10 +593,10 @@ workflows:
           EOF
           
           echo "✅ Podfile criado com iOS 12.0 ULTRA FORÇADO!"
-      - name: Skip CocoaPods (usando build direto)
+      - name: Install CocoaPods dependencies
         script: |
           cd ios
-          echo "⚠️ Pulando CocoaPods - usando build direto do projeto"
+          pod install --repo-update --verbose
           
           # Verificar se workspace existe
           if [ -f "modamaskavo.xcworkspace" ]; then
