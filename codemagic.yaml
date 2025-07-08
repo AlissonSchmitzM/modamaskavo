@@ -599,11 +599,10 @@ workflows:
           cd ios
           pod install --repo-update --verbose
           
-      - name: Verificar se workspace existe
+- name: Skip CocoaPods (usando build direto)
         script: |
           cd ios
-          echo "=== Verificando arquivos no diretório ios ==="
-          ls -la
+          echo "⚠️ Pulando CocoaPods - usando build direto do projeto"
           
           # Verificar se workspace existe
           if [ -f "modamaskavo.xcworkspace" ]; then
@@ -649,17 +648,17 @@ workflows:
           
           echo "✅ exportOptions.plist criado!"
           
-      - name: Build and Archive iOS app
+      - name: Build and Archive iOS app (sem CocoaPods)
         script: |
           cd ios
           
           # Criar diretório de build
           mkdir -p build
           
-          echo "=== Iniciando build do iOS ==="
+          echo "=== Iniciando build do iOS (sem CocoaPods) ==="
           
-          # Build e Archive
-          xcodebuild -workspace "$XCODE_WORKSPACE" \
+          # Build e Archive usando PROJECT ao invés de WORKSPACE
+          xcodebuild -project modamaskavo.xcodeproj \
                      -scheme "$XCODE_SCHEME" \
                      -configuration Release \
                      -destination generic/platform=iOS \
