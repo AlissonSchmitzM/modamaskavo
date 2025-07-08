@@ -1,6 +1,6 @@
 workflows:
-  ios-workflow-fixed-deployment:
-    name: iOS Build com Deployment Target Correto
+  ios-workflow-fixed-podfile:
+    name: iOS Build com Podfile Ruby Correto
     instance_type: mac_mini_m1
     environment:
       node: 18
@@ -27,27 +27,53 @@ workflows:
             # Fazer backup do Podfile original
             cp Podfile Podfile.backup
             
-            # Corrigir o deployment target para iOS 13.0 ou superior
-            sed -i '' 's/platform :ios, .*/platform :ios, '\''13.0'\''/' Podfile
-            
-            # Se não encontrou a linha platform, adicionar no início
-            if ! grep -q "platform :ios" Podfile; then
-              echo "platform :ios, '13.0'" | cat - Podfile > temp && mv temp Podfile
-            fi
-            
-            # Adicionar post_install hook para forçar deployment target
-            if ! grep -q "post_install" Podfile; then
-              cat >> Podfile << 'EOF'
+            # Criar um novo Podfile com sintaxe Ruby correta
+            cat > Podfile << 'EOF'
+# Uncomment the next line to define a global platform for your project
+platform :ios, '13.0'
 
-post_install do |installer|
-  installer.pods_project.targets.each do |target|
-    target.build_configurations.each do |config|
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+require_relative '../node_modules/react-native/scripts/react_native_pods'
+require_relative '../node_modules/@react-native-community/cli-platform-ios/native_modules'
+
+target 'modamaskavo' do
+  config = use_native_modules!
+
+  # Flags change depending on the env values.
+  flags = get_default_flags()
+
+  use_react_native!(
+    :path => config[:reactNativePath],
+    # to enable hermes on iOS, change `false` to `true` and then install pods
+    :hermes_enabled => flags[:hermes_enabled],
+    :fabric_enabled => flags[:fabric_enabled],
+    # An absolute path to your application root.
+    :app_path => "#{Pod::Config.instance.installation_root}/.."
+  )
+
+  target 'modamaskavoTests' do
+    inherit! :complete
+    # Pods for testing
+  end
+
+  # Enables Flipper.
+  #
+  # Note that if you have use_frameworks! enabled, Flipper will not work and
+  # you should disable the next line.
+  use_flipper!()
+
+  post_install do |installer|
+    react_native_post_install(installer)
+    __apply_Xcode_12_5_M1_post_install_workaround(installer)
+    
+    # Forçar deployment target em todos os pods
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+      end
     end
   end
 end
 EOF
-            fi
             
             echo ""
             echo "📄 Podfile corrigido:"
@@ -71,31 +97,26 @@ EOF
           # Limpar cache do CocoaPods
           pod cache clean --all
           
-          # Limpar cache do npm (pode afetar dependências)
-          npm cache clean --force
-          
-          echo "📦 Instalando CocoaPods com deployment target correto..."
+          echo "📦 Instalando CocoaPods..."
           
           # Instalar com verbose para ver o progresso
-          pod install --verbose --repo-update
+          pod install --verbose --repo-update 2>&1 | tee pod-install.log
           
           POD_RESULT=$?
           
           if [ $POD_RESULT -eq 0 ]; then
             echo "✅ CocoaPods instalado com sucesso!"
           else
-            echo "❌ CocoaPods falhou novamente!"
-            echo "🔍 Tentando com --deployment-target explícito..."
+            echo "❌ CocoaPods falhou!"
+            echo "🔍 Últimas linhas do erro:"
+            tail -30 pod-install.log
             
-            # Tentar forçar deployment target
-            pod install --verbose --repo-update --deployment-target=13.0
+            # Procurar por erros específicos
+            echo ""
+            echo "🔍 Erros específicos:"
+            grep -i "error" pod-install.log | head -5
             
-            POD_RESULT=$?
-            
-            if [ $POD_RESULT -ne 0 ]; then
-              echo "❌ Falha total no CocoaPods!"
-              exit 1
-            fi
+            exit 1
           fi
           
       - name: Verificar instalação do CocoaPods
@@ -109,6 +130,9 @@ EOF
             echo "✅ Workspace criado com sucesso!"
           else
             echo "❌ Workspace não foi criado!"
+            
+            # Verificar se existe algum workspace
+            find . -name "*.xcworkspace" -type d -exec echo "Workspace encontrado: {}" \;
             exit 1
           fi
           
@@ -116,7 +140,7 @@ EOF
           if [ -d "Pods" ]; then
             echo "✅ Pasta Pods criada!"
             echo "📁 Pods principais instalados:"
-            ls -la Pods/ | grep -E "(React|RN)" | head -10
+            ls -la Pods/ | grep -E "(React|RN|Folly)" | head -10
           else
             echo "❌ Pasta Pods não encontrada!"
             exit 1
@@ -125,8 +149,8 @@ EOF
           # Verificar Podfile.lock
           if [ -f "Podfile.lock" ]; then
             echo "✅ Podfile.lock criado!"
-            echo "📊 Deployment target no Podfile.lock:"
-            grep -A 5 -B 5 "IPHONEOS_DEPLOYMENT_TARGET" Podfile.lock || echo "Não encontrado"
+            echo "📊 Verificando deployment target:"
+            grep -A 2 -B 2 "13.0" Podfile.lock | head -10
           else
             echo "❌ Podfile.lock não encontrado!"
             exit 1
@@ -138,7 +162,7 @@ EOF
           
           mkdir -p build
           
-          echo "🔨 Iniciando build com workspace e deployment target correto..."
+          echo "🔨 Iniciando build com workspace..."
           
           # Build usando workspace
           xcodebuild -workspace modamaskavo.xcworkspace \
@@ -185,8 +209,8 @@ EOF
             
             # Procurar por erros específicos
             echo ""
-            echo "🔍 Erros relacionados ao deployment target:"
-            grep -i "deployment" build-success.log || echo "Nenhum erro de deployment encontrado"
+            echo "🔍 Erros de deployment target:"
+            grep -i "deployment" build-success.log | head -5
             
             echo ""
             echo "🔍 Outros erros:"
@@ -217,11 +241,8 @@ EOF
               echo "📄 Número de arquivos: $FILE_COUNT"
               
               # Verificar se app tem conteúdo React Native
-              if find "$APP_PATH" -name "*React*" -o -name "*RN*" | head -5; then
-                echo "✅ App contém componentes React Native!"
-              else
-                echo "⚠️  App pode não conter React Native"
-              fi
+              echo "📱 Verificando conteúdo React Native:"
+              find "$APP_PATH" -name "*React*" -o -name "*RN*" -o -name "*Hermes*" | head -5
               
               # Criar IPA
               cd build
@@ -248,13 +269,13 @@ EOF
                 cp modamaskavo.ipa ../../modamaskavo-react-native.ipa
                 
                 if [ $IPA_BYTES -gt 10000000 ]; then  # Maior que 10MB
-                  echo "🎉 IPA parece válido para React Native (maior que 10MB)!"
+                  echo "🎉 IPA parece válido para React Native!"
                 else
-                  echo "⚠️  IPA ainda pequeno para React Native, mas foi criado"
+                  echo "⚠️  IPA pequeno, mas foi criado"
                 fi
                 
                 # Verificar conteúdo do IPA
-                echo "📄 Primeiros arquivos do IPA:"
+                echo "📄 Estrutura do IPA:"
                 unzip -l modamaskavo.ipa | head -20
                 
               else
@@ -262,6 +283,8 @@ EOF
               fi
             else
               echo "❌ Nenhum .app encontrado no archive!"
+              echo "📁 Conteúdo do archive:"
+              find build/modamaskavo.xcarchive -type f | head -10
             fi
           else
             echo "❌ Archive não existe - build falhou!"
@@ -292,8 +315,6 @@ EOF
           echo "📊 Status CocoaPods:"
           if [ -f "ios/Podfile.lock" ]; then
             echo "✅ Podfile.lock criado"
-            echo "📊 Deployment target usado:"
-            grep "IPHONEOS_DEPLOYMENT_TARGET" ios/Podfile.lock | head -1
           else
             echo "❌ Podfile.lock não encontrado"
           fi
@@ -310,6 +331,7 @@ EOF
       - ios/build/*.app
       - ios/build/*.xcarchive
       - ios/build-success.log
+      - ios/pod-install.log
       - ios/Podfile.lock
       - ios/Podfile.backup
       - "*.ipa"
