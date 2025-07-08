@@ -11,7 +11,7 @@ workflows:
       node: 18.17.0
       xcode: latest
       cocoapods: default
- scripts:
+    scripts:
       - name: Install npm dependencies
         script: |
           npm ci
