@@ -253,7 +253,77 @@ workflows:
           EOF
           
           echo "✅ Podfile ROBUSTO criado com iOS 12.0 + Firebase + fallbacks!"
+       - name: HACK BRUTAL - Criar ReactAppDependencyProvider.podspec para iOS 12.0
+        script: |
+          echo "🔥 Criando ReactAppDependencyProvider.podspec para iOS 12.0..."
           
+          # Criar diretório build/generated/ios
+          mkdir -p build/generated/ios
+          
+          # Criar ReactAppDependencyProvider.podspec
+          cat > build/generated/ios/ReactAppDependencyProvider.podspec << 'EOF'
+Pod::Spec.new do |s|
+  s.name                   = "ReactAppDependencyProvider"
+  s.version                = "1000.0.0"
+  s.summary                = "React Native App Dependency Provider with iOS 12.0 forced"
+  s.homepage               = "https://reactnative.dev/"
+  s.license                = "MIT"
+  s.author                 = "Meta Platforms, Inc."
+  s.platform               = :ios, "12.0"
+  s.ios.deployment_target  = "12.0"
+  s.source                 = { :path => "." }
+  s.source_files           = "*.{h,m,mm,cpp,c}"
+  s.header_dir             = "React"
+  s.public_header_files    = "*.h"
+  s.requires_arc           = true
+  s.dependency             "React-Core"
+  s.pod_target_xcconfig    = {
+    'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
+    'MACOSX_DEPLOYMENT_TARGET' => '10.15',
+    'USE_HEADERMAP' => 'NO',
+    'CLANG_CXX_LANGUAGE_STANDARD' => 'c++17',
+    'CLANG_CXX_LIBRARY' => 'libc++',
+    'GCC_PREPROCESSOR_DEFINITIONS' => 'FOLLY_NO_CONFIG FOLLY_MOBILE FOLLY_USE_LIBCPP'
+  }
+end
+EOF
+          
+          # Criar ReactCodegen.podspec também
+          cat > build/generated/ios/ReactCodegen.podspec << 'EOF'
+Pod::Spec.new do |s|
+  s.name                   = "ReactCodegen"
+  s.version                = "1000.0.0"
+  s.summary                = "React Native Codegen with iOS 12.0 forced"
+  s.homepage               = "https://reactnative.dev/"
+  s.license                = "MIT"
+  s.author                 = "Meta Platforms, Inc."
+  s.platform               = :ios, "12.0"
+  s.ios.deployment_target  = "12.0"
+  s.source                 = { :path => "." }
+  s.source_files           = "*.{h,m,mm,cpp,c}"
+  s.header_dir             = "React"
+  s.public_header_files    = "*.h"
+  s.requires_arc           = true
+  s.dependency             "React-Core"
+  s.pod_target_xcconfig    = {
+    'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
+    'MACOSX_DEPLOYMENT_TARGET' => '10.15',
+    'USE_HEADERMAP' => 'NO',
+    'CLANG_CXX_LANGUAGE_STANDARD' => 'c++17',
+    'CLANG_CXX_LIBRARY' => 'libc++',
+    'GCC_PREPROCESSOR_DEFINITIONS' => 'FOLLY_NO_CONFIG FOLLY_MOBILE FOLLY_USE_LIBCPP'
+  }
+end
+EOF
+          
+          # Criar arquivos dummy para não quebrar
+          touch build/generated/ios/dummy.cpp
+          touch build/generated/ios/dummy.h
+          
+          echo "✅ ReactAppDependencyProvider.podspec e ReactCodegen.podspec criados!"
+          
+          # Verificar se os arquivos foram criados
+          ls -la build/generated/ios/
       - name: Install CocoaPods dependencies
         script: |
           cd ios
