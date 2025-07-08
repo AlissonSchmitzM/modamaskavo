@@ -156,11 +156,21 @@ workflows:
             cat node_modules/@react-native-async-storage/async-storage/RNCAsyncStorage.podspec
           fi
 
-      - name: Create Podfile ROBUSTO com iOS 12.0 + Firebase
+      - name: Create Podfile ROBUSTO com iOS 12.0 + Firebase (CORRIGIDO)
         script: |
           cat > ios/Podfile << 'EOF'
           require_relative '../node_modules/react-native/scripts/react_native_pods'
-          require_relative '../node_modules/@react-native-community/cli-platform-ios/native_modules'
+          
+          # Tentar carregar native_modules de diferentes locais
+          begin
+            require_relative '../node_modules/@react-native-community/cli-platform-ios/native_modules'
+          rescue LoadError
+            begin
+              require_relative '../node_modules/react-native/scripts/react_native_pods'
+            rescue LoadError
+              puts "⚠️ native_modules não encontrado, usando configuração manual"
+            end
+          end
           
           # Tentar carregar Firebase
           begin
@@ -175,7 +185,13 @@ workflows:
           prepare_react_native_project!
           
           target 'modamaskavo' do
-            config = use_native_modules!
+            # Tentar usar use_native_modules se disponível
+            begin
+              config = use_native_modules!
+            rescue
+              puts "⚠️ use_native_modules não disponível, usando configuração manual"
+              config = { :reactNativePath => "../node_modules/react-native" }
+            end
             
             use_react_native!(
               :path => config[:reactNativePath],
@@ -187,19 +203,42 @@ workflows:
             # Adicionar Firebase se disponível
             if $firebase_available
               use_rnfb_pods!
+            else
+              # Adicionar pods Firebase manualmente
+              pod 'Firebase/Core', '~> 10.0'
+              pod 'Firebase/Auth', '~> 10.0'
+              pod 'Firebase/Firestore', '~> 10.0'
+              pod 'Firebase/Storage', '~> 10.0'
+              pod 'Firebase/Messaging', '~> 10.0'
+              pod 'Firebase/Crashlytics', '~> 10.0'
+              pod 'Firebase/Analytics', '~> 10.0'
             end
             
+            # Adicionar pods manualmente para bibliotecas conhecidas
+            pod 'BVLinearGradient', :path => '../node_modules/react-native-linear-gradient'
+            pod 'lottie-react-native', :path => '../node_modules/lottie-react-native'
+            pod 'RNCAsyncStorage', :path => '../node_modules/@react-native-async-storage/async-storage'
+            pod 'RNBootSplash', :path => '../node_modules/react-native-bootsplash'
+            pod 'react-native-image-picker', :path => '../node_modules/react-native-image-picker'
+            pod 'react-native-safe-area-context', :path => '../node_modules/react-native-safe-area-context'
+            pod 'react-native-splash-screen', :path => '../node_modules/react-native-splash-screen'
+            pod 'react-native-webview', :path => '../node_modules/react-native-webview'
+            pod 'rn-fetch-blob', :path => '../node_modules/rn-fetch-blob'
+            
             post_install do |installer|
-              react_native_post_install(
-                installer,
-                config[:reactNativePath],
-                :mac_catalyst_enabled => false
-              )
+              begin
+                react_native_post_install(
+                  installer,
+                  config[:reactNativePath],
+                  :mac_catalyst_enabled => false
+                )
+              rescue
+                puts "⚠️ react_native_post_install não disponível, usando configuração manual"
+              end
               
-              # Forçar iOS 12.0 em TODOS os pods SEM quebrar sintaxe
+              # Forçar iOS 12.0 em TODOS os pods
               installer.pods_project.targets.each do |target|
                 target.build_configurations.each do |config|
-                  # Forçar iOS 12.0 apenas nas configurações de build
                   config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.0'
                   config.build_settings['MACOSX_DEPLOYMENT_TARGET'] = '10.15'
                   config.build_settings['RCT_NEW_ARCH_ENABLED'] = 'NO'
@@ -213,7 +252,7 @@ workflows:
           end
           EOF
           
-          echo "✅ Podfile ROBUSTO criado com iOS 12.0 + Firebase!"
+          echo "✅ Podfile ROBUSTO criado com iOS 12.0 + Firebase + fallbacks!"
           
       - name: Install CocoaPods dependencies
         script: |
