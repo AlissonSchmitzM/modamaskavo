@@ -201,9 +201,3 @@ workflows:
       - ios/build/*.ipa
       - ios/build/*.xcarchive
       - "*.ipa"
-    
-    publishing:
-      app_store_connect:
-        auth: integration  # Configure integração com App Store Connect
-        key_id: $APP_STORE_CONNECT_KEY_ID
-        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
