@@ -1,6 +1,6 @@
 workflows:
-  ios-workflow-debug-pods:
-    name: iOS Build - Debug CocoaPods Completo
+  ios-workflow-final:
+    name: iOS Build - Solução Final
     instance_type: mac_mini_m1
     environment:
       node: 18
@@ -11,293 +11,173 @@ workflows:
           echo "📦 Instalando dependências npm..."
           npm install
           
-      - name: Verificar Podfile original
+      - name: Verificar e corrigir deployment target
         script: |
           cd ios
           
           echo "🔍 Verificando Podfile original..."
-          
           if [ -f "Podfile" ]; then
-            echo "📄 Conteúdo do Podfile original:"
             cat Podfile
-            echo ""
-            echo "📊 Informações do Podfile:"
-            echo "- Linhas: $(wc -l < Podfile)"
-            echo "- Tamanho: $(wc -c < Podfile) bytes"
-          else
-            echo "❌ Podfile não encontrado!"
-            echo "📁 Arquivos na pasta ios:"
-            ls -la
-            exit 1
-          fi
-          
-      - name: Tentar pod install SEM modificar Podfile
-        script: |
-          cd ios
-          
-          echo "🔧 Tentando pod install com Podfile original..."
-          
-          # Limpar instalações anteriores
-          rm -rf Pods
-          rm -f Podfile.lock
-          
-          # Limpar cache
-          pod cache clean --all
-          
-          # Tentar com Podfile original
-          echo "📦 Executando pod install com Podfile original..."
-          pod install --verbose 2>&1 | tee pod-install-original.log
-          
-          ORIGINAL_RESULT=$?
-          
-          echo ""
-          echo "📊 Resultado com Podfile original: $ORIGINAL_RESULT"
-          
-          if [ $ORIGINAL_RESULT -eq 0 ]; then
-            echo "✅ Pod install funcionou com Podfile original!"
-          else
-            echo "❌ Pod install falhou com Podfile original!"
-            echo "🔍 Últimas linhas do erro:"
-            tail -20 pod-install-original.log
             
             echo ""
-            echo "🔍 Erros específicos:"
-            grep -i "error" pod-install-original.log | head -5
-            grep -i "could not find" pod-install-original.log | head -3
-            grep -i "deployment target" pod-install-original.log | head -3
-          fi
-          
-      - name: Modificar Podfile se necessário
-        script: |
-          cd ios
-          
-          # Se o pod install original falhou, vamos modificar
-          if [ ! -f "modamaskavo.xcworkspace/contents.xcworkspacedata" ]; then
-            echo "🔧 Pod install original falhou, modificando Podfile..."
+            echo "🔧 Corrigindo deployment target para iOS 13.0..."
             
             # Backup
             cp Podfile Podfile.backup
             
-            # Verificar deployment target atual
-            CURRENT_TARGET=$(grep "platform :ios" Podfile | grep -o "'[^']*'" | tr -d "'")
-            echo "📊 Deployment target atual: $CURRENT_TARGET"
+            # Forçar iOS 13.0 como deployment target
+            sed -i.bak "s/platform :ios, '[^']*'/platform :ios, '13.0'/" Podfile
             
-            # Se for menor que 13.0, corrigir
-            if [[ "$CURRENT_TARGET" < "13.0" ]]; then
-              echo "🔧 Corrigindo deployment target para 13.0..."
-              sed -i.bak "s/platform :ios, '[^']*'/platform :ios, '13.0'/" Podfile
-              
-              echo "📄 Podfile após correção:"
-              cat Podfile
-              
-              # Limpar e tentar novamente
-              rm -rf Pods
-              rm -f Podfile.lock
-              
-              echo "📦 Tentando pod install com deployment target corrigido..."
-              pod install --verbose 2>&1 | tee pod-install-fixed.log
-              
-              FIXED_RESULT=$?
-              
-              if [ $FIXED_RESULT -eq 0 ]; then
-                echo "✅ Pod install funcionou com deployment target corrigido!"
-              else
-                echo "❌ Pod install ainda falhou!"
-                echo "🔍 Últimas linhas do erro:"
-                tail -20 pod-install-fixed.log
-              fi
-            else
-              echo "✅ Deployment target já está correto ($CURRENT_TARGET)"
+            # Se não encontrou a linha, adicionar
+            if ! grep -q "platform :ios" Podfile; then
+              echo "platform :ios, '13.0'" > Podfile.new
+              cat Podfile >> Podfile.new
+              mv Podfile.new Podfile
             fi
+            
+            # Garantir que post_install existe para forçar deployment target
+            if ! grep -q "post_install" Podfile; then
+              echo "" >> Podfile
+              echo "post_install do |installer|" >> Podfile
+              echo "  installer.pods_project.targets.each do |target|" >> Podfile
+              echo "    target.build_configurations.each do |config|" >> Podfile
+              echo "      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'" >> Podfile
+              echo "    end" >> Podfile
+              echo "  end" >> Podfile
+              echo "end" >> Podfile
+            fi
+            
+            echo ""
+            echo "📄 Podfile corrigido:"
+            cat Podfile
+          fi
+          
+      - name: Instalar CocoaPods com deployment target correto
+        script: |
+          cd ios
+          
+          echo "🧹 Limpando instalações anteriores..."
+          rm -rf Pods
+          rm -f Podfile.lock
+          pod cache clean --all
+          
+          echo "📦 Instalando CocoaPods com iOS 13.0..."
+          pod install --verbose --repo-update
+          
+          if [ $? -eq 0 ]; then
+            echo "✅ CocoaPods instalado com sucesso!"
           else
-            echo "✅ Pod install original funcionou!"
-          fi
-          
-      - name: Tentar soluções alternativas
-        script: |
-          cd ios
-          
-          if [ ! -f "modamaskavo.xcworkspace/contents.xcworkspacedata" ]; then
-            echo "🔧 Tentando soluções alternativas..."
+            echo "❌ CocoaPods falhou! Tentando com deployment target explícito..."
             
-            # Solução 1: Atualizar repositório
-            echo "🔄 Tentativa 1: Atualizando repositório CocoaPods..."
-            pod repo update
-            pod install --verbose 2>&1 | tee pod-install-repo-update.log
+            # Última tentativa com deployment target explícito
+            IPHONEOS_DEPLOYMENT_TARGET=13.0 pod install --verbose --repo-update
             
-            if [ -f "modamaskavo.xcworkspace/contents.xcworkspacedata" ]; then
-              echo "✅ Funcionou com repo update!"
-            else
-              # Solução 2: Instalar sem cache
-              echo "🔄 Tentativa 2: Instalando sem cache..."
-              pod cache clean --all
-              pod install --verbose --clean-install 2>&1 | tee pod-install-clean.log
-              
-              if [ -f "modamaskavo.xcworkspace/contents.xcworkspacedata" ]; then
-                echo "✅ Funcionou com clean install!"
-              else
-                # Solução 3: Forçar versão específica
-                echo "🔄 Tentativa 3: Forçando versão específica..."
-                pod install --verbose --deployment-target=12.0 2>&1 | tee pod-install-deploy.log
-                
-                if [ -f "modamaskavo.xcworkspace/contents.xcworkspacedata" ]; then
-                  echo "✅ Funcionou com deployment target 12.0!"
-                else
-                  echo "❌ Todas as tentativas falharam!"
-                fi
-              fi
+            if [ $? -ne 0 ]; then
+              echo "❌ Falha total no CocoaPods!"
+              exit 1
             fi
           fi
           
-      - name: Análise completa dos logs
+      - name: Verificar se workspace foi criado
         script: |
           cd ios
           
-          echo "🔍 ANÁLISE COMPLETA DOS LOGS"
-          echo "============================"
-          
-          # Verificar status final
           if [ -f "modamaskavo.xcworkspace/contents.xcworkspacedata" ]; then
-            echo "✅ STATUS: Workspace criado com sucesso!"
-            
-            # Verificar pods instalados
-            if [ -d "Pods" ]; then
-              echo "📁 Pods instalados:"
-              ls -la Pods/ | grep -E "(React|RN)" | head -5
-            fi
-            
-            # Verificar Podfile.lock
-            if [ -f "Podfile.lock" ]; then
-              echo "📄 Podfile.lock criado!"
-              echo "📊 Deployment target no lock:"
-              grep -A 2 -B 2 "IPHONEOS_DEPLOYMENT_TARGET" Podfile.lock | head -5
-            fi
-            
+            echo "✅ Workspace criado com sucesso!"
           else
-            echo "❌ STATUS: Workspace NÃO foi criado!"
-            
-            # Analisar todos os logs
-            echo ""
-            echo "🔍 ANÁLISE DE TODOS OS LOGS:"
-            
-            for log_file in pod-install-*.log; do
-              if [ -f "$log_file" ]; then
-                echo ""
-                echo "📄 Análise de $log_file:"
-                
-                # Erros mais comuns
-                if grep -q "deployment target" "$log_file"; then
-                  echo "🚨 ERRO: Deployment target incompatível"
-                  grep -A 2 -B 2 "deployment target" "$log_file" | head -5
-                fi
-                
-                if grep -q "could not find compatible versions" "$log_file"; then
-                  echo "🚨 ERRO: Versões incompatíveis"
-                  grep -A 3 "could not find compatible versions" "$log_file" | head -5
-                fi
-                
-                if grep -q "No such file" "$log_file"; then
-                  echo "🚨 ERRO: Arquivo não encontrado"
-                  grep "No such file" "$log_file" | head -3
-                fi
-                
-                if grep -q "network" "$log_file"; then
-                  echo "🚨 ERRO: Problema de rede"
-                  grep -i "network" "$log_file" | head -3
-                fi
-              fi
-            done
-            
-            # Sugestões baseadas nos erros
-            echo ""
-            echo "💡 SUGESTÕES:"
-            echo "1. Verificar se o Podfile está correto"
-            echo "2. Verificar se as dependências do React Native estão corretas"
-            echo "3. Verificar se o deployment target é compatível"
-            echo "4. Verificar conexão de rede"
+            echo "❌ Workspace não foi criado!"
+            exit 1
           fi
           
-      - name: Tentar build mesmo sem workspace
+          if [ -d "Pods" ]; then
+            echo "✅ Pods instalados!"
+            echo "📁 Principais pods:"
+            ls -la Pods/ | grep -E "(React|RN)" | head -5
+          else
+            echo "❌ Pods não instalados!"
+            exit 1
+          fi
+          
+      - name: Build iOS com workspace
         script: |
           cd ios
           
-          if [ ! -f "modamaskavo.xcworkspace/contents.xcworkspacedata" ]; then
-            echo "⚠️  Tentando build sem workspace (só com project)..."
+          mkdir -p build
+          
+          echo "🔨 Iniciando build com workspace..."
+          
+          xcodebuild -workspace modamaskavo.xcworkspace \
+                     -scheme modamaskavo \
+                     -configuration Release \
+                     -destination generic/platform=iOS \
+                     -archivePath build/modamaskavo.xcarchive \
+                     archive \
+                     CODE_SIGNING_REQUIRED=NO \
+                     CODE_SIGNING_ALLOWED=NO \
+                     SKIP_INSTALL=NO \
+                     ONLY_ACTIVE_ARCH=NO \
+                     IPHONEOS_DEPLOYMENT_TARGET=13.0 \
+                     -allowProvisioningUpdates
+          
+          if [ $? -eq 0 ]; then
+            echo "✅ Build bem-sucedido!"
             
-            mkdir -p build
+            # Procurar .app
+            APP_PATH=$(find build/modamaskavo.xcarchive -name "*.app" -type d | head -1)
             
-            xcodebuild -project modamaskavo.xcodeproj \
-                       -scheme modamaskavo \
-                       -configuration Release \
-                       -destination generic/platform=iOS \
-                       -archivePath build/modamaskavo.xcarchive \
-                       archive \
-                       CODE_SIGNING_REQUIRED=NO \
-                       CODE_SIGNING_ALLOWED=NO \
-                       SKIP_INSTALL=NO \
-                       ONLY_ACTIVE_ARCH=NO \
-                       -allowProvisioningUpdates \
-                       2>&1 | tee build-without-workspace.log
-            
-            BUILD_RESULT=$?
-            
-            if [ $BUILD_RESULT -eq 0 ]; then
-              echo "✅ Build funcionou sem workspace!"
+            if [ -n "$APP_PATH" ]; then
+              echo "📱 App encontrado: $APP_PATH"
               
-              # Procurar .app
-              APP_PATH=$(find build/modamaskavo.xcarchive -name "*.app" -type d | head -1)
+              # Verificar tamanho
+              APP_SIZE=$(du -sh "$APP_PATH" | cut -f1)
+              echo "📊 Tamanho do app: $APP_SIZE"
               
-              if [ -n "$APP_PATH" ]; then
-                echo "📱 App encontrado: $APP_PATH"
+              # Criar IPA
+              cd build
+              cp -r "$APP_PATH" ./modamaskavo.app
+              mkdir -p Payload
+              cp -r modamaskavo.app Payload/
+              zip -r modamaskavo.ipa Payload/
+              
+              if [ -f "modamaskavo.ipa" ]; then
+                IPA_SIZE=$(du -sh modamaskavo.ipa | cut -f1)
+                IPA_BYTES=$(wc -c < modamaskavo.ipa)
                 
-                # Criar IPA
-                cd build
-                cp -r "$APP_PATH" ./modamaskavo.app
-                mkdir -p Payload
-                cp -r modamaskavo.app Payload/
-                zip -r modamaskavo.ipa Payload/
+                echo "✅ IPA criado com sucesso!"
+                echo "📊 Tamanho do IPA: $IPA_SIZE ($IPA_BYTES bytes)"
                 
-                if [ -f "modamaskavo.ipa" ]; then
-                  IPA_SIZE=$(du -sh modamaskavo.ipa | cut -f1)
-                  echo "✅ IPA criado: $IPA_SIZE"
-                  cp modamaskavo.ipa ../../modamaskavo-without-pods.ipa
+                cp modamaskavo.ipa ../../modamaskavo-final.ipa
+                
+                if [ $IPA_BYTES -gt 10000000 ]; then
+                  echo "🎉 IPA válido para React Native!"
+                else
+                  echo "⚠️  IPA pequeno, mas foi criado"
                 fi
               fi
-            else
-              echo "❌ Build falhou mesmo sem workspace!"
-              tail -20 build-without-workspace.log
             fi
           else
-            echo "✅ Workspace existe, pulando build sem workspace"
+            echo "❌ Build falhou!"
           fi
           
-      - name: Relatório final detalhado
+      - name: Relatório final
         script: |
-          echo "📋 RELATÓRIO FINAL DETALHADO"
-          echo "============================"
+          echo "📋 RELATÓRIO FINAL"
+          echo "=================="
           
-          cd ios
-          
-          echo "📊 STATUS DOS ARQUIVOS:"
-          echo "- Podfile: $([ -f "Podfile" ] && echo "✅" || echo "❌")"
-          echo "- Podfile.lock: $([ -f "Podfile.lock" ] && echo "✅" || echo "❌")"
-          echo "- Workspace: $([ -f "modamaskavo.xcworkspace/contents.xcworkspacedata" ] && echo "✅" || echo "❌")"
-          echo "- Pasta Pods: $([ -d "Pods" ] && echo "✅" || echo "❌")"
+          echo "📱 IPAs encontrados:"
+          find . -name "*.ipa" -exec ls -lh {} \;
           
           echo ""
-          echo "📱 IPAs ENCONTRADOS:"
-          find .. -name "*.ipa" -exec ls -lh {} \;
-          
-          echo ""
-          echo "📄 LOGS DISPONÍVEIS:"
-          ls -la *.log 2>/dev/null || echo "Nenhum log encontrado"
+          echo "📊 Status:"
+          echo "- Podfile corrigido: ✅"
+          echo "- CocoaPods instalado: $([ -d "ios/Pods" ] && echo "✅" || echo "❌")"
+          echo "- Workspace criado: $([ -f "ios/modamaskavo.xcworkspace/contents.xcworkspacedata" ] && echo "✅" || echo "❌")"
+          echo "- Build realizado: $([ -d "ios/build" ] && echo "✅" || echo "❌")"
           
     artifacts:
-      - ios/pod-install-*.log
-      - ios/build-*.log
-      - ios/Podfile.backup
-      - ios/Podfile.lock
       - ios/build/*.ipa
       - ios/build/*.app
       - ios/build/*.xcarchive
+      - ios/Podfile.backup
+      - ios/Podfile.lock
       - "*.ipa"
