@@ -1,4 +1,4 @@
-# codemagic.yaml - VERSÃO CORRIGIDA COM Firebase
+# codemagic.yaml - VERSÃO CORRIGIDA COM Firebase + Lottie
 workflows:
   ios-workflow:
     name: iOS Workflow
@@ -37,6 +37,37 @@ workflows:
           EOF
             
             echo "✅ Arquivo dummy criado, continuando..."
+          fi
+
+      - name: HACK BRUTAL - Corrigir Lottie.podspec para iOS 12.0
+        script: |
+          echo "Corrigindo Lottie.podspec para iOS 12.0..."
+          
+          # Encontrar o arquivo lottie-react-native.podspec
+          LOTTIE_PODSPEC=$(find node_modules/lottie-react-native -name "lottie-react-native.podspec" -type f)
+          
+          if [ -n "$LOTTIE_PODSPEC" ]; then
+            echo "Encontrado lottie-react-native.podspec em: $LOTTIE_PODSPEC"
+            
+            # Fazer backup
+            cp "$LOTTIE_PODSPEC" "$LOTTIE_PODSPEC.backup"
+            
+            # Corrigir deployment target
+            sed -i '' 's/s.ios.deployment_target = .*/s.ios.deployment_target = "12.0"/' "$LOTTIE_PODSPEC"
+            sed -i '' 's/s.platforms = .*/s.platforms = { :ios => "12.0", :osx => "10.15" }/' "$LOTTIE_PODSPEC"
+            
+            # Adicionar configuração forçada se não existir
+            if ! grep -q "s.ios.deployment_target" "$LOTTIE_PODSPEC"; then
+              # Adicionar após a linha do nome
+              sed -i '' '/s.name.*=.*"lottie-react-native"/a\
+              s.ios.deployment_target = "12.0"' "$LOTTIE_PODSPEC"
+            fi
+            
+            echo "✅ lottie-react-native.podspec corrigido para iOS 12.0!"
+            echo "Conteúdo do arquivo:"
+            head -20 "$LOTTIE_PODSPEC"
+          else
+            echo "⚠️ lottie-react-native.podspec não encontrado"
           fi
 
       - name: HACK BRUTAL - Corrigir Yoga.podspec para iOS 12.0
@@ -378,7 +409,7 @@ workflows:
           # Executar o script Ruby
           ruby fix_podspecs.rb
           
-      - name: Create Podfile with iOS 12.0 ULTRA FORÇADO + Firebase
+      - name: Create Podfile with iOS 12.0 ULTRA FORÇADO + Firebase + Lottie
         script: |
           cat > ios/Podfile << 'EOF'
           require_relative '../node_modules/react-native/scripts/react_native_pods'
@@ -416,8 +447,8 @@ workflows:
                   config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
                   config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = 'FOLLY_NO_CONFIG FOLLY_MOBILE FOLLY_USE_LIBCPP'
                   
-                  # Forçar iOS 12.0 especificamente para Firebase e Yoga
-                  if target.name.include?('RNFB') || target.name.include?('Firebase') || target.name.include?('Yoga')
+                  # Forçar iOS 12.0 especificamente para Firebase, Yoga e Lottie
+                  if target.name.include?('RNFB') || target.name.include?('Firebase') || target.name.include?('Yoga') || target.name.include?('lottie')
                     config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.0'
                   end
                 end
@@ -426,7 +457,7 @@ workflows:
           end
           EOF
           
-          echo "✅ Podfile criado com iOS 12.0 ULTRA FORÇADO + Firebase!"
+          echo "✅ Podfile criado com iOS 12.0 ULTRA FORÇADO + Firebase + Lottie!"
           
       - name: Install CocoaPods dependencies
         script: |
