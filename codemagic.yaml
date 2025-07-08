@@ -10,43 +10,64 @@ workflows:
         script: |
           npm install --production
           
-      - name: Skip CocoaPods - Use pre-built workspace
+      - name: Limpar configurações do CocoaPods do projeto
         script: |
-          echo "Pulando CocoaPods, usando workspace existente..."
           cd ios
           
-          # Verificar se workspace existe
-          if [ -d "modamaskavo.xcworkspace" ]; then
-            echo "✅ Workspace encontrado!"
-          else
-            echo "❌ Workspace não existe, criando minimal..."
-            # Criar workspace mínimo
-            mkdir -p modamaskavo.xcworkspace
-            cat > modamaskavo.xcworkspace/contents.xcworkspacedata << 'EOF'
-          <?xml version="1.0" encoding="UTF-8"?>
-          <Workspace version="1.0">
-             <FileRef location="group:modamaskavo.xcodeproj">
-             </FileRef>
-          </Workspace>
+          echo "🧹 Limpando configurações do CocoaPods..."
+          
+          # Backup do projeto original
+          cp modamaskavo.xcodeproj/project.pbxproj modamaskavo.xcodeproj/project.pbxproj.backup
+          
+          # Remover referências ao CocoaPods do projeto
+          sed -i '' '/Pods/d' modamaskavo.xcodeproj/project.pbxproj
+          sed -i '' '/PODS_/d' modamaskavo.xcodeproj/project.pbxproj
+          sed -i '' '/\.xcconfig/d' modamaskavo.xcodeproj/project.pbxproj
+          sed -i '' '/CP\]/d' modamaskavo.xcodeproj/project.pbxproj
+          
+          # Criar xcconfig vazio para substituir o do Pods
+          mkdir -p "Target Support Files/Pods-modamaskavo"
+          touch "Target Support Files/Pods-modamaskavo/Pods-modamaskavo.release.xcconfig"
+          
+          # Criar arquivos xcfilelist vazios
+          touch "Target Support Files/Pods-modamaskavo/Pods-modamaskavo-frameworks-Release-input-files.xcfilelist"
+          touch "Target Support Files/Pods-modamaskavo/Pods-modamaskavo-frameworks-Release-output-files.xcfilelist"
+          touch "Target Support Files/Pods-modamaskavo/Pods-modamaskavo-resources-Release-input-files.xcfilelist"
+          touch "Target Support Files/Pods-modamaskavo/Pods-modamaskavo-resources-Release-output-files.xcfilelist"
+          
+          echo "✅ Configurações do CocoaPods removidas!"
+          
+      - name: Criar configuração mínima sem CocoaPods
+        script: |
+          cd ios
+          
+          # Criar um novo arquivo de configuração limpo
+          cat > ios-build.xcconfig << 'EOF'
+          // Configuração mínima para build iOS
+          CLANG_ENABLE_OBJC_ARC = YES
+          CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR
+          GCC_C_LANGUAGE_STANDARD = gnu99
+          IPHONEOS_DEPLOYMENT_TARGET = 11.0
+          TARGETED_DEVICE_FAMILY = 1,2
+          CODE_SIGNING_REQUIRED = NO
+          CODE_SIGNING_ALLOWED = NO
           EOF
-          fi
           
-      - name: Build iOS app DIRETO
+          # Aplicar configuração ao projeto usando PlistBuddy
+          /usr/libexec/PlistBuddy -c "Set :objects:*:buildSettings:CLANG_ENABLE_OBJC_ARC YES" modamaskavo.xcodeproj/project.pbxproj 2>/dev/null || true
+          
+          echo "✅ Configuração mínima criada!"
+          
+      - name: Build iOS app SEM CocoaPods
         script: |
           cd ios
           
-          # Criar pasta build se não existir
+          # Criar pasta build
           mkdir -p build
           
-          # Verificar se o projeto existe
-          if [ ! -f "modamaskavo.xcodeproj/project.pbxproj" ]; then
-            echo "❌ Projeto Xcode não encontrado!"
-            exit 1
-          fi
+          echo "🔨 Iniciando build SEM CocoaPods..."
           
-          echo "🔨 Iniciando build do archive..."
-          
-          # Tentar build direto do projeto
+          # Build mais simples, ignorando dependências do CocoaPods
           xcodebuild -project modamaskavo.xcodeproj \
                      -scheme modamaskavo \
                      -configuration Release \
@@ -54,116 +75,85 @@ workflows:
                      -archivePath build/modamaskavo.xcarchive \
                      archive \
                      CODE_SIGNING_REQUIRED=NO \
-                     CODE_SIGNING_ALLOWED=NO
+                     CODE_SIGNING_ALLOWED=NO \
+                     SKIP_INSTALL=NO \
+                     BUILD_LIBRARY_FOR_DISTRIBUTION=YES \
+                     ONLY_ACTIVE_ARCH=NO \
+                     -quiet
           
           # Verificar se o comando foi bem-sucedido
           if [ $? -eq 0 ]; then
             echo "✅ Build concluído com sucesso!"
           else
-            echo "❌ Build falhou!"
-            exit 1
-          fi
-          
-      - name: Verificar archive criado
-        script: |
-          cd ios
-          
-          echo "🔍 Verificando se archive foi criado..."
-          
-          # Listar conteúdo da pasta build
-          echo "📁 Conteúdo da pasta build:"
-          ls -la build/
-          
-          # Verificar especificamente o archive
-          if [ -d "build/modamaskavo.xcarchive" ]; then
-            echo "✅ Archive encontrado!"
-            echo "📊 Tamanho: $(du -sh build/modamaskavo.xcarchive)"
-            echo "📁 Conteúdo do archive:"
-            ls -la build/modamaskavo.xcarchive/
+            echo "❌ Build falhou! Tentando build alternativo..."
             
-            # Verificar se o .app existe dentro do archive
-            if [ -d "build/modamaskavo.xcarchive/Products/Applications/modamaskavo.app" ]; then
-              echo "✅ App encontrado dentro do archive!"
-            else
-              echo "❌ App não encontrado no archive!"
-              echo "📁 Conteúdo de Products:"
-              ls -la build/modamaskavo.xcarchive/Products/ 2>/dev/null || echo "Pasta Products não existe"
-            fi
-          else
-            echo "❌ Archive não foi criado!"
-            echo "📁 Arquivos disponíveis em build/:"
-            find build/ -type f -name "*" 2>/dev/null || echo "Nenhum arquivo encontrado"
-            exit 1
-          fi
-          
-      - name: Create IPA manually
-        script: |
-          cd ios/build
-          
-          # Verificar novamente se archive existe
-          if [ ! -d "modamaskavo.xcarchive" ]; then
-            echo "❌ Archive não encontrado em $(pwd)!"
-            echo "📁 Conteúdo atual:"
-            ls -la
-            exit 1
-          fi
-          
-          # Verificar se o .app existe no local correto
-          APP_PATH="modamaskavo.xcarchive/Products/Applications/modamaskavo.app"
-          if [ ! -d "$APP_PATH" ]; then
-            echo "❌ App não encontrado em $APP_PATH"
-            echo "📁 Explorando estrutura do archive:"
-            find modamaskavo.xcarchive/ -name "*.app" -type d 2>/dev/null || echo "Nenhum .app encontrado"
+            # Tentar build mais básico
+            xcodebuild -project modamaskavo.xcodeproj \
+                       -scheme modamaskavo \
+                       -configuration Release \
+                       -destination generic/platform=iOS \
+                       -archivePath build/modamaskavo.xcarchive \
+                       archive \
+                       CODE_SIGNING_REQUIRED=NO \
+                       CODE_SIGNING_ALLOWED=NO \
+                       VALIDATE_WORKSPACE=NO \
+                       -allowProvisioningUpdates
             
-            # Tentar encontrar o .app em outros locais
-            find modamaskavo.xcarchive/ -type d -name "*.app" | while read app_found; do
-              echo "📱 App encontrado em: $app_found"
-              APP_PATH="$app_found"
-            done
-            
-            # Se ainda não encontrou, sair
-            if [ ! -d "$APP_PATH" ]; then
+            if [ $? -ne 0 ]; then
+              echo "❌ Build alternativo também falhou!"
               exit 1
             fi
           fi
           
-          # Extrair .app do archive
-          echo "📱 Copiando app de: $APP_PATH"
-          cp -r "$APP_PATH" ./
+      - name: Verificar archive e criar IPA
+        script: |
+          cd ios/build
           
-          # Criar Payload
+          echo "🔍 Verificando archive criado..."
+          
+          if [ ! -d "modamaskavo.xcarchive" ]; then
+            echo "❌ Archive não foi criado!"
+            exit 1
+          fi
+          
+          echo "✅ Archive encontrado!"
+          
+          # Encontrar o .app dentro do archive
+          APP_PATH=$(find modamaskavo.xcarchive -name "*.app" -type d | head -1)
+          
+          if [ -z "$APP_PATH" ]; then
+            echo "❌ App não encontrado no archive!"
+            echo "📁 Conteúdo do archive:"
+            find modamaskavo.xcarchive -type d -name "*" | head -20
+            exit 1
+          fi
+          
+          echo "📱 App encontrado em: $APP_PATH"
+          
+          # Copiar .app para pasta atual
+          cp -r "$APP_PATH" ./modamaskavo.app
+          
+          # Criar Payload para IPA
           mkdir -p Payload
           cp -r modamaskavo.app Payload/
           
           # Criar IPA
           zip -r modamaskavo.ipa Payload/
           
-          echo "✅ IPA criado manualmente!"
+          echo "✅ IPA criado com sucesso!"
           ls -la *.ipa
+          
+          # Copiar para raiz
+          cp modamaskavo.ipa ../../modamaskavo-final.ipa
           
       - name: Verificar arquivos finais
         script: |
-          echo "🔍 Verificando arquivos finais..."
+          echo "📁 Arquivos disponíveis para download:"
+          ls -la ios/build/*.ipa 2>/dev/null || echo "Nenhum IPA em ios/build"
+          ls -la *.ipa 2>/dev/null || echo "Nenhum IPA na raiz"
           
-          cd ios/build
-          
-          # Verificar IPA
-          if [ -f "modamaskavo.ipa" ]; then
-            echo "✅ IPA criado com sucesso!"
-            echo "📊 Tamanho: $(du -h modamaskavo.ipa)"
-            echo "📱 Tipo: $(file modamaskavo.ipa)"
-          else
-            echo "❌ IPA não foi criado!"
-          fi
-          
-          # Listar todos os arquivos
-          echo "📁 Todos os arquivos na pasta build:"
-          ls -la
-          
-          # Copiar para raiz para facilitar download
-          if [ -f "modamaskavo.ipa" ]; then
-            cp modamaskavo.ipa ../../modamaskavo-final.ipa
-            echo "✅ IPA copiado para raiz do projeto!"
+          if [ -f "modamaskavo-final.ipa" ]; then
+            echo "✅ IPA final criado: $(du -h modamaskavo-final.ipa)"
           fi
           
     artifacts:
