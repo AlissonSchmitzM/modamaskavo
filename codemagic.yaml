@@ -43,31 +43,49 @@ workflows:
         script: |
           echo "Corrigindo Lottie.podspec para iOS 12.0..."
           
-          # Encontrar o arquivo lottie-react-native.podspec
-          LOTTIE_PODSPEC=$(find node_modules/lottie-react-native -name "lottie-react-native.podspec" -type f)
-          
-          if [ -n "$LOTTIE_PODSPEC" ]; then
-            echo "Encontrado lottie-react-native.podspec em: $LOTTIE_PODSPEC"
+          # Encontrar TODOS os arquivos lottie-react-native.podspec
+          find node_modules/lottie-react-native -name "*.podspec" -type f | while read LOTTIE_PODSPEC; do
+            echo "Encontrado Lottie podspec em: $LOTTIE_PODSPEC"
             
             # Fazer backup
             cp "$LOTTIE_PODSPEC" "$LOTTIE_PODSPEC.backup"
             
-            # Corrigir deployment target
-            sed -i '' 's/s.ios.deployment_target = .*/s.ios.deployment_target = "12.0"/' "$LOTTIE_PODSPEC"
-            sed -i '' 's/s.platforms = .*/s.platforms = { :ios => "12.0", :osx => "10.15" }/' "$LOTTIE_PODSPEC"
+            # Reescrever completamente o arquivo
+            cat > "$LOTTIE_PODSPEC" << 'EOF'
+          Pod::Spec.new do |s|
+            s.name                   = "lottie-react-native"
+            s.version                = "6.7.0"
+            s.summary                = "Lottie wrapper for React Native with iOS 12.0 forced"
+            s.homepage               = "https://github.com/lottie-react-native/lottie-react-native"
+            s.license                = "Apache-2.0"
+            s.author                 = { "Lottie" => "lottie-react-native@airbnb.com" }
+            s.platforms              = { :ios => "12.0", :osx => "10.15" }
+            s.source                 = { :path => "." }
+            s.source_files           = "src/ios/**/*.{h,m,mm,swift}"
+            s.header_dir             = "lottie-react-native"
+            s.public_header_files    = "src/ios/**/*.h"
+            s.requires_arc           = true
+            s.ios.deployment_target  = "12.0"
+            s.dependency             "React-Core"
+            s.dependency             "lottie-ios", "~> 4.0"
+            s.pod_target_xcconfig    = {
+              'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
+              'MACOSX_DEPLOYMENT_TARGET' => '10.15',
+              'USE_HEADERMAP' => 'NO',
+              'CLANG_CXX_LANGUAGE_STANDARD' => 'c++17',
+              'CLANG_CXX_LIBRARY' => 'libc++',
+              'GCC_PREPROCESSOR_DEFINITIONS' => 'FOLLY_NO_CONFIG FOLLY_MOBILE FOLLY_USE_LIBCPP'
+            }
+          end
+          EOF
             
-            # Adicionar configuração forçada se não existir
-            if ! grep -q "s.ios.deployment_target" "$LOTTIE_PODSPEC"; then
-              # Adicionar após a linha do nome
-              sed -i '' '/s.name.*=.*"lottie-react-native"/a\
-              s.ios.deployment_target = "12.0"' "$LOTTIE_PODSPEC"
-            fi
-            
-            echo "✅ lottie-react-native.podspec corrigido para iOS 12.0!"
-            echo "Conteúdo do arquivo:"
-            head -20 "$LOTTIE_PODSPEC"
-          else
-            echo "⚠️ lottie-react-native.podspec não encontrado"
+            echo "✅ Lottie podspec em $LOTTIE_PODSPEC reescrito para iOS 12.0!"
+          done
+          
+          # Verificar se existe package.json do lottie e corrigir também
+          if [ -f "node_modules/lottie-react-native/package.json" ]; then
+            echo "Verificando package.json do lottie..."
+            cat node_modules/lottie-react-native/package.json | head -20
           fi
 
       - name: HACK BRUTAL - Corrigir Yoga.podspec para iOS 12.0
