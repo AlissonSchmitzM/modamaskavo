@@ -1,12 +1,18 @@
 workflows:
-  ios-workflow:
-    name: iOS Build Sem Dependências
+  ios-appstore-workflow:
+    name: iOS Build para App Store
     instance_type: mac_mini_m1
     environment:
       node: 18
       xcode: latest
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.modamaskavo  # MUDE AQUI
+      vars:
+        APP_STORE_USERNAME: $APP_STORE_USERNAME  # Adicione nas variáveis do Codemagic
+        APP_STORE_PASSWORD: $APP_STORE_PASSWORD  # Senha específica do app
     scripts:
-      - name: Install npm dependencies only
+      - name: Install npm dependencies
         script: |
           npm install --production
           
@@ -34,174 +40,173 @@ workflows:
           # Copiar para o local alternativo
           cp "Pods/Target Support Files/Pods-modamaskavo/Pods-modamaskavo.release.xcconfig" "Target Support Files/Pods-modamaskavo/"
           
-          # Criar arquivos xcfilelist VAZIOS mas válidos
-          echo "# Arquivo vazio - sem frameworks" > "Pods/Target Support Files/Pods-modamaskavo/Pods-modamaskavo-frameworks-Release-input-files.xcfilelist"
-          echo "# Arquivo vazio - sem frameworks" > "Pods/Target Support Files/Pods-modamaskavo/Pods-modamaskavo-frameworks-Release-output-files.xcfilelist"
-          echo "# Arquivo vazio - sem resources" > "Pods/Target Support Files/Pods-modamaskavo/Pods-modamaskavo-resources-Release-input-files.xcfilelist"
-          echo "# Arquivo vazio - sem resources" > "Pods/Target Support Files/Pods-modamaskavo/Pods-modamaskavo-resources-Release-output-files.xcfilelist"
+          # Criar arquivos xcfilelist COMPLETAMENTE VAZIOS
+          touch "Pods/Target Support Files/Pods-modamaskavo/Pods-modamaskavo-frameworks-Release-input-files.xcfilelist"
+          touch "Pods/Target Support Files/Pods-modamaskavo/Pods-modamaskavo-frameworks-Release-output-files.xcfilelist"
+          touch "Pods/Target Support Files/Pods-modamaskavo/Pods-modamaskavo-resources-Release-input-files.xcfilelist"
+          touch "Pods/Target Support Files/Pods-modamaskavo/Pods-modamaskavo-resources-Release-output-files.xcfilelist"
           
           # Copiar para ambos os locais
           cp "Pods/Target Support Files/Pods-modamaskavo/"*.xcfilelist "Target Support Files/Pods-modamaskavo/"
           
-          # Criar na raiz também (caso o Xcode procure lá)
-          mkdir -p "Target Support Files/Pods-modamaskavo"
-          cp "Pods/Target Support Files/Pods-modamaskavo/"*.xcfilelist "./Target Support Files/Pods-modamaskavo/"
-          
           # Criar scripts vazios
           cat > "Pods/Target Support Files/Pods-modamaskavo/Pods-modamaskavo-frameworks.sh" << 'EOF'
           #!/bin/sh
-          echo "CocoaPods frameworks script vazio - sem frameworks para processar"
+          echo "CocoaPods frameworks script vazio"
           exit 0
           EOF
           
           cat > "Pods/Target Support Files/Pods-modamaskavo/Pods-modamaskavo-resources.sh" << 'EOF'
           #!/bin/sh
-          echo "CocoaPods resources script vazio - sem resources para processar"
+          echo "CocoaPods resources script vazio"
           exit 0
           EOF
           
           chmod +x "Pods/Target Support Files/Pods-modamaskavo/"*.sh
-          
-          # Copiar scripts para todos os locais
           cp "Pods/Target Support Files/Pods-modamaskavo/"*.sh "Target Support Files/Pods-modamaskavo/"
           
           echo "✅ Estrutura CocoaPods completa criada!"
           
-          # Verificar se os arquivos foram criados
-          echo "📁 Arquivos criados:"
-          find . -name "*Pods-modamaskavo*" -type f | head -20
-          
-      - name: Verificar estrutura criada
+      - name: Criar ExportOptions.plist
         script: |
           cd ios
           
-          echo "🔍 Verificando se todos os arquivos necessários existem..."
+          # Criar arquivo de opções de exportação para App Store
+          cat > ExportOptions.plist << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>app-store</string>
+              <key>uploadBitcode</key>
+              <true/>
+              <key>uploadSymbols</key>
+              <true/>
+              <key>compileBitcode</key>
+              <true/>
+              <key>teamID</key>
+              <string>$TEAM_ID</string>
+              <key>provisioningProfiles</key>
+              <dict>
+                  <key>com.seudominio.modamaskavo</key>
+                  <string>$PROVISIONING_PROFILE_SPECIFIER</string>
+              </dict>
+          </dict>
+          </plist>
+          EOF
           
-          # Lista de arquivos que o Xcode espera
-          FILES_TO_CHECK=(
-            "Target Support Files/Pods-modamaskavo/Pods-modamaskavo-frameworks-Release-input-files.xcfilelist"
-            "Target Support Files/Pods-modamaskavo/Pods-modamaskavo-frameworks-Release-output-files.xcfilelist"
-            "Target Support Files/Pods-modamaskavo/Pods-modamaskavo-resources-Release-input-files.xcfilelist"
-            "Target Support Files/Pods-modamaskavo/Pods-modamaskavo-resources-Release-output-files.xcfilelist"
-            "Pods/Target Support Files/Pods-modamaskavo/Pods-modamaskavo.release.xcconfig"
-          )
+          echo "✅ ExportOptions.plist criado!"
           
-          ALL_EXIST=true
-          for file in "${FILES_TO_CHECK[@]}"; do
-            if [ -f "$file" ]; then
-              echo "✅ $file"
-            else
-              echo "❌ $file - FALTANDO!"
-              ALL_EXIST=false
-            fi
-          done
-          
-          if [ "$ALL_EXIST" = true ]; then
-            echo "✅ Todos os arquivos necessários existem!"
-          else
-            echo "❌ Alguns arquivos estão faltando!"
-            exit 1
-          fi
-          
-      - name: Build iOS app com estrutura completa
+      - name: Build iOS app para App Store
         script: |
           cd ios
           
           mkdir -p build
           
-          echo "🔨 Iniciando build com estrutura CocoaPods completa..."
+          echo "🔨 Iniciando build para App Store..."
           
-          # Tentar build com mais tolerância a erros
-          set +e  # Não sair imediatamente em caso de erro
-          
+          # Build com assinatura de código para App Store
           xcodebuild -project modamaskavo.xcodeproj \
                      -scheme modamaskavo \
                      -configuration Release \
                      -destination generic/platform=iOS \
                      -archivePath build/modamaskavo.xcarchive \
                      archive \
-                     CODE_SIGNING_REQUIRED=NO \
-                     CODE_SIGNING_ALLOWED=NO \
                      SKIP_INSTALL=NO \
                      ONLY_ACTIVE_ARCH=NO \
-                     VALIDATE_WORKSPACE=NO \
-                     -allowProvisioningUpdates \
-                     -quiet
+                     CODE_SIGNING_REQUIRED=YES \
+                     CODE_SIGNING_ALLOWED=YES \
+                     -allowProvisioningUpdates
           
-          BUILD_RESULT=$?
-          set -e  # Voltar a sair em caso de erro
-          
-          if [ $BUILD_RESULT -eq 0 ]; then
-            echo "✅ Build concluído com sucesso!"
+          if [ $? -eq 0 ]; then
+            echo "✅ Archive criado com sucesso!"
           else
-            echo "⚠️  Build falhou, mas continuando para verificar arquivos gerados..."
-            
-            # Verificar se algum arquivo foi gerado mesmo com erro
-            if [ -d "build" ]; then
-              echo "📁 Conteúdo da pasta build:"
-              find build -type f -name "*" | head -20
-            fi
+            echo "❌ Falha ao criar archive!"
+            exit 1
           fi
           
-      - name: Procurar e criar IPA de qualquer arquivo gerado
+      - name: Exportar IPA para App Store
         script: |
           cd ios
           
-          echo "🔍 Procurando por arquivos .app em qualquer lugar..."
+          echo "📦 Exportando IPA para App Store..."
           
-          # Procurar em toda a estrutura do projeto
-          APP_FILES=$(find . -name "*.app" -type d 2>/dev/null | grep -v "Pods" | head -5)
+          # Exportar IPA usando ExportOptions.plist
+          xcodebuild -exportArchive \
+                     -archivePath build/modamaskavo.xcarchive \
+                     -exportPath build \
+                     -exportOptionsPlist ExportOptions.plist \
+                     -allowProvisioningUpdates
           
-          if [ -n "$APP_FILES" ]; then
-            echo "📱 Arquivos .app encontrados:"
-            echo "$APP_FILES"
-            
-            # Criar pasta build se não existir
-            mkdir -p build
-            cd build
-            
-            # Pegar o primeiro .app encontrado
-            FIRST_APP=$(echo "$APP_FILES" | head -1)
-            echo "📱 Usando: $FIRST_APP"
-            
-            # Copiar para nome padrão
-            cp -r "../$FIRST_APP" ./modamaskavo.app
-            
-            # Criar IPA
-            mkdir -p Payload
-            cp -r modamaskavo.app Payload/
-            zip -r modamaskavo.ipa Payload/
-            
-            echo "✅ IPA criado a partir do .app encontrado!"
-            ls -la *.ipa
-            
-            # Copiar para raiz
-            cp modamaskavo.ipa ../../modamaskavo-final.ipa
-            
+          if [ $? -eq 0 ]; then
+            echo "✅ IPA exportado com sucesso!"
+            ls -la build/*.ipa
           else
-            echo "❌ Nenhum arquivo .app encontrado!"
-            
-            # Procurar por qualquer arquivo de build
-            echo "📁 Procurando outros arquivos de build..."
-            find . -name "*.o" -o -name "*.a" -o -name "*.dylib" | head -10
-            
-            # Criar IPA de teste
-            mkdir -p build/Payload/modamaskavo.app
-            echo "Test App" > build/Payload/modamaskavo.app/test.txt
-            cd build
-            zip -r modamaskavo-test.ipa Payload/
-            
-            echo "⚠️  IPA de teste criado!"
-            cp modamaskavo-test.ipa ../../modamaskavo-test.ipa
+            echo "❌ Falha ao exportar IPA!"
+            exit 1
           fi
           
-      - name: Verificar arquivos finais
+      - name: Validar IPA
         script: |
-          echo "📁 Arquivos disponíveis para download:"
-          find . -name "*.ipa" -type f -exec ls -lh {} \;
+          cd ios/build
+          
+          echo "🔍 Validando IPA..."
+          
+          # Validar IPA antes de enviar
+          xcrun altool --validate-app \
+                       --type ios \
+                       --file modamaskavo.ipa \
+                       --username $APP_STORE_USERNAME \
+                       --password $APP_STORE_PASSWORD
+          
+          if [ $? -eq 0 ]; then
+            echo "✅ IPA validado com sucesso!"
+          else
+            echo "⚠️  Validação falhou, mas continuando..."
+          fi
+          
+      - name: Enviar para App Store Connect
+        script: |
+          cd ios/build
+          
+          echo "🚀 Enviando para App Store Connect..."
+          
+          # Enviar IPA para App Store Connect
+          xcrun altool --upload-app \
+                       --type ios \
+                       --file modamaskavo.ipa \
+                       --username $APP_STORE_USERNAME \
+                       --password $APP_STORE_PASSWORD
+          
+          if [ $? -eq 0 ]; then
+            echo "✅ App enviado com sucesso para App Store Connect!"
+            echo "📱 Agora você pode processar o build no App Store Connect"
+          else
+            echo "❌ Falha ao enviar para App Store Connect!"
+            exit 1
+          fi
+          
+      - name: Backup do IPA
+        script: |
+          cd ios/build
+          
+          # Criar backup do IPA com timestamp
+          if [ -f "modamaskavo.ipa" ]; then
+            cp modamaskavo.ipa "../../modamaskavo-appstore-$(date +%Y%m%d-%H%M%S).ipa"
+            echo "✅ Backup do IPA criado!"
+          fi
           
     artifacts:
       - ios/build/*.ipa
-      - ios/build/*.app
       - ios/build/*.xcarchive
       - "*.ipa"
+    
+    publishing:
+      app_store_connect:
+        auth: integration  # Configure integração com App Store Connect
+        
+        # OU use API key:
+        # api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        # key_id: $APP_STORE_CONNECT_KEY_ID  
+        # issuer_id: $APP_STORE_CONNECT_ISSUER_ID
