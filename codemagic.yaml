@@ -386,7 +386,67 @@ workflows:
           EOF
           
           echo "✅ Podfile criado com iOS 12.0 ULTRA FORÇADO + Firebase!"
+      - name: HACK BRUTAL - Corrigir Yoga.podspec para iOS 12.0
+        script: |
+          echo "Corrigindo Yoga.podspec para iOS 12.0..."
           
+          # Encontrar o arquivo Yoga.podspec
+          YOGA_PODSPEC=$(find node_modules/react-native -name "Yoga.podspec" -type f)
+          
+          if [ -n "$YOGA_PODSPEC" ]; then
+            echo "Encontrado Yoga.podspec em: $YOGA_PODSPEC"
+            
+            # Fazer backup
+            cp "$YOGA_PODSPEC" "$YOGA_PODSPEC.backup"
+            
+            # Corrigir deployment target
+            sed -i '' 's/s.ios.deployment_target = .*/s.ios.deployment_target = "12.0"/' "$YOGA_PODSPEC"
+            sed -i '' 's/s.platforms = .*/s.platforms = { :ios => "12.0", :osx => "10.15" }/' "$YOGA_PODSPEC"
+            
+            # Adicionar configuração forçada se não existir
+            if ! grep -q "s.ios.deployment_target" "$YOGA_PODSPEC"; then
+              # Adicionar após a linha do nome
+              sed -i '' '/s.name.*=.*"Yoga"/a\
+              s.ios.deployment_target = "12.0"' "$YOGA_PODSPEC"
+            fi
+            
+            echo "✅ Yoga.podspec corrigido para iOS 12.0!"
+            echo "Conteúdo do arquivo:"
+            head -20 "$YOGA_PODSPEC"
+          else
+            echo "⚠️ Yoga.podspec não encontrado, criando um novo..."
+            
+            # Criar diretório se não existir
+            mkdir -p node_modules/react-native/ReactCommon/yoga
+            
+            # Criar Yoga.podspec personalizado
+            cat > node_modules/react-native/ReactCommon/yoga/Yoga.podspec << 'EOF'
+      Pod::Spec.new do |s|
+        s.name                   = "Yoga"
+        s.version                = "1.14.0"
+        s.summary                = "Yoga is a cross-platform layout engine which implements Flexbox."
+        s.homepage               = "https://facebook.github.io/yoga/"
+        s.license                = "MIT"
+        s.author                 = "Facebook"
+        s.platforms              = { :ios => "12.0", :osx => "10.15" }
+        s.source                 = { :path => "." }
+        s.source_files           = "**/*.{c,h,cpp}"
+        s.public_header_files    = "**/*.h"
+        s.header_dir             = "yoga"
+        s.requires_arc           = false
+        s.pod_target_xcconfig    = {
+          'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
+          'MACOSX_DEPLOYMENT_TARGET' => '10.15',
+          'USE_HEADERMAP' => 'NO',
+          'CLANG_CXX_LANGUAGE_STANDARD' => 'c++14',
+          'CLANG_CXX_LIBRARY' => 'libc++'
+        }
+        s.compiler_flags = '-fno-omit-frame-pointer', '-fexceptions', '-Wall', '-Werror', '-std=c++14', '-fPIC'
+      end
+      EOF
+            
+            echo "✅ Yoga.podspec criado com iOS 12.0 forçado!"
+          fi
       - name: Install CocoaPods dependencies
         script: |
           cd ios
