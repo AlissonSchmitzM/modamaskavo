@@ -1,4 +1,4 @@
-# codemagic.yaml - VERSÃO FINAL COM REACT-JSITOOLING
+# codemagic.yaml - VERSÃO FINAL COM REACT-JSITOOLING E JSINSPECTORTRACING
 workflows:
   ios-workflow:
     name: iOS Workflow
@@ -15,7 +15,7 @@ workflows:
       - name: Install npm dependencies
         script: |
           npm ci
-      - name: HACK BRUTAL - Criar TODOS os podspecs incluindo React-jsitooling
+      - name: HACK BRUTAL - Criar TODOS os podspecs incluindo React-jsitooling E jsinspectortracing
         script: |
           # Criar React-jsitooling.podspec no local correto
           mkdir -p node_modules/react-native/ReactCommon/jsitooling
@@ -38,6 +38,28 @@ workflows:
           # Criar arquivos dummy para jsitooling
           touch node_modules/react-native/ReactCommon/jsitooling/dummy.cpp
           touch node_modules/react-native/ReactCommon/jsitooling/dummy.h
+          
+          # Criar React-jsinspectortracing.podspec no local correto
+          mkdir -p node_modules/react-native/ReactCommon/jsinspector-modern/tracing
+          cat > node_modules/react-native/ReactCommon/jsinspector-modern/tracing/React-jsinspectortracing.podspec << 'EOF'
+          Pod::Spec.new do |s|
+            s.name                   = "React-jsinspectortracing"
+            s.version                = "1000.0.0"
+            s.summary                = "React Native JSI Inspector Tracing"
+            s.homepage               = "https://reactnative.dev/"
+            s.license                = "MIT"
+            s.author                 = "Meta Platforms, Inc."
+            s.platforms              = { :ios => "15.0" }
+            s.source                 = { :path => "." }
+            s.source_files           = "*.{h,m,mm,cpp,c}"
+            s.header_dir             = "React"
+            s.public_header_files    = "*.h"
+          end
+          EOF
+          
+          # Criar arquivos dummy para jsinspectortracing
+          touch node_modules/react-native/ReactCommon/jsinspector-modern/tracing/dummy.cpp
+          touch node_modules/react-native/ReactCommon/jsinspector-modern/tracing/dummy.h
           
           # Criar ReactCommon.podspec com TODOS os subspecs necessários
           cat > node_modules/react-native/ReactCommon/ReactCommon.podspec << 'EOF'
@@ -271,7 +293,7 @@ workflows:
             puts "✅ Created #{name}.podspec"
           end
 
-          # Lista de podspecs restantes (adicionei React-jsitooling)
+          # Lista COMPLETA de podspecs incluindo React-jsinspectortracing
           podspecs = [
             ["React", "node_modules/react-native"],
             ["React-RCTFBReactNativeSpec", "node_modules/react-native/React"],
@@ -314,7 +336,7 @@ workflows:
             create_podspec(name, path)
           end
 
-          puts "✅ Todos os podspecs criados incluindo React-jsitooling!"
+          puts "✅ Todos os podspecs criados incluindo React-jsitooling e React-jsinspectortracing!"
           EOF
           
           # Executar o script Ruby
