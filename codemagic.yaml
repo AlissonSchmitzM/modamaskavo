@@ -1,23 +1,57 @@
 workflows:
   ios-workflow:
-    name: iOS Simple Build
+    name: iOS Build Definitivo
     instance_type: mac_mini_m1
     environment:
       node: 18
-      xcode: latest
+      xcode: 14.2
       cocoapods: default
     scripts:
       - name: Install dependencies
         script: |
           npm install
           
-      - name: Simple Podfile
+      - name: Create minimal Podfile
         script: |
           cat > ios/Podfile << 'EOF'
           platform :ios, '13.0'
+          
           target 'modamaskavo' do
-            pod 'React', :path => '../node_modules/react-native'
-            pod 'React-Core', :path => '../node_modules/react-native'
+            # Apenas o essencial
+            pod 'React', :path => '../node_modules/react-native', :subspecs => [
+              'Core',
+              'CxxBridge',
+              'DevSupport',
+              'RCTActionSheet',
+              'RCTAnimation',
+              'RCTBlob',
+              'RCTImage',
+              'RCTLinking',
+              'RCTNetwork',
+              'RCTSettings',
+              'RCTText',
+              'RCTVibration',
+              'RCTWebSocket',
+            ]
+            
+            # Yoga
+            pod 'Yoga', :path => '../node_modules/react-native/ReactCommon/yoga'
+            
+            # Third party
+            pod 'DoubleConversion', :podspec => '../node_modules/react-native/third-party-podspecs/DoubleConversion.podspec'
+            pod 'glog', :podspec => '../node_modules/react-native/third-party-podspecs/glog.podspec'
+            
+            # Suas libs
+            pod 'react-native-safe-area-context', :path => '../node_modules/react-native-safe-area-context'
+            pod 'react-native-webview', :path => '../node_modules/react-native-webview'
+            
+            post_install do |installer|
+              installer.pods_project.targets.each do |target|
+                target.build_configurations.each do |config|
+                  config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+                end
+              end
+            end
           end
           EOF
           
@@ -29,7 +63,6 @@ workflows:
         script: |
           cd ios
           xcodebuild -workspace modamaskavo.xcworkspace -scheme modamaskavo -configuration Release -destination generic/platform=iOS archive -archivePath build/app.xcarchive
-          xcodebuild -exportArchive -archivePath build/app.xcarchive -exportPath build -exportOptionsPlist ../exportOptions.plist
           
     artifacts:
-      - ios/build/*.ipa
+      - ios/build/*.xcarchive
