@@ -1,4 +1,4 @@
-# codemagic.yaml - VERSÃO CORRIGIDA COM Firebase + Lottie
+# codemagic.yaml - VERSÃO FINAL CORRIGIDA
 workflows:
   ios-workflow:
     name: iOS Workflow
@@ -39,344 +39,124 @@ workflows:
             echo "✅ Arquivo dummy criado, continuando..."
           fi
 
-      - name: HACK BRUTAL - Corrigir Lottie.podspec para iOS 12.0
+      - name: HACK BRUTAL - Reescrever RNFBAuth.podspec completo para iOS 12.0
         script: |
-          echo "Corrigindo Lottie.podspec para iOS 12.0..."
+          echo "🔥 REESCREVENDO RNFBAuth.podspec completo para iOS 12.0..."
           
-          # Encontrar TODOS os arquivos lottie-react-native.podspec
-          find node_modules/lottie-react-native -name "*.podspec" -type f | while read LOTTIE_PODSPEC; do
-            echo "Encontrado Lottie podspec em: $LOTTIE_PODSPEC"
-            
-            # Fazer backup
-            cp "$LOTTIE_PODSPEC" "$LOTTIE_PODSPEC.backup"
+          # Caminho do podspec
+          RNFB_AUTH_PODSPEC="node_modules/@react-native-firebase/auth/RNFBAuth.podspec"
+          
+          if [ -f "$RNFB_AUTH_PODSPEC" ]; then
+            echo "Encontrado RNFBAuth.podspec, fazendo backup..."
+            cp "$RNFB_AUTH_PODSPEC" "$RNFB_AUTH_PODSPEC.backup"
             
             # Reescrever completamente o arquivo
-            cat > "$LOTTIE_PODSPEC" << 'EOF'
-          Pod::Spec.new do |s|
-            s.name                   = "lottie-react-native"
-            s.version                = "6.7.0"
-            s.summary                = "Lottie wrapper for React Native with iOS 12.0 forced"
-            s.homepage               = "https://github.com/lottie-react-native/lottie-react-native"
-            s.license                = "Apache-2.0"
-            s.author                 = { "Lottie" => "lottie-react-native@airbnb.com" }
-            s.platforms              = { :ios => "12.0", :osx => "10.15" }
-            s.source                 = { :path => "." }
-            s.source_files           = "src/ios/**/*.{h,m,mm,swift}"
-            s.header_dir             = "lottie-react-native"
-            s.public_header_files    = "src/ios/**/*.h"
-            s.requires_arc           = true
-            s.ios.deployment_target  = "12.0"
-            s.dependency             "React-Core"
-            s.dependency             "lottie-ios", "~> 4.0"
-            s.pod_target_xcconfig    = {
-              'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
-              'MACOSX_DEPLOYMENT_TARGET' => '10.15',
-              'USE_HEADERMAP' => 'NO',
-              'CLANG_CXX_LANGUAGE_STANDARD' => 'c++17',
-              'CLANG_CXX_LIBRARY' => 'libc++',
-              'GCC_PREPROCESSOR_DEFINITIONS' => 'FOLLY_NO_CONFIG FOLLY_MOBILE FOLLY_USE_LIBCPP'
-            }
-          end
-          EOF
-            
-            echo "✅ Lottie podspec em $LOTTIE_PODSPEC reescrito para iOS 12.0!"
-          done
+            cat > "$RNFB_AUTH_PODSPEC" << 'EOF'
+          require 'json'
 
-      - name: HACK BRUTAL - Corrigir Yoga.podspec para iOS 12.0
-        script: |
-          echo "Corrigindo Yoga.podspec para iOS 12.0..."
-          
-          # Encontrar TODOS os arquivos Yoga.podspec
-          find node_modules/react-native -name "Yoga.podspec" -type f | while read YOGA_PODSPEC; do
-            echo "Encontrado Yoga.podspec em: $YOGA_PODSPEC"
-            
-            # Fazer backup
-            cp "$YOGA_PODSPEC" "$YOGA_PODSPEC.backup"
-            
-            # Reescrever completamente o arquivo
-            cat > "$YOGA_PODSPEC" << 'EOF'
-          Pod::Spec.new do |s|
-            s.name                   = "Yoga"
-            s.version                = "1.14.0"
-            s.summary                = "Yoga is a cross-platform layout engine which implements Flexbox."
-            s.homepage               = "https://facebook.github.io/yoga/"
-            s.license                = "MIT"
-            s.author                 = "Facebook"
-            s.platforms              = { :ios => "12.0", :osx => "10.15" }
-            s.source                 = { :path => "." }
-            s.source_files           = "**/*.{c,h,cpp}"
-            s.public_header_files    = "**/*.h"
-            s.header_dir             = "yoga"
-            s.requires_arc           = false
-            s.ios.deployment_target  = "12.0"
-            s.pod_target_xcconfig    = {
-              'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
-              'MACOSX_DEPLOYMENT_TARGET' => '10.15',
-              'USE_HEADERMAP' => 'NO',
-              'CLANG_CXX_LANGUAGE_STANDARD' => 'c++14',
-              'CLANG_CXX_LIBRARY' => 'libc++'
-            }
-            s.compiler_flags = '-fno-omit-frame-pointer', '-fexceptions', '-Wall', '-Werror', '-std=c++14', '-fPIC'
-          end
-          EOF
-            
-            echo "✅ Yoga.podspec em $YOGA_PODSPEC corrigido para iOS 12.0!"
-          done
+          package = JSON.parse(File.read(File.join(__dir__, 'package.json')))
+          appPackage = JSON.parse(File.read(File.join(__dir__, '..', 'app', 'package.json')))
 
-      - name: HACK BRUTAL - Corrigir TODOS os podspecs problemáticos
-        script: |
-          # Criar diretório third-party-podspecs se não existir
-          mkdir -p node_modules/react-native/third-party-podspecs
-          
-          # Corrigir fast_float.podspec
-          cat > node_modules/react-native/third-party-podspecs/fast_float.podspec << 'EOF'
           Pod::Spec.new do |s|
-            s.name                   = "fast_float"
-            s.version                = "3.4.0"
-            s.summary                = "Fast and exact implementation of the C++ from_chars functions for float and double types"
-            s.homepage               = "https://github.com/fastfloat/fast_float"
-            s.license                = "MIT"
-            s.author                 = { "Daniel Lemire" => "lemire@gmail.com" }
-            s.platforms              = { :ios => "12.0", :osx => "10.15" }
-            s.source                 = { :git => "https://github.com/fastfloat/fast_float.git", :tag => "v3.4.0" }
-            s.source_files           = "include/**/*.h"
-            s.header_dir             = "fast_float"
-            s.public_header_files    = "include/**/*.h"
-            s.header_mappings_dir    = "include"
-            s.requires_arc           = false
-            s.pod_target_xcconfig    = {
+            s.name                = "RNFBAuth"
+            s.version             = package['version']
+            s.description         = package['description']
+            s.summary             = <<-DESC
+                                      A well tested feature rich Firebase Auth implementation for React Native, 
+                                      supporting all Firebase Auth features on iOS & Android platforms.
+                                    DESC
+            s.homepage            = "http://invertase.io/oss/react-native-firebase"
+            s.license             = package['license']
+            s.authors             = "Invertase Limited"
+            s.source              = { :git => "https://github.com/invertase/react-native-firebase.git", :tag => "v#{s.version}" }
+            s.social_media_url    = 'http://twitter.com/invertaseio'
+            s.ios.deployment_target = "12.0"
+            s.platform            = :ios, "12.0"
+            s.cocoapods_version   = '>= 1.10.0'
+            s.static_framework    = false
+            s.dependency          'React-Core'
+            s.dependency          'RNFBApp'
+            s.dependency          'Firebase/Auth', appPackage['sdks']['ios']['firebase']
+            s.source_files        = 'ios/**/*.{h,m}'
+            s.pod_target_xcconfig = {
               'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
-              'MACOSX_DEPLOYMENT_TARGET' => '10.15',
-              'USE_HEADERMAP' => 'NO',
-              'CLANG_CXX_LANGUAGE_STANDARD' => 'c++14',
-              'CLANG_CXX_LIBRARY' => 'libc++'
+              'MACOSX_DEPLOYMENT_TARGET' => '10.15'
             }
           end
           EOF
-          
-          # Corrigir fmt.podspec
-          cat > node_modules/react-native/third-party-podspecs/fmt.podspec << 'EOF'
-          Pod::Spec.new do |s|
-            s.name                   = "fmt"
-            s.version                = "6.2.1"
-            s.summary                = "A modern formatting library"
-            s.homepage               = "https://github.com/fmtlib/fmt"
-            s.license                = "MIT"
-            s.author                 = { "Victor Zverovich" => "victor.zverovich@gmail.com" }
-            s.platforms              = { :ios => "12.0", :osx => "10.15" }
-            s.source                 = { :git => "https://github.com/fmtlib/fmt.git", :tag => "6.2.1" }
-            s.source_files           = "include/**/*.h", "src/*.cc"
-            s.header_dir             = "fmt"
-            s.public_header_files    = "include/**/*.h"
-            s.header_mappings_dir    = "include"
-            s.requires_arc           = false
-            s.pod_target_xcconfig    = {
-              'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
-              'MACOSX_DEPLOYMENT_TARGET' => '10.15',
-              'USE_HEADERMAP' => 'NO',
-              'CLANG_CXX_LANGUAGE_STANDARD' => 'c++14',
-              'CLANG_CXX_LIBRARY' => 'libc++'
-            }
-          end
-          EOF
-          
-          # Corrigir glog.podspec
-          cat > node_modules/react-native/third-party-podspecs/glog.podspec << 'EOF'
-          Pod::Spec.new do |s|
-            s.name                   = "glog"
-            s.version                = "0.3.5"
-            s.summary                = "Google logging library"
-            s.homepage               = "https://github.com/google/glog"
-            s.license                = "BSD"
-            s.author                 = { "Google" => "google-glog@googlegroups.com" }
-            s.platforms              = { :ios => "12.0", :osx => "10.15" }
-            s.source                 = { :git => "https://github.com/google/glog.git", :tag => "v0.3.5" }
-            s.source_files           = "src/**/*.{h,cc}"
-            s.header_dir             = "glog"
-            s.public_header_files    = "src/glog/*.h"
-            s.header_mappings_dir    = "src"
-            s.requires_arc           = false
-            s.pod_target_xcconfig    = {
-              'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
-              'MACOSX_DEPLOYMENT_TARGET' => '10.15',
-              'USE_HEADERMAP' => 'NO',
-              'CLANG_CXX_LANGUAGE_STANDARD' => 'c++14',
-              'CLANG_CXX_LIBRARY' => 'libc++'
-            }
-          end
-          EOF
-          
-          echo "✅ Third-party podspecs corrigidos!"
-      
-            - name: HACK BRUTAL - Corrigir Firebase Auth podspec (MELHORADO)
-        script: |
-          echo "Corrigindo TODOS os podspecs Firebase para iOS 12.0..."
-          
-          # Lista de todos os módulos Firebase para corrigir
-          FIREBASE_MODULES=(
-            "app/RNFBApp"
-            "auth/RNFBAuth"
-            "firestore/RNFBFirestore"
-            "storage/RNFBStorage"
-            "messaging/RNFBMessaging"
-            "crashlytics/RNFBCrashlytics"
-            "analytics/RNFBAnalytics"
-            "remote-config/RNFBRemoteConfig"
-            "functions/RNFBFunctions"
-            "database/RNFBDatabase"
-          )
-          
-          for module in "${FIREBASE_MODULES[@]}"; do
-            PODSPEC_PATH="node_modules/@react-native-firebase/${module}.podspec"
-            
-            if [ -f "$PODSPEC_PATH" ]; then
-              echo "Corrigindo $PODSPEC_PATH..."
-              
-              # Fazer backup
-              cp "$PODSPEC_PATH" "$PODSPEC_PATH.backup"
-              
-              # Usar sed para corrigir deployment target
-              sed -i '' 's/s\.ios\.deployment_target *= *"[^"]*"/s.ios.deployment_target = "12.0"/' "$PODSPEC_PATH"
-              sed -i '' 's/s\.platform *= *:ios, *"[^"]*"/s.platform = :ios, "12.0"/' "$PODSPEC_PATH"
-              
-              # Verificar se foi corrigido
-              if grep -q 'deployment_target = "12.0"' "$PODSPEC_PATH"; then
-                echo "✅ $module corrigido para iOS 12.0!"
-              else
-                echo "⚠️ $module não foi corrigido, tentando abordagem alternativa..."
-                
-                # Abordagem alternativa: reescrever linha por linha
-                ruby -i -pe 'gsub(/s\.ios\.deployment_target\s*=\s*"[^"]*"/, "s.ios.deployment_target = \"12.0\"")' "$PODSPEC_PATH"
-                ruby -i -pe 'gsub(/s\.platform\s*=\s*:ios,\s*"[^"]*"/, "s.platform = :ios, \"12.0\"")' "$PODSPEC_PATH"
-                
-                if grep -q 'deployment_target = "12.0"' "$PODSPEC_PATH"; then
-                  echo "✅ $module corrigido com abordagem alternativa!"
-                else
-                  echo "❌ $module não foi corrigido. Conteúdo:"
-                  head -20 "$PODSPEC_PATH"
-                fi
-              fi
-              
-              # Verificar sintaxe
-              if ruby -c "$PODSPEC_PATH" > /dev/null 2>&1; then
-                echo "✅ Sintaxe de $module válida!"
-              else
-                echo "❌ Sintaxe de $module inválida, restaurando backup..."
-                cp "$PODSPEC_PATH.backup" "$PODSPEC_PATH"
-              fi
-            else
-              echo "⚠️ $PODSPEC_PATH não encontrado"
-            fi
-          done
-          
-          echo "✅ Todos os podspecs Firebase processados!"
-          
-            - name: HACK BRUTAL - Corrigir DoubleConversion.podspec para iOS 12.0 (MELHORADO)
-        script: |
-          echo "Corrigindo DoubleConversion.podspec para iOS 12.0..."
-          
-          # Criar diretório se não existir
-          mkdir -p node_modules/react-native/third-party-podspecs
-          
-          # Criar DoubleConversion.podspec com iOS 12.0 FORÇADO
-          cat > node_modules/react-native/third-party-podspecs/DoubleConversion.podspec << 'EOF'
-          Pod::Spec.new do |s|
-            s.name                   = "DoubleConversion"
-            s.version                = "1.1.6"
-            s.summary                = "Efficient binary-decimal and decimal-binary conversion routines for IEEE doubles"
-            s.homepage               = "https://github.com/google/double-conversion"
-            s.license                = "BSD"
-            s.author                 = { "Google" => "double-conversion@googlegroups.com" }
-            s.platform               = :ios, "12.0"
-            s.ios.deployment_target  = "12.0"
-            s.source                 = { :git => "https://github.com/google/double-conversion.git", :tag => "v1.1.6" }
-            s.source_files           = "double-conversion/*.{h,cc}"
-            s.header_dir             = "double-conversion"
-            s.public_header_files    = "double-conversion/*.h"
-            s.header_mappings_dir    = "."
-            s.requires_arc           = false
-            s.pod_target_xcconfig    = {
-              'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
-              'MACOSX_DEPLOYMENT_TARGET' => '10.15',
-              'USE_HEADERMAP' => 'NO',
-              'CLANG_CXX_LANGUAGE_STANDARD' => 'c++14',
-              'CLANG_CXX_LIBRARY' => 'libc++',
-              'GCC_PREPROCESSOR_DEFINITIONS' => 'FOLLY_NO_CONFIG FOLLY_MOBILE FOLLY_USE_LIBCPP'
-            }
-            s.compiler_flags = '-fno-omit-frame-pointer', '-fexceptions', '-Wall', '-Werror', '-std=c++14', '-fPIC'
-          end
-          EOF
-          
-          # Verificar se o arquivo está válido
-          if ruby -c node_modules/react-native/third-party-podspecs/DoubleConversion.podspec > /dev/null 2>&1; then
-            echo "✅ DoubleConversion.podspec criado e válido para iOS 12.0!"
-          else
-            echo "❌ DoubleConversion.podspec inválido após criação. Conteúdo:"
-            cat node_modules/react-native/third-party-podspecs/DoubleConversion.podspec
-          fi
-          
-          # Verificar se o arquivo existe
-          if [ -f "node_modules/react-native/third-party-podspecs/DoubleConversion.podspec" ]; then
-            echo "✅ Arquivo DoubleConversion.podspec existe!"
-            ls -la node_modules/react-native/third-party-podspecs/DoubleConversion.podspec
-          else
-            echo "❌ Arquivo DoubleConversion.podspec NÃO existe!"
-          fi
-          
-            - name: HACK BRUTAL - Corrigir RNBootSplash.podspec para iOS 12.0 (MELHORADO)
-        script: |
-          echo "Corrigindo RNBootSplash.podspec para iOS 12.0..."
-          
-          # Encontrar o arquivo RNBootSplash.podspec
-          BOOTSPLASH_PODSPEC=$(find node_modules/react-native-bootsplash -name "*.podspec" -type f | head -1)
-          
-          if [ -n "$BOOTSPLASH_PODSPEC" ]; then
-            echo "Encontrado RNBootSplash.podspec em: $BOOTSPLASH_PODSPEC"
-            
-            # Fazer backup
-            cp "$BOOTSPLASH_PODSPEC" "$BOOTSPLASH_PODSPEC.backup"
-            
-            # Reescrever completamente o arquivo
-            cat > "$BOOTSPLASH_PODSPEC" << 'EOF'
-            require 'json'
-            
-            package = JSON.parse(File.read(File.join(__dir__, 'package.json')))
-            
-            Pod::Spec.new do |s|
-              s.name                   = "RNBootSplash"
-              s.version                = package['version']
-              s.summary                = package['description']
-              s.license                = package['license']
-              s.author                 = package['author']
-              s.homepage               = package['homepage']
-              s.platforms              = { :ios => "12.0" }
-              s.ios.deployment_target  = "12.0"
-              s.source                 = { :git => package['repository']['url'], :tag => "v#{s.version}" }
-              s.source_files           = "ios/**/*.{h,m,mm,swift}"
-              s.header_dir             = "RNBootSplash"
-              s.public_header_files    = "ios/**/*.h"
-              s.requires_arc           = true
-              s.dependency             "React-Core"
-              s.pod_target_xcconfig    = {
-                'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
-                'MACOSX_DEPLOYMENT_TARGET' => '10.15'
-              }
-            end
-            EOF
             
             # Verificar se o arquivo está válido
-            if ruby -c "$BOOTSPLASH_PODSPEC" > /dev/null 2>&1; then
-              echo "✅ RNBootSplash.podspec reescrito e válido para iOS 12.0!"
+            if ruby -c "$RNFB_AUTH_PODSPEC" > /dev/null 2>&1; then
+              echo "✅ RNFBAuth.podspec reescrito e válido para iOS 12.0!"
             else
-              echo "❌ RNBootSplash.podspec inválido após reescrita. Conteúdo:"
-              cat "$BOOTSPLASH_PODSPEC"
+              echo "❌ RNFBAuth.podspec inválido após reescrita. Conteúdo:"
+              cat "$RNFB_AUTH_PODSPEC"
             fi
           else
-            echo "⚠️ RNBootSplash.podspec não encontrado"
-            echo "Listando arquivos em react-native-bootsplash:"
-            find node_modules/react-native-bootsplash -name "*.podspec" -o -name "*.json" | head -10
+            echo "⚠️ RNFBAuth.podspec não encontrado em $RNFB_AUTH_PODSPEC"
+            echo "Procurando arquivos Firebase Auth..."
+            find node_modules/@react-native-firebase -name "*auth*" -type f | head -10
           fi
-            - name: Create Podfile ROBUSTO com iOS 12.0 + Firebase
+          
+          # Fazer o mesmo para RNFBApp
+          RNFB_APP_PODSPEC="node_modules/@react-native-firebase/app/RNFBApp.podspec"
+          
+          if [ -f "$RNFB_APP_PODSPEC" ]; then
+            echo "Corrigindo RNFBApp.podspec também..."
+            cp "$RNFB_APP_PODSPEC" "$RNFB_APP_PODSPEC.backup"
+            
+            sed -i '' 's/s\.ios\.deployment_target *= *"[^"]*"/s.ios.deployment_target = "12.0"/' "$RNFB_APP_PODSPEC"
+            sed -i '' 's/s\.platform *= *:ios, *"[^"]*"/s.platform = :ios, "12.0"/' "$RNFB_APP_PODSPEC"
+            
+            echo "✅ RNFBApp.podspec também corrigido!"
+          fi
+
+      - name: EMERGÊNCIA - Corrigir RNCAsyncStorage.podspec corrompido
+        script: |
+          echo "🚨 EMERGÊNCIA - Corrigindo RNCAsyncStorage.podspec corrompido..."
+          
+          # Restaurar backup se existir
+          if [ -f "node_modules/@react-native-async-storage/async-storage/RNCAsyncStorage.podspec.backup" ]; then
+            echo "Restaurando backup do RNCAsyncStorage.podspec..."
+            cp "node_modules/@react-native-async-storage/async-storage/RNCAsyncStorage.podspec.backup" "node_modules/@react-native-async-storage/async-storage/RNCAsyncStorage.podspec"
+          else
+            echo "Backup não encontrado, recriando RNCAsyncStorage.podspec..."
+            
+            # Recriar o arquivo do zero
+            cat > node_modules/@react-native-async-storage/async-storage/RNCAsyncStorage.podspec << 'EOF'
+          require 'json'
+
+          package = JSON.parse(File.read(File.join(__dir__, 'package.json')))
+
+          Pod::Spec.new do |s|
+            s.name         = "RNCAsyncStorage"
+            s.version      = package['version']
+            s.summary      = package['description']
+            s.license      = package['license']
+            s.author       = package['author']
+            s.homepage     = package['homepage']
+            s.platform     = :ios, "12.0"
+            s.ios.deployment_target = "12.0"
+            s.source       = { :git => "https://github.com/react-native-async-storage/async-storage.git", :tag => "v#{s.version}" }
+            s.source_files = "ios/**/*.{h,m}"
+            s.dependency   'React-Core'
+            s.pod_target_xcconfig = {
+              'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
+              'MACOSX_DEPLOYMENT_TARGET' => '10.15'
+            }
+          end
+          EOF
+          fi
+          
+          # Verificar se o arquivo está válido agora
+          if ruby -c node_modules/@react-native-async-storage/async-storage/RNCAsyncStorage.podspec > /dev/null 2>&1; then
+            echo "✅ RNCAsyncStorage.podspec corrigido e válido!"
+          else
+            echo "❌ RNCAsyncStorage.podspec ainda inválido. Conteúdo:"
+            cat node_modules/@react-native-async-storage/async-storage/RNCAsyncStorage.podspec
+          fi
+
+      - name: Create Podfile ROBUSTO com iOS 12.0 + Firebase
         script: |
           cat > ios/Podfile << 'EOF'
           require_relative '../node_modules/react-native/scripts/react_native_pods'
@@ -435,411 +215,6 @@ workflows:
           
           echo "✅ Podfile ROBUSTO criado com iOS 12.0 + Firebase!"
           
-      - name: HACK BRUTAL - Criar React-RuntimeApple.podspec FORÇADO
-        script: |
-          # Criar React-RuntimeApple.podspec com iOS 12.0 FORÇADO
-          mkdir -p node_modules/react-native/ReactCommon/react/runtime/platform/ios
-          cat > node_modules/react-native/ReactCommon/react/runtime/platform/ios/React-RuntimeApple.podspec << 'EOF'
-          Pod::Spec.new do |s|
-            s.name                   = "React-RuntimeApple"
-            s.version                = "1000.0.0"
-            s.summary                = "React Native RuntimeApple with iOS 12.0 forced"
-            s.homepage               = "https://reactnative.dev/"
-            s.license                = "MIT"
-            s.author                 = "Meta Platforms, Inc."
-            s.platforms              = { :ios => "12.0", :osx => "10.15" }
-            s.source                 = { :path => "." }
-            s.source_files           = "*.{h,m,mm,cpp,c}"
-            s.header_dir             = "React"
-            s.public_header_files    = "*.h"
-            s.requires_arc           = true
-            s.pod_target_xcconfig    = {
-              'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
-              'MACOSX_DEPLOYMENT_TARGET' => '10.15',
-              'USE_HEADERMAP' => 'NO',
-              'CLANG_CXX_LANGUAGE_STANDARD' => 'c++17',
-              'CLANG_CXX_LIBRARY' => 'libc++',
-              'GCC_PREPROCESSOR_DEFINITIONS' => 'FOLLY_NO_CONFIG FOLLY_MOBILE FOLLY_USE_LIBCPP'
-            }
-          end
-          EOF
-          
-          # Criar arquivos dummy para React-RuntimeApple
-          touch node_modules/react-native/ReactCommon/react/runtime/platform/ios/dummy.cpp
-          touch node_modules/react-native/ReactCommon/react/runtime/platform/ios/dummy.h
-          
-          echo "✅ React-RuntimeApple.podspec criado com iOS 12.0 FORÇADO!"
-          
-      - name: HACK BRUTAL - Criar React-RuntimeCore.podspec FORÇADO
-        script: |
-          # Criar React-RuntimeCore.podspec com iOS 12.0 FORÇADO
-          mkdir -p node_modules/react-native/ReactCommon/react/runtime
-          cat > node_modules/react-native/ReactCommon/react/runtime/React-RuntimeCore.podspec << 'EOF'
-          Pod::Spec.new do |s|
-            s.name                   = "React-RuntimeCore"
-            s.version                = "1000.0.0"
-            s.summary                = "React Native RuntimeCore with iOS 12.0 forced"
-            s.homepage               = "https://reactnative.dev/"
-            s.license                = "MIT"
-            s.author                 = "Meta Platforms, Inc."
-            s.platforms              = { :ios => "12.0", :osx => "10.15" }
-            s.source                 = { :path => "." }
-            s.source_files           = "*.{h,m,mm,cpp,c}"
-            s.header_dir             = "React"
-            s.public_header_files    = "*.h"
-            s.requires_arc           = true
-            s.pod_target_xcconfig    = {
-              'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
-              'MACOSX_DEPLOYMENT_TARGET' => '10.15',
-              'USE_HEADERMAP' => 'NO',
-              'CLANG_CXX_LANGUAGE_STANDARD' => 'c++17',
-              'CLANG_CXX_LIBRARY' => 'libc++',
-              'GCC_PREPROCESSOR_DEFINITIONS' => 'FOLLY_NO_CONFIG FOLLY_MOBILE FOLLY_USE_LIBCPP'
-            }
-          end
-          EOF
-          
-          # Criar arquivos dummy para React-RuntimeCore
-          touch node_modules/react-native/ReactCommon/react/runtime/dummy.cpp
-          touch node_modules/react-native/ReactCommon/react/runtime/dummy.h
-          
-          echo "✅ React-RuntimeCore.podspec criado com iOS 12.0 FORÇADO!"
-          
-      - name: HACK BRUTAL - Criar TODOS os podspecs React restantes
-        script: |
-          # Script Ruby para criar todos os outros podspecs
-          cat > fix_podspecs.rb << 'EOF'
-          require 'fileutils'
-
-          def create_podspec(name, path)
-            FileUtils.mkdir_p(path)
-            File.write("#{path}/#{name}.podspec", <<~PODSPEC)
-              Pod::Spec.new do |s|
-                s.name                   = "#{name}"
-                s.version                = "1000.0.0"
-                s.summary                = "Auto-generated podspec for compatibility"
-                s.homepage               = "https://reactnative.dev/"
-                s.license                = "MIT"
-                s.author                 = "Meta Platforms, Inc."
-                s.platforms              = { :ios => "12.0", :osx => "10.15" }
-                s.source                 = { :path => "." }
-                s.source_files           = "*.{h,m,mm,cpp,c}"
-                s.header_dir             = "React"
-                s.public_header_files    = "*.h"
-                s.requires_arc           = true
-                s.pod_target_xcconfig    = {
-                  'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
-                  'MACOSX_DEPLOYMENT_TARGET' => '10.15',
-                  'USE_HEADERMAP' => 'NO',
-                  'CLANG_CXX_LANGUAGE_STANDARD' => 'c++17',
-                  'CLANG_CXX_LIBRARY' => 'libc++',
-                  'GCC_PREPROCESSOR_DEFINITIONS' => 'FOLLY_NO_CONFIG FOLLY_MOBILE FOLLY_USE_LIBCPP'
-                }
-              end
-            PODSPEC
-            FileUtils.touch("#{path}/dummy.cpp")
-            FileUtils.touch("#{path}/dummy.h")
-            puts "✅ Created #{name}.podspec with iOS 12.0 forced"
-          end
-
-          # Lista de podspecs necessários
-          podspecs = [
-            ["React-featureflags", "node_modules/react-native/ReactCommon/react/featureflags"],
-            ["React-featureflagsnativemodule", "node_modules/react-native/ReactCommon/react/nativemodule/featureflags"],
-            ["React-idlecallbacksnativemodule", "node_modules/react-native/ReactCommon/react/nativemodule/idlecallbacks"],
-            ["React-utils", "node_modules/react-native/ReactCommon/react/utils"],
-            ["React-debug", "node_modules/react-native/ReactCommon/react/debug"],
-            ["React-NativeModulesApple", "node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios"],
-            ["React-logger", "node_modules/react-native/ReactCommon/logger"],
-            ["React-oscompat", "node_modules/react-native/ReactCommon/oscompat"]
-          ]
-
-          podspecs.each do |name, path|
-            create_podspec(name, path)
-          end
-
-          puts "✅ Todos os podspecs React criados com iOS 12.0 forçado!"
-          EOF
-          
-          # Executar o script Ruby
-          ruby fix_podspecs.rb
-          
-      - name: Create Podfile with iOS 12.0 ULTRA FORÇADO + Firebase + Lottie
-        script: |
-          cat > ios/Podfile << 'EOF'
-          require_relative '../node_modules/react-native/scripts/react_native_pods'
-          require_relative '../node_modules/@react-native-firebase/app/scripts/RNFBCocoaPods.rb'
-          
-          platform :ios, '12.0'
-          
-          target 'modamaskavo' do
-            config = use_native_modules!
-            
-            use_react_native!(
-              :path => config[:reactNativePath],
-              :hermes_enabled => false,
-              :fabric_enabled => false,
-              :new_arch_enabled => false
-            )
-            
-            # Firebase
-            use_rnfb_pods!
-            
-            post_install do |installer|
-              react_native_post_install(installer)
-              
-              # Forçar iOS 12.0 em TODOS os pods
-              installer.pods_project.targets.each do |target|
-                target.build_configurations.each do |config|
-                  config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.0'
-                  config.build_settings['MACOSX_DEPLOYMENT_TARGET'] = '10.15'
-                  config.build_settings['RCT_NEW_ARCH_ENABLED'] = 'NO'
-                  config.build_settings['ENABLE_BITCODE'] = 'NO'
-                  config.build_settings['CODE_SIGNING_REQUIRED'] = 'NO'
-                  config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
-                  config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
-                  config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
-                  config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
-                  config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = 'FOLLY_NO_CONFIG FOLLY_MOBILE FOLLY_USE_LIBCPP'
-                  
-                  # Forçar iOS 12.0 especificamente para Firebase, Yoga e Lottie
-                  if target.name.include?('RNFB') || target.name.include?('Firebase') || target.name.include?('Yoga') || target.name.include?('lottie')
-                    config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.0'
-                  end
-                end
-              end
-            end
-          end
-          EOF
-          
-          echo "✅ Podfile criado com iOS 12.0 ULTRA FORÇADO + Firebase + Lottie!"
-      - name: HACK BRUTAL - Corrigir DoubleConversion.podspec para iOS 12.0
-        script: |
-          echo "Corrigindo DoubleConversion.podspec para iOS 12.0..."
-          
-          # Criar DoubleConversion.podspec com iOS 12.0 FORÇADO
-          cat > node_modules/react-native/third-party-podspecs/DoubleConversion.podspec << 'EOF'
-          Pod::Spec.new do |s|
-            s.name                   = "DoubleConversion"
-            s.version                = "1.1.6"
-            s.summary                = "Efficient binary-decimal and decimal-binary conversion routines for IEEE doubles"
-            s.homepage               = "https://github.com/google/double-conversion"
-            s.license                = "BSD"
-            s.author                 = { "Google" => "double-conversion@googlegroups.com" }
-            s.platforms              = { :ios => "12.0", :osx => "10.15" }
-            s.source                 = { :git => "https://github.com/google/double-conversion.git", :tag => "v1.1.6" }
-            s.source_files           = "double-conversion/*.{h,cc}"
-            s.header_dir             = "double-conversion"
-            s.public_header_files    = "double-conversion/*.h"
-            s.header_mappings_dir    = "."
-            s.requires_arc           = false
-            s.ios.deployment_target  = "12.0"
-            s.pod_target_xcconfig    = {
-              'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
-              'MACOSX_DEPLOYMENT_TARGET' => '10.15',
-              'USE_HEADERMAP' => 'NO',
-              'CLANG_CXX_LANGUAGE_STANDARD' => 'c++14',
-              'CLANG_CXX_LIBRARY' => 'libc++',
-              'GCC_PREPROCESSOR_DEFINITIONS' => 'FOLLY_NO_CONFIG FOLLY_MOBILE FOLLY_USE_LIBCPP'
-            }
-            s.compiler_flags = '-fno-omit-frame-pointer', '-fexceptions', '-Wall', '-Werror', '-std=c++14', '-fPIC'
-          end
-          EOF
-          
-          echo "✅ DoubleConversion.podspec criado com iOS 12.0 FORÇADO!"   
-            - name: HACK BRUTAL - Corrigir RNBootSplash.podspec para iOS 12.0
-        script: |
-          echo "Corrigindo RNBootSplash.podspec para iOS 12.0..."
-          
-          # Encontrar o arquivo RNBootSplash.podspec
-          BOOTSPLASH_PODSPEC=$(find node_modules/react-native-bootsplash -name "*.podspec" -type f)
-          
-          if [ -n "$BOOTSPLASH_PODSPEC" ]; then
-            echo "Encontrado RNBootSplash.podspec em: $BOOTSPLASH_PODSPEC"
-            
-            # Fazer backup
-            cp "$BOOTSPLASH_PODSPEC" "$BOOTSPLASH_PODSPEC.backup"
-            
-            # Reescrever completamente o arquivo
-            cat > "$BOOTSPLASH_PODSPEC" << 'EOF'
-          Pod::Spec.new do |s|
-            s.name                   = "RNBootSplash"
-            s.version                = "5.7.1"
-            s.summary                = "Display a splash screen during app launch. Hide it when you are ready."
-            s.homepage               = "https://github.com/zoontek/react-native-bootsplash"
-            s.license                = "MIT"
-            s.author                 = { "Mathieu Acthernoene" => "zoontek@gmail.com" }
-            s.platforms              = { :ios => "12.0", :osx => "10.15" }
-            s.source                 = { :path => "." }
-            s.source_files           = "ios/**/*.{h,m,mm,swift}"
-            s.header_dir             = "RNBootSplash"
-            s.public_header_files    = "ios/**/*.h"
-            s.requires_arc           = true
-            s.ios.deployment_target  = "12.0"
-            s.dependency             "React-Core"
-            s.pod_target_xcconfig    = {
-              'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
-              'MACOSX_DEPLOYMENT_TARGET' => '10.15',
-              'USE_HEADERMAP' => 'NO',
-              'CLANG_CXX_LANGUAGE_STANDARD' => 'c++17',
-              'CLANG_CXX_LIBRARY' => 'libc++',
-              'GCC_PREPROCESSOR_DEFINITIONS' => 'FOLLY_NO_CONFIG FOLLY_MOBILE FOLLY_USE_LIBCPP'
-            }
-          end
-          EOF
-            
-            echo "✅ RNBootSplash.podspec reescrito para iOS 12.0!"
-          else
-            echo "⚠️ RNBootSplash.podspec não encontrado"
-          fi    
-            - name: HACK BRUTAL - Corrigir TODOS os podspecs para iOS 12.0
-        script: |
-          echo "🔥 HACK BRUTAL - Corrigindo TODOS os podspecs para iOS 12.0..."
-          
-          # Função para corrigir qualquer podspec
-          fix_podspec() {
-            local podspec_file="$1"
-            local pod_name=$(basename "$podspec_file" .podspec)
-            
-            echo "Corrigindo $podspec_file..."
-            
-            # Backup
-            cp "$podspec_file" "$podspec_file.backup"
-            
-            # Usar sed para forçar iOS 12.0 em todas as linhas relevantes
-            sed -i '' 's/s\.ios\.deployment_target = .*/s.ios.deployment_target = "12.0"/' "$podspec_file"
-            sed -i '' 's/s\.platforms = .*/s.platforms = { :ios => "12.0", :osx => "10.15" }/' "$podspec_file"
-            sed -i '' 's/spec\.ios\.deployment_target = .*/spec.ios.deployment_target = "12.0"/' "$podspec_file"
-            sed -i '' 's/spec\.platforms = .*/spec.platforms = { :ios => "12.0", :osx => "10.15" }/' "$podspec_file"
-            
-            # Adicionar deployment target se não existir
-            if ! grep -q "deployment_target" "$podspec_file"; then
-              # Adicionar após a primeira linha que contém s.name
-              sed -i '' '/s\.name.*=/a\
-              s.ios.deployment_target = "12.0"' "$podspec_file"
-            fi
-            
-            # Adicionar xcconfig se não existir
-            if ! grep -q "pod_target_xcconfig" "$podspec_file"; then
-              # Adicionar antes do end
-              sed -i '' '/^end$/i\
-              s.pod_target_xcconfig = { "IPHONEOS_DEPLOYMENT_TARGET" => "12.0", "MACOSX_DEPLOYMENT_TARGET" => "10.15" }' "$podspec_file"
-            fi
-            
-            echo "✅ $pod_name corrigido!"
-          }
-          
-          # Encontrar e corrigir TODOS os podspecs
-          echo "Procurando todos os podspecs..."
-          find node_modules -name "*.podspec" -type f | while read podspec; do
-            fix_podspec "$podspec"
-          done
-          
-          # Criar podspecs que estão faltando
-          echo "Criando podspecs que estão faltando..."
-          
-          # DoubleConversion
-          mkdir -p node_modules/react-native/third-party-podspecs
-          cat > node_modules/react-native/third-party-podspecs/DoubleConversion.podspec << 'EOF'
-          Pod::Spec.new do |s|
-            s.name                   = "DoubleConversion"
-            s.version                = "1.1.6"
-            s.summary                = "Efficient binary-decimal and decimal-binary conversion routines for IEEE doubles"
-            s.homepage               = "https://github.com/google/double-conversion"
-            s.license                = "BSD"
-            s.author                 = { "Google" => "double-conversion@googlegroups.com" }
-            s.platforms              = { :ios => "12.0", :osx => "10.15" }
-            s.source                 = { :git => "https://github.com/google/double-conversion.git", :tag => "v1.1.6" }
-            s.source_files           = "double-conversion/*.{h,cc}"
-            s.header_dir             = "double-conversion"
-            s.public_header_files    = "double-conversion/*.h"
-            s.header_mappings_dir    = "."
-            s.requires_arc           = false
-            s.ios.deployment_target  = "12.0"
-            s.pod_target_xcconfig    = { "IPHONEOS_DEPLOYMENT_TARGET" => "12.0", "MACOSX_DEPLOYMENT_TARGET" => "10.15" }
-          end
-          EOF
-          
-          # Yoga
-          find node_modules/react-native -name "Yoga.podspec" -type f | while read yoga_podspec; do
-            cat > "$yoga_podspec" << 'EOF'
-          Pod::Spec.new do |s|
-            s.name                   = "Yoga"
-            s.version                = "1.14.0"
-            s.summary                = "Yoga is a cross-platform layout engine which implements Flexbox."
-            s.homepage               = "https://facebook.github.io/yoga/"
-            s.license                = "MIT"
-            s.author                 = "Facebook"
-            s.platforms              = { :ios => "12.0", :osx => "10.15" }
-            s.source                 = { :path => "." }
-            s.source_files           = "**/*.{c,h,cpp}"
-            s.public_header_files    = "**/*.h"
-            s.header_dir             = "yoga"
-            s.requires_arc           = false
-            s.ios.deployment_target  = "12.0"
-            s.pod_target_xcconfig    = { "IPHONEOS_DEPLOYMENT_TARGET" => "12.0", "MACOSX_DEPLOYMENT_TARGET" => "10.15" }
-          end
-          EOF
-          done
-          
-          # Verificar se Firebase está instalado
-          if [ -f "node_modules/@react-native-firebase/app/scripts/RNFBCocoaPods.rb" ]; then
-            echo "✅ Firebase encontrado!"
-          else
-            echo "⚠️ Firebase não encontrado, criando arquivo dummy..."
-            mkdir -p node_modules/@react-native-firebase/app/scripts/
-            cat > node_modules/@react-native-firebase/app/scripts/RNFBCocoaPods.rb << 'EOF'
-          def use_rnfb_pods!
-            puts "⚠️ Firebase não disponível, usando configuração dummy"
-          end
-          EOF
-          fi
-          
-          echo "🎉 TODOS os podspecs corrigidos para iOS 12.0!"
-            - name: EMERGÊNCIA - Corrigir RNCAsyncStorage.podspec corrompido
-        script: |
-          echo "🚨 EMERGÊNCIA - Corrigindo RNCAsyncStorage.podspec corrompido..."
-          
-          # Restaurar backup se existir
-          if [ -f "node_modules/@react-native-async-storage/async-storage/RNCAsyncStorage.podspec.backup" ]; then
-            echo "Restaurando backup do RNCAsyncStorage.podspec..."
-            cp "node_modules/@react-native-async-storage/async-storage/RNCAsyncStorage.podspec.backup" "node_modules/@react-native-async-storage/async-storage/RNCAsyncStorage.podspec"
-          else
-            echo "Backup não encontrado, recriando RNCAsyncStorage.podspec..."
-            
-            # Recriar o arquivo do zero
-            cat > node_modules/@react-native-async-storage/async-storage/RNCAsyncStorage.podspec << 'EOF'
-          require 'json'
-
-          package = JSON.parse(File.read(File.join(__dir__, 'package.json')))
-
-          Pod::Spec.new do |s|
-            s.name         = "RNCAsyncStorage"
-            s.version      = package['version']
-            s.summary      = package['description']
-            s.license      = package['license']
-            s.author       = package['author']
-            s.homepage     = package['homepage']
-            s.platform     = :ios, "12.0"
-            s.ios.deployment_target = "12.0"
-            s.source       = { :git => "https://github.com/react-native-async-storage/async-storage.git", :tag => "v#{s.version}" }
-            s.source_files = "ios/**/*.{h,m}"
-            s.dependency   'React-Core'
-            s.pod_target_xcconfig = {
-              'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
-              'MACOSX_DEPLOYMENT_TARGET' => '10.15'
-            }
-          end
-          EOF
-          fi
-          
-          # Verificar se o arquivo está válido agora
-          if ruby -c node_modules/@react-native-async-storage/async-storage/RNCAsyncStorage.podspec > /dev/null 2>&1; then
-            echo "✅ RNCAsyncStorage.podspec corrigido e válido!"
-          else
-            echo "❌ RNCAsyncStorage.podspec ainda inválido. Conteúdo:"
-            cat node_modules/@react-native-async-storage/async-storage/RNCAsyncStorage.podspec
-          fi
       - name: Install CocoaPods dependencies
         script: |
           cd ios
