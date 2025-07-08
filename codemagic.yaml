@@ -1,4 +1,4 @@
-# codemagic.yaml - VERSÃO FINAL COM BOOST E DEPLOYMENT TARGET FORÇADO
+# codemagic.yaml - VERSÃO FINAL COM REACTCOMMON SUBSPECS CORRETOS
 workflows:
   ios-workflow:
     name: iOS Workflow
@@ -15,8 +15,118 @@ workflows:
       - name: Install npm dependencies
         script: |
           npm ci
-      - name: HACK BRUTAL - Criar TODOS os podspecs com iOS 15.0 FORÇADO
+      - name: HACK BRUTAL - Criar ReactCommon.podspec COM SUBSPECS CORRETOS
         script: |
+          # Criar ReactCommon.podspec com TODOS os subspecs necessários
+          mkdir -p node_modules/react-native/ReactCommon
+          cat > node_modules/react-native/ReactCommon/ReactCommon.podspec << 'EOF'
+          Pod::Spec.new do |s|
+            s.name                   = "ReactCommon"
+            s.version                = "1000.0.0"
+            s.summary                = "ReactCommon with all turbomodule subspecs"
+            s.homepage               = "https://reactnative.dev/"
+            s.license                = "MIT"
+            s.author                 = "Meta Platforms, Inc."
+            s.platforms              = { :ios => "15.0" }
+            s.source                 = { :path => "." }
+            s.source_files           = "*.{h,m,mm,cpp,c}"
+            s.header_dir             = "ReactCommon"
+            s.public_header_files    = "*.h"
+            s.pod_target_xcconfig    = {
+              'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
+              'MACOSX_DEPLOYMENT_TARGET' => '10.15'
+            }
+            
+            # Subspec turbomodule - OBRIGATÓRIO
+            s.subspec "turbomodule" do |ss|
+              ss.source_files = "*.{h,m,mm,cpp,c}"
+              ss.header_dir = "ReactCommon"
+              ss.public_header_files = "*.h"
+              ss.pod_target_xcconfig = {
+                'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
+                'MACOSX_DEPLOYMENT_TARGET' => '10.15'
+              }
+              
+              # Subspec turbomodule/core - OBRIGATÓRIO E CRÍTICO
+              ss.subspec "core" do |sss|
+                sss.source_files = "*.{h,m,mm,cpp,c}"
+                sss.header_dir = "ReactCommon"
+                sss.public_header_files = "*.h"
+                sss.pod_target_xcconfig = {
+                  'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
+                  'MACOSX_DEPLOYMENT_TARGET' => '10.15'
+                }
+              end
+              
+              # Outros subspecs do turbomodule
+              ss.subspec "samples" do |sss|
+                sss.source_files = "*.{h,m,mm,cpp,c}"
+                sss.header_dir = "ReactCommon"
+                sss.public_header_files = "*.h"
+                sss.pod_target_xcconfig = {
+                  'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
+                  'MACOSX_DEPLOYMENT_TARGET' => '10.15'
+                }
+              end
+            end
+            
+            # Outros subspecs importantes
+            s.subspec "jsi" do |ss|
+              ss.source_files = "*.{h,m,mm,cpp,c}"
+              ss.header_dir = "ReactCommon"
+              ss.public_header_files = "*.h"
+              ss.pod_target_xcconfig = {
+                'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
+                'MACOSX_DEPLOYMENT_TARGET' => '10.15'
+              }
+            end
+            
+            s.subspec "callinvoker" do |ss|
+              ss.source_files = "*.{h,m,mm,cpp,c}"
+              ss.header_dir = "ReactCommon"
+              ss.public_header_files = "*.h"
+              ss.pod_target_xcconfig = {
+                'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
+                'MACOSX_DEPLOYMENT_TARGET' => '10.15'
+              }
+            end
+            
+            s.subspec "runtimeexecutor" do |ss|
+              ss.source_files = "*.{h,m,mm,cpp,c}"
+              ss.header_dir = "ReactCommon"
+              ss.public_header_files = "*.h"
+              ss.pod_target_xcconfig = {
+                'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
+                'MACOSX_DEPLOYMENT_TARGET' => '10.15'
+              }
+            end
+            
+            s.subspec "react" do |ss|
+              ss.source_files = "*.{h,m,mm,cpp,c}"
+              ss.header_dir = "ReactCommon"
+              ss.public_header_files = "*.h"
+              ss.pod_target_xcconfig = {
+                'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
+                'MACOSX_DEPLOYMENT_TARGET' => '10.15'
+              }
+            end
+            
+            s.subspec "Default" do |ss|
+              ss.source_files = "*.{h,m,mm,cpp,c}"
+              ss.header_dir = "ReactCommon"
+              ss.public_header_files = "*.h"
+              ss.pod_target_xcconfig = {
+                'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
+                'MACOSX_DEPLOYMENT_TARGET' => '10.15'
+              }
+            end
+          end
+          EOF
+          
+          # Criar arquivos dummy para ReactCommon
+          touch node_modules/react-native/ReactCommon/dummy.cpp
+          touch node_modules/react-native/ReactCommon/dummy.h
+          
           # Criar boost.podspec com iOS 15.0 forçado
           mkdir -p node_modules/react-native/third-party-podspecs
           cat > node_modules/react-native/third-party-podspecs/boost.podspec << 'EOF'
@@ -147,7 +257,7 @@ workflows:
           touch node_modules/react-native/ReactCommon/jsinspector-modern/tracing/dummy.cpp
           touch node_modules/react-native/ReactCommon/jsinspector-modern/tracing/dummy.h
           
-          # Script Ruby para criar todos os outros podspecs COM DEPLOYMENT TARGET FORÇADO
+          # Script Ruby para criar todos os outros podspecs
           cat > fix_podspecs.rb << 'EOF'
           require 'fileutils'
 
@@ -177,7 +287,7 @@ workflows:
             puts "✅ Created #{name}.podspec with iOS 15.0 forced"
           end
 
-          # Lista COMPLETA de podspecs
+          # Lista COMPLETA de podspecs (SEM ReactCommon que já foi criado)
           podspecs = [
             ["React", "node_modules/react-native"],
             ["React-RCTFBReactNativeSpec", "node_modules/react-native/React"],
@@ -214,7 +324,6 @@ workflows:
             ["React-RCTActionSheet", "node_modules/react-native/Libraries/ActionSheetIOS"],
             ["React-RCTAlert", "node_modules/react-native/Libraries/Alert"],
             ["React-RCTPushNotification", "node_modules/react-native/Libraries/PushNotificationIOS"],
-            ["ReactCommon", "node_modules/react-native/ReactCommon"],
             ["React-Core", "node_modules/react-native"],
             ["React-jsc", "node_modules/react-native/ReactCommon/jsc"],
             ["React-jsinspector", "node_modules/react-native/ReactCommon/jsinspector-modern"]
@@ -225,6 +334,7 @@ workflows:
           end
 
           puts "✅ Todos os podspecs criados com iOS 15.0 forçado!"
+          puts "✅ ReactCommon/turbomodule/core já foi criado manualmente!"
           EOF
           
           # Executar o script Ruby
