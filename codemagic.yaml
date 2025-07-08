@@ -1,4 +1,4 @@
-# codemagic.yaml - VERSÃO CORRIGIDA COM ARTIFACTS
+# codemagic.yaml - VERSÃO CORRIGIDA COM React-RuntimeApple
 workflows:
   ios-workflow:
     name: iOS Workflow
@@ -16,10 +16,12 @@ workflows:
         script: |
           npm ci
           
-      - name: HACK BRUTAL - Corrigir fast_float.podspec
+      - name: HACK BRUTAL - Corrigir TODOS os podspecs problemáticos
         script: |
-          # Corrigir fast_float.podspec para usar iOS 12.0
+          # Criar diretório third-party-podspecs se não existir
           mkdir -p node_modules/react-native/third-party-podspecs
+          
+          # Corrigir fast_float.podspec
           cat > node_modules/react-native/third-party-podspecs/fast_float.podspec << 'EOF'
           Pod::Spec.new do |s|
             s.name                   = "fast_float"
@@ -45,11 +47,7 @@ workflows:
           end
           EOF
           
-          echo "✅ fast_float.podspec corrigido para iOS 12.0!"
-          
-      - name: HACK BRUTAL - Corrigir fmt.podspec
-        script: |
-          # Corrigir fmt.podspec - SEM :file na licença
+          # Corrigir fmt.podspec
           cat > node_modules/react-native/third-party-podspecs/fmt.podspec << 'EOF'
           Pod::Spec.new do |s|
             s.name                   = "fmt"
@@ -75,7 +73,162 @@ workflows:
           end
           EOF
           
-          echo "✅ fmt.podspec corrigido!"
+          # Corrigir glog.podspec
+          cat > node_modules/react-native/third-party-podspecs/glog.podspec << 'EOF'
+          Pod::Spec.new do |s|
+            s.name                   = "glog"
+            s.version                = "0.3.5"
+            s.summary                = "Google logging library"
+            s.homepage               = "https://github.com/google/glog"
+            s.license                = "BSD"
+            s.author                 = { "Google" => "google-glog@googlegroups.com" }
+            s.platforms              = { :ios => "12.0", :osx => "10.15" }
+            s.source                 = { :git => "https://github.com/google/glog.git", :tag => "v0.3.5" }
+            s.source_files           = "src/**/*.{h,cc}"
+            s.header_dir             = "glog"
+            s.public_header_files    = "src/glog/*.h"
+            s.header_mappings_dir    = "src"
+            s.requires_arc           = false
+            s.pod_target_xcconfig    = {
+              'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
+              'MACOSX_DEPLOYMENT_TARGET' => '10.15',
+              'USE_HEADERMAP' => 'NO',
+              'CLANG_CXX_LANGUAGE_STANDARD' => 'c++14',
+              'CLANG_CXX_LIBRARY' => 'libc++'
+            }
+          end
+          EOF
+          
+          echo "✅ Third-party podspecs corrigidos!"
+          
+      - name: HACK BRUTAL - Criar React-RuntimeApple.podspec FORÇADO
+        script: |
+          # Criar React-RuntimeApple.podspec com iOS 12.0 FORÇADO
+          mkdir -p node_modules/react-native/ReactCommon/react/runtime/platform/ios
+          cat > node_modules/react-native/ReactCommon/react/runtime/platform/ios/React-RuntimeApple.podspec << 'EOF'
+          Pod::Spec.new do |s|
+            s.name                   = "React-RuntimeApple"
+            s.version                = "1000.0.0"
+            s.summary                = "React Native RuntimeApple with iOS 12.0 forced"
+            s.homepage               = "https://reactnative.dev/"
+            s.license                = "MIT"
+            s.author                 = "Meta Platforms, Inc."
+            s.platforms              = { :ios => "12.0", :osx => "10.15" }
+            s.source                 = { :path => "." }
+            s.source_files           = "*.{h,m,mm,cpp,c}"
+            s.header_dir             = "React"
+            s.public_header_files    = "*.h"
+            s.requires_arc           = true
+            s.pod_target_xcconfig    = {
+              'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
+              'MACOSX_DEPLOYMENT_TARGET' => '10.15',
+              'USE_HEADERMAP' => 'NO',
+              'CLANG_CXX_LANGUAGE_STANDARD' => 'c++17',
+              'CLANG_CXX_LIBRARY' => 'libc++',
+              'GCC_PREPROCESSOR_DEFINITIONS' => 'FOLLY_NO_CONFIG FOLLY_MOBILE FOLLY_USE_LIBCPP'
+            }
+          end
+          EOF
+          
+          # Criar arquivos dummy para React-RuntimeApple
+          touch node_modules/react-native/ReactCommon/react/runtime/platform/ios/dummy.cpp
+          touch node_modules/react-native/ReactCommon/react/runtime/platform/ios/dummy.h
+          
+          echo "✅ React-RuntimeApple.podspec criado com iOS 12.0 FORÇADO!"
+          
+      - name: HACK BRUTAL - Criar React-RuntimeCore.podspec FORÇADO
+        script: |
+          # Criar React-RuntimeCore.podspec com iOS 12.0 FORÇADO
+          mkdir -p node_modules/react-native/ReactCommon/react/runtime
+          cat > node_modules/react-native/ReactCommon/react/runtime/React-RuntimeCore.podspec << 'EOF'
+          Pod::Spec.new do |s|
+            s.name                   = "React-RuntimeCore"
+            s.version                = "1000.0.0"
+            s.summary                = "React Native RuntimeCore with iOS 12.0 forced"
+            s.homepage               = "https://reactnative.dev/"
+            s.license                = "MIT"
+            s.author                 = "Meta Platforms, Inc."
+            s.platforms              = { :ios => "12.0", :osx => "10.15" }
+            s.source                 = { :path => "." }
+            s.source_files           = "*.{h,m,mm,cpp,c}"
+            s.header_dir             = "React"
+            s.public_header_files    = "*.h"
+            s.requires_arc           = true
+            s.pod_target_xcconfig    = {
+              'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
+              'MACOSX_DEPLOYMENT_TARGET' => '10.15',
+              'USE_HEADERMAP' => 'NO',
+              'CLANG_CXX_LANGUAGE_STANDARD' => 'c++17',
+              'CLANG_CXX_LIBRARY' => 'libc++',
+              'GCC_PREPROCESSOR_DEFINITIONS' => 'FOLLY_NO_CONFIG FOLLY_MOBILE FOLLY_USE_LIBCPP'
+            }
+          end
+          EOF
+          
+          # Criar arquivos dummy para React-RuntimeCore
+          touch node_modules/react-native/ReactCommon/react/runtime/dummy.cpp
+          touch node_modules/react-native/ReactCommon/react/runtime/dummy.h
+          
+          echo "✅ React-RuntimeCore.podspec criado com iOS 12.0 FORÇADO!"
+          
+      - name: HACK BRUTAL - Criar TODOS os podspecs React restantes
+        script: |
+          # Script Ruby para criar todos os outros podspecs
+          cat > fix_podspecs.rb << 'EOF'
+          require 'fileutils'
+
+          def create_podspec(name, path)
+            FileUtils.mkdir_p(path)
+            File.write("#{path}/#{name}.podspec", <<~PODSPEC)
+              Pod::Spec.new do |s|
+                s.name                   = "#{name}"
+                s.version                = "1000.0.0"
+                s.summary                = "Auto-generated podspec for compatibility"
+                s.homepage               = "https://reactnative.dev/"
+                s.license                = "MIT"
+                s.author                 = "Meta Platforms, Inc."
+                s.platforms              = { :ios => "12.0", :osx => "10.15" }
+                s.source                 = { :path => "." }
+                s.source_files           = "*.{h,m,mm,cpp,c}"
+                s.header_dir             = "React"
+                s.public_header_files    = "*.h"
+                s.requires_arc           = true
+                s.pod_target_xcconfig    = {
+                  'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
+                  'MACOSX_DEPLOYMENT_TARGET' => '10.15',
+                  'USE_HEADERMAP' => 'NO',
+                  'CLANG_CXX_LANGUAGE_STANDARD' => 'c++17',
+                  'CLANG_CXX_LIBRARY' => 'libc++',
+                  'GCC_PREPROCESSOR_DEFINITIONS' => 'FOLLY_NO_CONFIG FOLLY_MOBILE FOLLY_USE_LIBCPP'
+                }
+              end
+            PODSPEC
+            FileUtils.touch("#{path}/dummy.cpp")
+            FileUtils.touch("#{path}/dummy.h")
+            puts "✅ Created #{name}.podspec with iOS 12.0 forced"
+          end
+
+          # Lista de podspecs necessários
+          podspecs = [
+            ["React-featureflags", "node_modules/react-native/ReactCommon/react/featureflags"],
+            ["React-featureflagsnativemodule", "node_modules/react-native/ReactCommon/react/nativemodule/featureflags"],
+            ["React-idlecallbacksnativemodule", "node_modules/react-native/ReactCommon/react/nativemodule/idlecallbacks"],
+            ["React-utils", "node_modules/react-native/ReactCommon/react/utils"],
+            ["React-debug", "node_modules/react-native/ReactCommon/react/debug"],
+            ["React-NativeModulesApple", "node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios"],
+            ["React-logger", "node_modules/react-native/ReactCommon/logger"],
+            ["React-oscompat", "node_modules/react-native/ReactCommon/oscompat"]
+          ]
+
+          podspecs.each do |name, path|
+            create_podspec(name, path)
+          end
+
+          puts "✅ Todos os podspecs React criados com iOS 12.0 forçado!"
+          EOF
+          
+          # Executar o script Ruby
+          ruby fix_podspecs.rb
           
       - name: Create Podfile with iOS 12.0 ULTRA FORÇADO
         script: |
@@ -107,6 +260,9 @@ workflows:
                   config.build_settings['CODE_SIGNING_REQUIRED'] = 'NO'
                   config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
                   config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
+                  config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
+                  config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
+                  config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = 'FOLLY_NO_CONFIG FOLLY_MOBILE FOLLY_USE_LIBCPP'
                 end
               end
             end
@@ -132,14 +288,6 @@ workflows:
           else
             echo "❌ Workspace não encontrado. Listando arquivos .xcworkspace:"
             find . -name "*.xcworkspace" -type d
-          fi
-          
-          # Verificar se projeto existe
-          if [ -d "modamaskavo.xcodeproj" ]; then
-            echo "✅ Projeto encontrado!"
-          else
-            echo "❌ Projeto não encontrado. Listando arquivos .xcodeproj:"
-            find . -name "*.xcodeproj" -type d
           fi
           
       - name: Criar exportOptions.plist
@@ -179,7 +327,7 @@ workflows:
           
           echo "=== Iniciando build do iOS com WORKSPACE ==="
           
-          # Build e Archive usando WORKSPACE (correto após CocoaPods)
+          # Build e Archive usando WORKSPACE
           xcodebuild -workspace "$XCODE_WORKSPACE" \
                      -scheme "$XCODE_SCHEME" \
                      -configuration Release \
@@ -213,43 +361,16 @@ workflows:
             find build -type f | head -20
           fi
           
-    # SEÇÃO DE ARTEFATOS - CRÍTICA PARA DOWNLOAD
+    # SEÇÃO DE ARTEFATOS
     artifacts:
-      # Arquivo IPA principal (mais importante)
       - ios/build/*.ipa
       - ios/build/**/*.ipa
-      
-      # Archive do Xcode
       - ios/build/*.xcarchive
       - ios/build/**/*.xcarchive
-      
-      # App bundle
       - ios/build/*.app
       - ios/build/**/*.app
-      
-      # Símbolos de debug
       - ios/build/**/*.dSYM
-      - ios/build/**/*.dSYM.zip
-      
-      # Logs importantes
-      - ios/build/logs/**
       - "**/*.log"
-      - "**/*.crash"
-      
-      # Relatórios de build
-      - ios/build/reports/**
-      - ios/DerivedData/*/Logs/**
-      
-      # Arquivos de configuração
       - ios/exportOptions.plist
       - ios/Podfile
       - ios/Podfile.lock
-      
-    # PUBLICAÇÃO POR EMAIL
-    publishing:
-      email:
-        recipients:
-          - alissonschmitz2@hotmail.com
-        notify:
-          success: true
-          failure: true
