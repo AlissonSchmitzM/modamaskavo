@@ -1,4 +1,4 @@
-# codemagic.yaml - ADICIONANDO REACT-RCTFBREACTNATIVESPEC
+# codemagic.yaml - ADICIONANDO REACT-JSC COM FABRIC
 workflows:
   ios-workflow:
     name: iOS Workflow
@@ -102,6 +102,34 @@ workflows:
           end
           EOF
           
+          # Criar React-jsc.podspec com Fabric subspec
+          cat > node_modules/react-native/ReactCommon/jsc/React-jsc.podspec << 'EOF'
+          Pod::Spec.new do |s|
+            s.name                   = "React-jsc"
+            s.version                = "1000.0.0"
+            s.summary                = "React Native JSC with Fabric support"
+            s.homepage               = "https://reactnative.dev/"
+            s.license                = "MIT"
+            s.author                 = "Meta Platforms, Inc."
+            s.platforms              = { :ios => "15.0" }
+            s.source                 = { :path => "." }
+            s.source_files           = "**/*.{h,m,mm,cpp,c}"
+            s.header_dir             = "React"
+            s.public_header_files    = "**/*.h"
+            
+            s.subspec "Fabric" do |ss|
+              ss.source_files = "**/*.{h,m,mm,cpp,c}"
+              ss.header_dir = "React"
+              ss.public_header_files = "**/*.h"
+            end
+            
+            s.subspec "Default" do |ss|
+              ss.source_files = "**/*.{h,m,mm,cpp,c}"
+              ss.header_dir = "React"
+            end
+          end
+          EOF
+          
           # Criar ReactCommon.podspec com todos os subspecs
           cat > node_modules/react-native/ReactCommon/ReactCommon.podspec << 'EOF'
           Pod::Spec.new do |s|
@@ -172,6 +200,7 @@ workflows:
 
           # Lista COMPLETA de podspecs problemáticos
           podspecs = [
+            ["React-jsc", "node_modules/react-native/ReactCommon/jsc"],
             ["React-RCTFBReactNativeSpec", "node_modules/react-native/React"],
             ["React-featureflagsnativemodule", "node_modules/react-native/ReactCommon/react/nativemodule/featureflags"],
             ["RCTRequired", "node_modules/react-native/Libraries/Required"],
@@ -214,7 +243,7 @@ workflows:
             create_podspec(name, path)
           end
 
-          puts "✅ Todos os podspecs criados incluindo React-RCTFBReactNativeSpec!"
+          puts "✅ Todos os podspecs criados incluindo React-jsc com Fabric!"
           EOF
           
           # Executar o script Ruby
