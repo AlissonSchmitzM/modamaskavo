@@ -1,4 +1,4 @@
-# codemagic.yaml - VERSÃO FINAL COM ARTIFACTS CORRETOS
+# codemagic.yaml - VERSÃO CORRIGIDA COM ARTIFACTS
 workflows:
   ios-workflow:
     name: iOS Workflow
@@ -15,6 +15,7 @@ workflows:
       - name: Install npm dependencies
         script: |
           npm ci
+          
       - name: HACK BRUTAL - Criar React-jsc.podspec COM FABRIC
         script: |
           # Criar React-jsc.podspec com subspec Fabric
@@ -338,6 +339,10 @@ workflows:
           touch node_modules/react-native/dummy.cpp
           touch node_modules/react-native/dummy.h
           
+          echo "✅ React-Core.podspec criado!"
+          
+      - name: HACK BRUTAL - Criar ReactCommon.podspec COM SUBSPECS CORRETOS
+        script: |
           # Criar ReactCommon.podspec com TODOS os subspecs necessários
           mkdir -p node_modules/react-native/ReactCommon
           cat > node_modules/react-native/ReactCommon/ReactCommon.podspec << 'EOF'
@@ -448,6 +453,10 @@ workflows:
           touch node_modules/react-native/ReactCommon/dummy.cpp
           touch node_modules/react-native/ReactCommon/dummy.h
           
+          echo "✅ ReactCommon.podspec criado!"
+          
+      - name: HACK BRUTAL - Criar TODOS os podspecs restantes
+        script: |
           # Script Ruby para criar todos os outros podspecs
           cat > fix_podspecs.rb << 'EOF'
           require 'fileutils'
@@ -527,10 +536,6 @@ workflows:
           end
 
           puts "✅ Todos os podspecs criados com iOS 12.0 forçado!"
-          puts "✅ React-jsc/Fabric já foi criado manualmente!"
-          puts "✅ React-Core/RCTWebSocket já foi criado manualmente!"
-          puts "✅ ReactCommon/turbomodule/core já foi criado manualmente!"
-          puts "✅ fast_float.podspec já foi corrigido manualmente!"
           EOF
           
           # Executar o script Ruby
@@ -567,13 +572,93 @@ workflows:
               :new_arch_enabled => false
             )
             
-            post_install do |installer|
+                        post_install do |installer|
               react_native_post_install(installer)
-              force_ios_12(installer
-
-              - name: Build iOS app
+              force_ios_12(installer)
+              
+              # Forçar iOS 12.0 em TODOS os pods
+              installer.pods_project.targets.each do |target|
+                target.build_configurations.each do |config|
+                  config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.0'
+                  config.build_settings['MACOSX_DEPLOYMENT_TARGET'] = '10.15'
+                  config.build_settings['RCT_NEW_ARCH_ENABLED'] = 'NO'
+                  config.build_settings['ENABLE_BITCODE'] = 'NO'
+                  config.build_settings['CODE_SIGNING_REQUIRED'] = 'NO'
+                  config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
+                  config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
+                end
+              end
+            end
+          end
+          EOF
+          
+          echo "✅ Podfile criado com iOS 12.0 ULTRA FORÇADO!"
+          
+      - name: Install CocoaPods dependencies
         script: |
           cd ios
+          pod install --repo-update --verbose
+          
+      - name: Verificar se workspace existe
+        script: |
+          cd ios
+          echo "=== Verificando arquivos no diretório ios ==="
+          ls -la
+          
+          # Verificar se workspace existe
+          if [ -f "modamaskavo.xcworkspace" ]; then
+            echo "✅ Workspace encontrado!"
+          else
+            echo "❌ Workspace não encontrado. Listando arquivos .xcworkspace:"
+            find . -name "*.xcworkspace" -type d
+          fi
+          
+          # Verificar se projeto existe
+          if [ -f "modamaskavo.xcodeproj" ]; then
+            echo "✅ Projeto encontrado!"
+          else
+            echo "❌ Projeto não encontrado. Listando arquivos .xcodeproj:"
+            find . -name "*.xcodeproj" -type d
+          fi
+          
+      - name: Criar exportOptions.plist
+        script: |
+          cd ios
+          cat > exportOptions.plist << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>development</string>
+              <key>compileBitcode</key>
+              <false/>
+              <key>uploadBitcode</key>
+              <false/>
+              <key>uploadSymbols</key>
+              <false/>
+              <key>signingStyle</key>
+              <string>automatic</string>
+              <key>stripSwiftSymbols</key>
+              <true/>
+              <key>thinning</key>
+              <string>&lt;none&gt;</string>
+          </dict>
+          </plist>
+          EOF
+          
+          echo "✅ exportOptions.plist criado!"
+          
+      - name: Build and Archive iOS app
+        script: |
+          cd ios
+          
+          # Criar diretório de build
+          mkdir -p build
+          
+          echo "=== Iniciando build do iOS ==="
+          
+          # Build e Archive
           xcodebuild -workspace "$XCODE_WORKSPACE" \
                      -scheme "$XCODE_SCHEME" \
                      -configuration Release \
@@ -581,40 +666,59 @@ workflows:
                      -archivePath build/modamaskavo.xcarchive \
                      archive
           
+          echo "=== Archive concluído, iniciando export ==="
+          
           # Exportar IPA
           xcodebuild -exportArchive \
                      -archivePath build/modamaskavo.xcarchive \
                      -exportPath build \
                      -exportOptionsPlist exportOptions.plist
-                     
-      - name: Create exportOptions.plist
-        script: |
-          cat > ios/exportOptions.plist << 'EOF'
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>method</key>
-              <string>development</string>
-              <key>teamID</key>
-              <string>YOUR_TEAM_ID</string>
-              <key>compileBitcode</key>
-              <false/>
-              <key>uploadBitcode</key>
-              <false/>
-              <key>uploadSymbols</key>
-              <false/>
-          </dict>
-          </plist>
-          EOF
           
-    # SEÇÃO DE ARTEFATOS - ADICIONE ESTA PARTE
+          echo "=== Export concluído ==="
+          
+          # Listar arquivos gerados
+          echo "=== Arquivos gerados ==="
+          find build -name "*.ipa" -o -name "*.app" -o -name "*.xcarchive" | head -10
+          
+          # Verificar se IPA foi criado
+          if find build -name "*.ipa" | grep -q .; then
+            echo "✅ IPA criado com sucesso!"
+            find build -name "*.ipa" -exec ls -la {} \;
+          else
+            echo "❌ IPA não foi criado"
+            echo "Conteúdo do diretório build:"
+            ls -la build/
+          fi
+          
+    # SEÇÃO DE ARTEFATOS - CRÍTICA PARA DOWNLOAD
     artifacts:
-      - build/outputs/**/*.ipa          # Arquivo IPA principal
-      - build/outputs/**/*.app          # Arquivo .app se necessário
-      - ios/build/**/*.xcarchive        # Arquivo de archive
-      - ios/build/**/*.ipa              # IPA na pasta ios/build
-      - ios/build/**/*.dSYM             # Símbolos de debug
-      - ios/build/logs/**               # Logs de build
-      - "**/*.crash"                    # Arquivos de crash
-      - "**/*.log"                      # Todos os logs
+      # Arquivo IPA principal (mais importante)
+      - ios/build/*.ipa
+      - ios/build/**/*.ipa
+      
+      # Archive do Xcode
+      - ios/build/*.xcarchive
+      - ios/build/**/*.xcarchive
+      
+      # App bundle
+      - ios/build/*.app
+      - ios/build/**/*.app
+      
+      # Símbolos de debug
+      - ios/build/**/*.dSYM
+      - ios/build/**/*.dSYM.zip
+      
+      # Logs importantes
+      - ios/build/logs/**
+      - "**/*.log"
+      - "**/*.crash"
+      
+      # Relatórios de build
+      - ios/build/reports/**
+      - ios/DerivedData/*/Logs/**
+      
+      # Arquivos de configuração
+      - ios/exportOptions.plist
+      - ios/Podfile
+      - ios/Podfile.lock
+    
