@@ -8,7 +8,7 @@ workflows:
       vars:
         XCODE_WORKSPACE: "modamaskavo.xcworkspace"
         XCODE_SCHEME: "modamaskavo"
-      node: 18.20.0  # Mudei apenas de 18.17.0 para 18.20.0
+      node: 18.20.0
       xcode: latest
       cocoapods: default
     scripts:
@@ -18,17 +18,25 @@ workflows:
 
       - name: Install dependencies with Firebase
         script: |
-          # Instalar dependências básicas
-          npm install
+          # Forçar instalação do Firebase
+          echo "Instalando Firebase..."
+          npm install @react-native-firebase/app @react-native-firebase/auth @react-native-firebase/firestore --save
           
-          # Instalar pacotes específicos do Firebase se necessário
-          npm install @react-native-firebase/app @react-native-firebase/auth @react-native-firebase/firestore
-          
-          # Verificar instalação (sem falhar se não encontrar)
+          # Verificar se foi instalado
           if [ -f "node_modules/@react-native-firebase/app/scripts/RNFBCocoaPods.rb" ]; then
+            echo "✅ Firebase instalado com sucesso"
             ls -la node_modules/@react-native-firebase/app/scripts/
           else
-            echo "⚠️ Firebase não encontrado, mas continuando..."
+            echo "❌ Firebase não foi instalado. Tentando novamente..."
+            npm cache clean --force
+            npm install @react-native-firebase/app @react-native-firebase/auth @react-native-firebase/firestore --force
+            
+            if [ -f "node_modules/@react-native-firebase/app/scripts/RNFBCocoaPods.rb" ]; then
+              echo "✅ Firebase instalado na segunda tentativa"
+            else
+              echo "❌ Falha crítica na instalação do Firebase"
+              exit 1
+            fi
           fi
 
       - name: HACK BRUTAL - Corrigir TODOS os podspecs problemáticos
@@ -469,7 +477,6 @@ workflows:
             find build -type f | head -20
           fi
           
-    # SEÇÃO DE ARTEFATOS
     artifacts:
       - ios/build/*.ipa
       - ios/build/**/*.ipa
