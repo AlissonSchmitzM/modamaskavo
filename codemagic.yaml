@@ -1,4 +1,4 @@
-# codemagic.yaml - ADICIONANDO REACT-FEATUREFLAGSNATIVEMODULE
+# codemagic.yaml - ADICIONANDO REACT-RCTFBREACTNATIVESPEC
 workflows:
   ios-workflow:
     name: iOS Workflow
@@ -172,6 +172,7 @@ workflows:
 
           # Lista COMPLETA de podspecs problemáticos
           podspecs = [
+            ["React-RCTFBReactNativeSpec", "node_modules/react-native/React"],
             ["React-featureflagsnativemodule", "node_modules/react-native/ReactCommon/react/nativemodule/featureflags"],
             ["RCTRequired", "node_modules/react-native/Libraries/Required"],
             ["React-RuntimeApple", "node_modules/react-native/ReactCommon/react/runtime/platform/ios"],
@@ -213,7 +214,7 @@ workflows:
             create_podspec(name, path)
           end
 
-          puts "✅ Todos os podspecs criados incluindo React-featureflagsnativemodule!"
+          puts "✅ Todos os podspecs criados incluindo React-RCTFBReactNativeSpec!"
           EOF
           
           # Executar o script Ruby
