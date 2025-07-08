@@ -1,6 +1,6 @@
 workflows:
-  ios-workflow-final:
-    name: iOS Build - Solução Final
+  ios-workflow-ios14:
+    name: iOS Build com iOS 14.0
     instance_type: mac_mini_m1
     environment:
       node: 18
@@ -11,100 +11,109 @@ workflows:
           echo "📦 Instalando dependências npm..."
           npm install
           
-      - name: Verificar e corrigir deployment target
+      - name: Corrigir deployment target para iOS 14.0
         script: |
           cd ios
           
-          echo "🔍 Verificando Podfile original..."
-          if [ -f "Podfile" ]; then
-            cat Podfile
-            
-            echo ""
-            echo "🔧 Corrigindo deployment target para iOS 13.0..."
-            
-            # Backup
-            cp Podfile Podfile.backup
-            
-            # Forçar iOS 13.0 como deployment target
-            sed -i.bak "s/platform :ios, '[^']*'/platform :ios, '13.0'/" Podfile
-            
-            # Se não encontrou a linha, adicionar
-            if ! grep -q "platform :ios" Podfile; then
-              echo "platform :ios, '13.0'" > Podfile.new
-              cat Podfile >> Podfile.new
-              mv Podfile.new Podfile
-            fi
-            
-            # Garantir que post_install existe para forçar deployment target
-            if ! grep -q "post_install" Podfile; then
-              echo "" >> Podfile
-              echo "post_install do |installer|" >> Podfile
-              echo "  installer.pods_project.targets.each do |target|" >> Podfile
-              echo "    target.build_configurations.each do |config|" >> Podfile
-              echo "      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'" >> Podfile
-              echo "    end" >> Podfile
-              echo "  end" >> Podfile
-              echo "end" >> Podfile
-            fi
-            
-            echo ""
-            echo "📄 Podfile corrigido:"
-            cat Podfile
+          echo "🔧 Corrigindo deployment target para iOS 14.0..."
+          
+          # Backup
+          cp Podfile Podfile.backup
+          
+          # Forçar iOS 14.0 (React-RuntimeApple precisa de 14.0+)
+          sed -i.bak "s/platform :ios, '[^']*'/platform :ios, '14.0'/" Podfile
+          
+          # Se não encontrou a linha, adicionar
+          if ! grep -q "platform :ios" Podfile; then
+            echo "platform :ios, '14.0'" > Podfile.new
+            cat Podfile >> Podfile.new
+            mv Podfile.new Podfile
           fi
           
-      - name: Instalar CocoaPods com deployment target correto
+          # Garantir post_install para iOS 14.0
+          if ! grep -q "post_install" Podfile; then
+            echo "" >> Podfile
+            echo "post_install do |installer|" >> Podfile
+            echo "  installer.pods_project.targets.each do |target|" >> Podfile
+            echo "    target.build_configurations.each do |config|" >> Podfile
+            echo "      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '14.0'" >> Podfile
+            echo "    end" >> Podfile
+            echo "  end" >> Podfile
+            echo "end" >> Podfile
+          fi
+          
+          echo "📄 Podfile corrigido:"
+          cat Podfile
+          
+      - name: Instalar CocoaPods com iOS 14.0
         script: |
           cd ios
           
-          echo "🧹 Limpando instalações anteriores..."
+          echo "🧹 Limpando tudo..."
           rm -rf Pods
           rm -f Podfile.lock
           pod cache clean --all
           
-          echo "📦 Instalando CocoaPods com iOS 13.0..."
+          echo "📦 Instalando CocoaPods com iOS 14.0..."
+          
+          # Forçar iOS 14.0 em todas as variáveis
+          export IPHONEOS_DEPLOYMENT_TARGET=14.0
+          
           pod install --verbose --repo-update
           
           if [ $? -eq 0 ]; then
             echo "✅ CocoaPods instalado com sucesso!"
           else
-            echo "❌ CocoaPods falhou! Tentando com deployment target explícito..."
+            echo "❌ Falhou! Tentando com deployment target explícito..."
             
-            # Última tentativa com deployment target explícito
-            IPHONEOS_DEPLOYMENT_TARGET=13.0 pod install --verbose --repo-update
+            # Última tentativa forçando deployment target
+            IPHONEOS_DEPLOYMENT_TARGET=14.0 pod install --verbose --repo-update --deployment-target=14.0
             
             if [ $? -ne 0 ]; then
-              echo "❌ Falha total no CocoaPods!"
-              exit 1
+              echo "❌ Falha total! Tentando iOS 15.0..."
+              
+              # Tentar iOS 15.0 se 14.0 não funcionar
+              sed -i.bak "s/platform :ios, '[^']*'/platform :ios, '15.0'/" Podfile
+              sed -i.bak "s/'14.0'/'15.0'/g" Podfile
+              
+              IPHONEOS_DEPLOYMENT_TARGET=15.0 pod install --verbose --repo-update
+              
+              if [ $? -ne 0 ]; then
+                echo "❌ Falha total mesmo com iOS 15.0!"
+                exit 1
+              fi
             fi
           fi
           
-      - name: Verificar se workspace foi criado
+      - name: Verificar instalação
         script: |
           cd ios
           
           if [ -f "modamaskavo.xcworkspace/contents.xcworkspacedata" ]; then
-            echo "✅ Workspace criado com sucesso!"
+            echo "✅ Workspace criado!"
           else
-            echo "❌ Workspace não foi criado!"
+            echo "❌ Workspace não criado!"
             exit 1
           fi
           
           if [ -d "Pods" ]; then
             echo "✅ Pods instalados!"
-            echo "📁 Principais pods:"
-            ls -la Pods/ | grep -E "(React|RN)" | head -5
           else
             echo "❌ Pods não instalados!"
             exit 1
           fi
           
-      - name: Build iOS com workspace
+      - name: Build com workspace
         script: |
           cd ios
           
           mkdir -p build
           
-          echo "🔨 Iniciando build com workspace..."
+          echo "🔨 Build com workspace e iOS 14.0..."
+          
+          # Detectar deployment target usado
+          DEPLOYMENT_TARGET=$(grep "platform :ios" Podfile | grep -o "'[^']*'" | tr -d "'")
+          echo "📊 Usando deployment target: $DEPLOYMENT_TARGET"
           
           xcodebuild -workspace modamaskavo.xcworkspace \
                      -scheme modamaskavo \
@@ -116,7 +125,7 @@ workflows:
                      CODE_SIGNING_ALLOWED=NO \
                      SKIP_INSTALL=NO \
                      ONLY_ACTIVE_ARCH=NO \
-                     IPHONEOS_DEPLOYMENT_TARGET=13.0 \
+                     IPHONEOS_DEPLOYMENT_TARGET=$DEPLOYMENT_TARGET \
                      -allowProvisioningUpdates
           
           if [ $? -eq 0 ]; then
@@ -130,7 +139,15 @@ workflows:
               
               # Verificar tamanho
               APP_SIZE=$(du -sh "$APP_PATH" | cut -f1)
+              FILE_COUNT=$(find "$APP_PATH" -type f | wc -l)
+              
               echo "📊 Tamanho do app: $APP_SIZE"
+              echo "📄 Arquivos no app: $FILE_COUNT"
+              
+              # Verificar se tem React Native
+              if find "$APP_PATH" -name "*React*" -o -name "*RN*" | head -5; then
+                echo "✅ App contém React Native!"
+              fi
               
               # Criar IPA
               cd build
@@ -143,16 +160,20 @@ workflows:
                 IPA_SIZE=$(du -sh modamaskavo.ipa | cut -f1)
                 IPA_BYTES=$(wc -c < modamaskavo.ipa)
                 
-                echo "✅ IPA criado com sucesso!"
-                echo "📊 Tamanho do IPA: $IPA_SIZE ($IPA_BYTES bytes)"
+                echo "✅ IPA criado!"
+                echo "📊 Tamanho: $IPA_SIZE ($IPA_BYTES bytes)"
                 
-                cp modamaskavo.ipa ../../modamaskavo-final.ipa
+                cp modamaskavo.ipa ../../modamaskavo-ios14.ipa
                 
-                if [ $IPA_BYTES -gt 10000000 ]; then
+                if [ $IPA_BYTES -gt 15000000 ]; then
                   echo "🎉 IPA válido para React Native!"
                 else
-                  echo "⚠️  IPA pequeno, mas foi criado"
+                  echo "⚠️  IPA pequeno, mas criado"
                 fi
+                
+                # Verificar conteúdo
+                echo "📄 Conteúdo do IPA:"
+                unzip -l modamaskavo.ipa | head -15
               fi
             fi
           else
@@ -168,11 +189,16 @@ workflows:
           find . -name "*.ipa" -exec ls -lh {} \;
           
           echo ""
+          echo "📊 Deployment target usado:"
+          if [ -f "ios/Podfile" ]; then
+            grep "platform :ios" ios/Podfile
+          fi
+          
+          echo ""
           echo "📊 Status:"
-          echo "- Podfile corrigido: ✅"
-          echo "- CocoaPods instalado: $([ -d "ios/Pods" ] && echo "✅" || echo "❌")"
-          echo "- Workspace criado: $([ -f "ios/modamaskavo.xcworkspace/contents.xcworkspacedata" ] && echo "✅" || echo "❌")"
-          echo "- Build realizado: $([ -d "ios/build" ] && echo "✅" || echo "❌")"
+          echo "- CocoaPods: $([ -d "ios/Pods" ] && echo "✅" || echo "❌")"
+          echo "- Workspace: $([ -f "ios/modamaskavo.xcworkspace/contents.xcworkspacedata" ] && echo "✅" || echo "❌")"
+          echo "- Build: $([ -d "ios/build" ] && echo "✅" || echo "❌")"
           
     artifacts:
       - ios/build/*.ipa
