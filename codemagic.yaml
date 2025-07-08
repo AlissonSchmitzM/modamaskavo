@@ -1,7 +1,7 @@
 # codemagic.yaml
 workflows:
-  ios-build:
-    name: iOS Build
+  ios-workflow:
+    name: iOS Workflow
     instance_type: mac_mini_m1
 
     environment:
