@@ -81,12 +81,6 @@ workflows:
             
             echo "✅ Lottie podspec em $LOTTIE_PODSPEC reescrito para iOS 12.0!"
           done
-          
-          # Verificar se existe package.json do lottie e corrigir também
-          if [ -f "node_modules/lottie-react-native/package.json" ]; then
-            echo "Verificando package.json do lottie..."
-            cat node_modules/lottie-react-native/package.json | head -20
-          fi
 
       - name: HACK BRUTAL - Corrigir Yoga.podspec para iOS 12.0
         script: |
@@ -298,6 +292,132 @@ workflows:
           
           echo "✅ Todos os podspecs Firebase corrigidos para iOS 12.0!"
           
+      - name: HACK BRUTAL - Corrigir DoubleConversion.podspec para iOS 12.0
+        script: |
+          echo "Corrigindo DoubleConversion.podspec para iOS 12.0..."
+          
+          # Criar DoubleConversion.podspec com iOS 12.0 FORÇADO
+          cat > node_modules/react-native/third-party-podspecs/DoubleConversion.podspec << 'EOF'
+          Pod::Spec.new do |s|
+            s.name                   = "DoubleConversion"
+            s.version                = "1.1.6"
+            s.summary                = "Efficient binary-decimal and decimal-binary conversion routines for IEEE doubles"
+            s.homepage               = "https://github.com/google/double-conversion"
+            s.license                = "BSD"
+            s.author                 = { "Google" => "double-conversion@googlegroups.com" }
+            s.platforms              = { :ios => "12.0", :osx => "10.15" }
+            s.source                 = { :git => "https://github.com/google/double-conversion.git", :tag => "v1.1.6" }
+            s.source_files           = "double-conversion/*.{h,cc}"
+            s.header_dir             = "double-conversion"
+            s.public_header_files    = "double-conversion/*.h"
+            s.header_mappings_dir    = "."
+            s.requires_arc           = false
+            s.ios.deployment_target  = "12.0"
+            s.pod_target_xcconfig    = {
+              'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
+              'MACOSX_DEPLOYMENT_TARGET' => '10.15',
+              'USE_HEADERMAP' => 'NO',
+              'CLANG_CXX_LANGUAGE_STANDARD' => 'c++14',
+              'CLANG_CXX_LIBRARY' => 'libc++',
+              'GCC_PREPROCESSOR_DEFINITIONS' => 'FOLLY_NO_CONFIG FOLLY_MOBILE FOLLY_USE_LIBCPP'
+            }
+            s.compiler_flags = '-fno-omit-frame-pointer', '-fexceptions', '-Wall', '-Werror', '-std=c++14', '-fPIC'
+          end
+          EOF
+          
+          echo "✅ DoubleConversion.podspec criado com iOS 12.0 FORÇADO!"
+          
+      - name: HACK BRUTAL - Corrigir RNBootSplash.podspec para iOS 12.0
+        script: |
+          echo "Corrigindo RNBootSplash.podspec para iOS 12.0..."
+          
+          # Encontrar o arquivo RNBootSplash.podspec
+          BOOTSPLASH_PODSPEC=$(find node_modules/react-native-bootsplash -name "*.podspec" -type f)
+          
+          if [ -n "$BOOTSPLASH_PODSPEC" ]; then
+            echo "Encontrado RNBootSplash.podspec em: $BOOTSPLASH_PODSPEC"
+            
+            # Fazer backup
+            cp "$BOOTSPLASH_PODSPEC" "$BOOTSPLASH_PODSPEC.backup"
+            
+            # Reescrever completamente o arquivo
+            cat > "$BOOTSPLASH_PODSPEC" << 'EOF'
+          Pod::Spec.new do |s|
+            s.name                   = "RNBootSplash"
+            s.version                = "5.7.1"
+            s.summary                = "Display a splash screen during app launch. Hide it when you are ready."
+            s.homepage               = "https://github.com/zoontek/react-native-bootsplash"
+            s.license                = "MIT"
+            s.author                 = { "Mathieu Acthernoene" => "zoontek@gmail.com" }
+            s.platforms              = { :ios => "12.0", :osx => "10.15" }
+            s.source                 = { :path => "." }
+            s.source_files           = "ios/**/*.{h,m,mm,swift}"
+            s.header_dir             = "RNBootSplash"
+            s.public_header_files    = "ios/**/*.h"
+            s.requires_arc           = true
+            s.ios.deployment_target  = "12.0"
+            s.dependency             "React-Core"
+            s.pod_target_xcconfig    = {
+              'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
+              'MACOSX_DEPLOYMENT_TARGET' => '10.15',
+              'USE_HEADERMAP' => 'NO',
+              'CLANG_CXX_LANGUAGE_STANDARD' => 'c++17',
+              'CLANG_CXX_LIBRARY' => 'libc++',
+              'GCC_PREPROCESSOR_DEFINITIONS' => 'FOLLY_NO_CONFIG FOLLY_MOBILE FOLLY_USE_LIBCPP'
+            }
+          end
+          EOF
+            
+            echo "✅ RNBootSplash.podspec reescrito para iOS 12.0!"
+          else
+            echo "⚠️ RNBootSplash.podspec não encontrado"
+          fi
+          
+      - name: HACK BRUTAL - Corrigir TODOS os podspecs para iOS 12.0
+        script: |
+          echo "🔥 HACK BRUTAL - Corrigindo TODOS os podspecs para iOS 12.0..."
+          
+          # Função para corrigir qualquer podspec
+          fix_podspec() {
+            local podspec_file="$1"
+            local pod_name=$(basename "$podspec_file" .podspec)
+            
+            echo "Corrigindo $podspec_file..."
+            
+            # Backup
+            cp "$podspec_file" "$podspec_file.backup"
+            
+            # Usar sed para forçar iOS 12.0 em todas as linhas relevantes
+            sed -i '' 's/s\.ios\.deployment_target = .*/s.ios.deployment_target = "12.0"/' "$podspec_file"
+            sed -i '' 's/s\.platforms = .*/s.platforms = { :ios => "12.0", :osx => "10.15" }/' "$podspec_file"
+            sed -i '' 's/spec\.ios\.deployment_target = .*/spec.ios.deployment_target = "12.0"/' "$podspec_file"
+            sed -i '' 's/spec\.platforms = .*/spec.platforms = { :ios => "12.0", :osx => "10.15" }/' "$podspec_file"
+            
+            # Adicionar deployment target se não existir
+            if ! grep -q "deployment_target" "$podspec_file"; then
+              # Adicionar após a primeira linha que contém s.name
+              sed -i '' '/s\.name.*=/a\
+              s.ios.deployment_target = "12.0"' "$podspec_file"
+            fi
+            
+            # Adicionar xcconfig se não existir
+            if ! grep -q "pod_target_xcconfig" "$podspec_file"; then
+              # Adicionar antes do end
+              sed -i '' '/^end$/i\
+              s.pod_target_xcconfig = { "IPHONEOS_DEPLOYMENT_TARGET" => "12.0", "MACOSX_DEPLOYMENT_TARGET" => "10.15" }' "$podspec_file"
+            fi
+            
+            echo "✅ $pod_name corrigido!"
+          }
+          
+          # Encontrar e corrigir TODOS os podspecs
+          echo "Procurando todos os podspecs..."
+          find node_modules -name "*.podspec" -type f | while read podspec; do
+            fix_podspec "$podspec"
+          done
+          
+          echo "🎉 TODOS os podspecs corrigidos para iOS 12.0!"
+
       - name: HACK BRUTAL - Criar React-RuntimeApple.podspec FORÇADO
         script: |
           # Criar React-RuntimeApple.podspec com iOS 12.0 FORÇADO
