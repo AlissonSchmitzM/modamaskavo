@@ -16,58 +16,6 @@ workflows:
         script: |
           npm ci
           
-      - name: HACK BRUTAL - Criar React-jsc.podspec COM FABRIC
-        script: |
-          # Criar React-jsc.podspec com subspec Fabric
-          mkdir -p node_modules/react-native/ReactCommon/jsc
-          cat > node_modules/react-native/ReactCommon/jsc/React-jsc.podspec << 'EOF'
-          Pod::Spec.new do |s|
-            s.name                   = "React-jsc"
-            s.version                = "1000.0.0"
-            s.summary                = "React Native JavaScriptCore with Fabric support"
-            s.homepage               = "https://reactnative.dev/"
-            s.license                = "MIT"
-            s.author                 = "Meta Platforms, Inc."
-            s.platforms              = { :ios => "12.0" }
-            s.source                 = { :path => "." }
-            s.source_files           = "*.{h,m,mm,cpp,c}"
-            s.header_dir             = "React"
-            s.public_header_files    = "*.h"
-            s.pod_target_xcconfig    = {
-              'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
-              'MACOSX_DEPLOYMENT_TARGET' => '10.15'
-            }
-            
-            # Subspec Fabric - CRÍTICO
-            s.subspec "Fabric" do |ss|
-              ss.source_files = "*.{h,m,mm,cpp,c}"
-              ss.header_dir = "React"
-              ss.public_header_files = "*.h"
-              ss.pod_target_xcconfig = {
-                'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
-                'MACOSX_DEPLOYMENT_TARGET' => '10.15'
-              }
-            end
-            
-            # Subspec Default
-            s.subspec "Default" do |ss|
-              ss.source_files = "*.{h,m,mm,cpp,c}"
-              ss.header_dir = "React"
-              ss.public_header_files = "*.h"
-              ss.pod_target_xcconfig = {
-                'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
-                'MACOSX_DEPLOYMENT_TARGET' => '10.15'
-              }
-            end
-          end
-          EOF
-          
-          # Criar arquivos dummy para React-jsc
-          touch node_modules/react-native/ReactCommon/jsc/dummy.cpp
-          touch node_modules/react-native/ReactCommon/jsc/dummy.h
-          
-          echo "✅ React-jsc.podspec com Fabric criado!"
-          
       - name: HACK BRUTAL - Corrigir fast_float.podspec
         script: |
           # Corrigir fast_float.podspec para usar iOS 12.0
@@ -78,7 +26,7 @@ workflows:
             s.version                = "3.4.0"
             s.summary                = "Fast and exact implementation of the C++ from_chars functions for float and double types"
             s.homepage               = "https://github.com/fastfloat/fast_float"
-            s.license                = { :type => "MIT", :file => "LICENSE" }
+            s.license                = "MIT"
             s.author                 = { "Daniel Lemire" => "lemire@gmail.com" }
             s.platforms              = { :ios => "12.0", :osx => "10.15" }
             s.source                 = { :git => "https://github.com/fastfloat/fast_float.git", :tag => "v3.4.0" }
@@ -99,89 +47,8 @@ workflows:
           
           echo "✅ fast_float.podspec corrigido para iOS 12.0!"
           
-            - name: HACK BRUTAL - Corrigir TODOS os third-party-podspecs
+      - name: HACK BRUTAL - Corrigir fmt.podspec
         script: |
-          # Criar diretório third-party-podspecs se não existir
-          mkdir -p node_modules/react-native/third-party-podspecs
-          
-          # Corrigir boost.podspec
-          cat > node_modules/react-native/third-party-podspecs/boost.podspec << 'EOF'
-          Pod::Spec.new do |s|
-            s.name                   = "boost"
-            s.version                = "1.76.0"
-            s.summary                = "Boost C++ Libraries"
-            s.homepage               = "https://www.boost.org/"
-            s.license                = "Boost Software License"
-            s.author                 = { "Boost" => "boost@boost.org" }
-            s.platforms              = { :ios => "12.0", :osx => "10.15" }
-            s.source                 = { :http => "https://boostorg.jfrog.io/artifactory/main/release/1.76.0/source/boost_1_76_0.tar.bz2" }
-            s.source_files           = "boost/**/*.{h,hpp}"
-            s.header_dir             = "boost"
-            s.public_header_files    = "boost/**/*.{h,hpp}"
-            s.header_mappings_dir    = "."
-            s.requires_arc           = false
-            s.pod_target_xcconfig    = {
-              'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
-              'MACOSX_DEPLOYMENT_TARGET' => '10.15',
-              'USE_HEADERMAP' => 'NO',
-              'CLANG_CXX_LANGUAGE_STANDARD' => 'c++14',
-              'CLANG_CXX_LIBRARY' => 'libc++'
-            }
-          end
-          EOF
-          
-          # Corrigir glog.podspec
-          cat > node_modules/react-native/third-party-podspecs/glog.podspec << 'EOF'
-          Pod::Spec.new do |s|
-            s.name                   = "glog"
-            s.version                = "0.3.5"
-            s.summary                = "Google logging library"
-            s.homepage               = "https://github.com/google/glog"
-            s.license                = "BSD"
-            s.author                 = { "Google" => "google-glog@googlegroups.com" }
-            s.platforms              = { :ios => "12.0", :osx => "10.15" }
-            s.source                 = { :git => "https://github.com/google/glog.git", :tag => "v0.3.5" }
-            s.source_files           = "src/**/*.{h,cc}"
-            s.header_dir             = "glog"
-            s.public_header_files    = "src/glog/*.h"
-            s.header_mappings_dir    = "src"
-            s.requires_arc           = false
-            s.pod_target_xcconfig    = {
-              'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
-              'MACOSX_DEPLOYMENT_TARGET' => '10.15',
-              'USE_HEADERMAP' => 'NO',
-              'CLANG_CXX_LANGUAGE_STANDARD' => 'c++14',
-              'CLANG_CXX_LIBRARY' => 'libc++'
-            }
-          end
-          EOF
-          
-          # Corrigir folly.podspec
-          cat > node_modules/react-native/third-party-podspecs/folly.podspec << 'EOF'
-          Pod::Spec.new do |s|
-            s.name                   = "folly"
-            s.version                = "2021.07.22.00"
-            s.summary                = "Facebook's C++ library"
-            s.homepage               = "https://github.com/facebook/folly"
-            s.license                = "Apache-2.0"
-            s.author                 = { "Facebook" => "folly@fb.com" }
-            s.platforms              = { :ios => "12.0", :osx => "10.15" }
-            s.source                 = { :git => "https://github.com/facebook/folly.git", :tag => "v2021.07.22.00" }
-            s.source_files           = "folly/**/*.{h,cpp}"
-            s.header_dir             = "folly"
-            s.public_header_files    = "folly/**/*.h"
-            s.header_mappings_dir    = "."
-            s.requires_arc           = false
-            s.pod_target_xcconfig    = {
-              'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
-              'MACOSX_DEPLOYMENT_TARGET' => '10.15',
-              'USE_HEADERMAP' => 'NO',
-              'CLANG_CXX_LANGUAGE_STANDARD' => 'c++14',
-              'CLANG_CXX_LIBRARY' => 'libc++'
-            }
-          end
-          EOF
-          
           # Corrigir fmt.podspec - SEM :file na licença
           cat > node_modules/react-native/third-party-podspecs/fmt.podspec << 'EOF'
           Pod::Spec.new do |s|
@@ -208,338 +75,7 @@ workflows:
           end
           EOF
           
-          echo "✅ Todos os third-party-podspecs corrigidos para iOS 12.0!"
-          
-      - name: HACK BRUTAL - Criar React-Core.podspec COM SUBSPECS CORRETOS
-        script: |
-          # Criar React-Core.podspec com TODOS os subspecs necessários
-          mkdir -p node_modules/react-native
-          cat > node_modules/react-native/React-Core.podspec << 'EOF'
-          Pod::Spec.new do |s|
-            s.name                   = "React-Core"
-            s.version                = "1000.0.0"
-            s.summary                = "React Native Core library with all subspecs"
-            s.homepage               = "https://reactnative.dev/"
-            s.license                = "MIT"
-            s.author                 = "Meta Platforms, Inc."
-            s.platforms              = { :ios => "12.0" }
-            s.source                 = { :path => "." }
-            s.source_files           = "*.{h,m,mm,cpp,c}"
-            s.header_dir             = "React"
-            s.public_header_files    = "*.h"
-            s.pod_target_xcconfig    = {
-              'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
-              'MACOSX_DEPLOYMENT_TARGET' => '10.15'
-            }
-            
-            # Subspec RCTWebSocket - CRÍTICO
-            s.subspec "RCTWebSocket" do |ss|
-              ss.source_files = "*.{h,m,mm,cpp,c}"
-              ss.header_dir = "React"
-              ss.public_header_files = "*.h"
-              ss.pod_target_xcconfig = {
-                'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
-                'MACOSX_DEPLOYMENT_TARGET' => '10.15'
-              }
-            end
-            
-            s.subspec "RCTAnimation" do |ss|
-              ss.source_files = "*.{h,m,mm,cpp,c}"
-              ss.header_dir = "React"
-              ss.public_header_files = "*.h"
-              ss.pod_target_xcconfig = {
-                'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
-                'MACOSX_DEPLOYMENT_TARGET' => '10.15'
-              }
-            end
-            
-            s.subspec "RCTBlob" do |ss|
-              ss.source_files = "*.{h,m,mm,cpp,c}"
-              ss.header_dir = "React"
-              ss.public_header_files = "*.h"
-              ss.pod_target_xcconfig = {
-                'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
-                'MACOSX_DEPLOYMENT_TARGET' => '10.15'
-              }
-            end
-            
-            s.subspec "RCTImage" do |ss|
-              ss.source_files = "*.{h,m,mm,cpp,c}"
-              ss.header_dir = "React"
-              ss.public_header_files = "*.h"
-              ss.pod_target_xcconfig = {
-                'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
-                'MACOSX_DEPLOYMENT_TARGET' => '10.15'
-              }
-            end
-            
-            s.subspec "RCTLinking" do |ss|
-              ss.source_files = "*.{h,m,mm,cpp,c}"
-              ss.header_dir = "React"
-              ss.public_header_files = "*.h"
-              ss.pod_target_xcconfig = {
-                'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
-                'MACOSX_DEPLOYMENT_TARGET' => '10.15'
-              }
-            end
-            
-            s.subspec "RCTNetwork" do |ss|
-              ss.source_files = "*.{h,m,mm,cpp,c}"
-              ss.header_dir = "React"
-              ss.public_header_files = "*.h"
-              ss.pod_target_xcconfig = {
-                'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
-                'MACOSX_DEPLOYMENT_TARGET' => '10.15'
-              }
-            end
-            
-            s.subspec "RCTSettings" do |ss|
-              ss.source_files = "*.{h,m,mm,cpp,c}"
-              ss.header_dir = "React"
-              ss.public_header_files = "*.h"
-              ss.pod_target_xcconfig = {
-                'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
-                'MACOSX_DEPLOYMENT_TARGET' => '10.15'
-              }
-            end
-            
-            s.subspec "RCTText" do |ss|
-              ss.source_files = "*.{h,m,mm,cpp,c}"
-              ss.header_dir = "React"
-              ss.public_header_files = "*.h"
-              ss.pod_target_xcconfig = {
-                'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
-                'MACOSX_DEPLOYMENT_TARGET' => '10.15'
-              }
-            end
-            
-            s.subspec "RCTVibration" do |ss|
-              ss.source_files = "*.{h,m,mm,cpp,c}"
-              ss.header_dir = "React"
-              ss.public_header_files = "*.h"
-              ss.pod_target_xcconfig = {
-                'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
-                'MACOSX_DEPLOYMENT_TARGET' => '10.15'
-              }
-            end
-            
-            s.subspec "Default" do |ss|
-              ss.source_files = "*.{h,m,mm,cpp,c}"
-              ss.header_dir = "React"
-              ss.public_header_files = "*.h"
-              ss.pod_target_xcconfig = {
-                'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
-                'MACOSX_DEPLOYMENT_TARGET' => '10.15'
-              }
-            end
-          end
-          EOF
-          
-          # Criar arquivos dummy para React-Core
-          touch node_modules/react-native/dummy.cpp
-          touch node_modules/react-native/dummy.h
-          
-          echo "✅ React-Core.podspec criado!"
-          
-      - name: HACK BRUTAL - Criar ReactCommon.podspec COM SUBSPECS CORRETOS
-        script: |
-          # Criar ReactCommon.podspec com TODOS os subspecs necessários
-          mkdir -p node_modules/react-native/ReactCommon
-          cat > node_modules/react-native/ReactCommon/ReactCommon.podspec << 'EOF'
-          Pod::Spec.new do |s|
-            s.name                   = "ReactCommon"
-            s.version                = "1000.0.0"
-            s.summary                = "ReactCommon with all turbomodule subspecs"
-            s.homepage               = "https://reactnative.dev/"
-            s.license                = "MIT"
-            s.author                 = "Meta Platforms, Inc."
-            s.platforms              = { :ios => "12.0" }
-            s.source                 = { :path => "." }
-            s.source_files           = "*.{h,m,mm,cpp,c}"
-            s.header_dir             = "ReactCommon"
-            s.public_header_files    = "*.h"
-            s.pod_target_xcconfig    = {
-              'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
-              'MACOSX_DEPLOYMENT_TARGET' => '10.15'
-            }
-            
-            # Subspec turbomodule - OBRIGATÓRIO
-            s.subspec "turbomodule" do |ss|
-              ss.source_files = "*.{h,m,mm,cpp,c}"
-              ss.header_dir = "ReactCommon"
-              ss.public_header_files = "*.h"
-              ss.pod_target_xcconfig = {
-                'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
-                'MACOSX_DEPLOYMENT_TARGET' => '10.15'
-              }
-              
-              # Subspec turbomodule/core - OBRIGATÓRIO E CRÍTICO
-              ss.subspec "core" do |sss|
-                sss.source_files = "*.{h,m,mm,cpp,c}"
-                sss.header_dir = "ReactCommon"
-                sss.public_header_files = "*.h"
-                sss.pod_target_xcconfig = {
-                  'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
-                  'MACOSX_DEPLOYMENT_TARGET' => '10.15'
-                }
-              end
-              
-              # Outros subspecs do turbomodule
-              ss.subspec "samples" do |sss|
-                sss.source_files = "*.{h,m,mm,cpp,c}"
-                sss.header_dir = "ReactCommon"
-                sss.public_header_files = "*.h"
-                sss.pod_target_xcconfig = {
-                  'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
-                  'MACOSX_DEPLOYMENT_TARGET' => '10.15'
-                }
-              end
-            end
-            
-            # Outros subspecs importantes
-            s.subspec "jsi" do |ss|
-              ss.source_files = "*.{h,m,mm,cpp,c}"
-              ss.header_dir = "ReactCommon"
-              ss.public_header_files = "*.h"
-              ss.pod_target_xcconfig = {
-                'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
-                'MACOSX_DEPLOYMENT_TARGET' => '10.15'
-              }
-            end
-            
-            s.subspec "callinvoker" do |ss|
-              ss.source_files = "*.{h,m,mm,cpp,c}"
-              ss.header_dir = "ReactCommon"
-              ss.public_header_files = "*.h"
-              ss.pod_target_xcconfig = {
-                'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
-                'MACOSX_DEPLOYMENT_TARGET' => '10.15'
-              }
-            end
-            
-            s.subspec "runtimeexecutor" do |ss|
-              ss.source_files = "*.{h,m,mm,cpp,c}"
-              ss.header_dir = "ReactCommon"
-              ss.public_header_files = "*.h"
-              ss.pod_target_xcconfig = {
-                'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
-                'MACOSX_DEPLOYMENT_TARGET' => '10.15'
-              }
-            end
-            
-            s.subspec "react" do |ss|
-              ss.source_files = "*.{h,m,mm,cpp,c}"
-              ss.header_dir = "ReactCommon"
-              ss.public_header_files = "*.h"
-              ss.pod_target_xcconfig = {
-                'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
-                'MACOSX_DEPLOYMENT_TARGET' => '10.15'
-              }
-            end
-            
-            s.subspec "Default" do |ss|
-              ss.source_files = "*.{h,m,mm,cpp,c}"
-              ss.header_dir = "ReactCommon"
-              ss.public_header_files = "*.h"
-              ss.pod_target_xcconfig = {
-                'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
-                'MACOSX_DEPLOYMENT_TARGET' => '10.15'
-              }
-            end
-          end
-          EOF
-          
-          # Criar arquivos dummy para ReactCommon
-          touch node_modules/react-native/ReactCommon/dummy.cpp
-          touch node_modules/react-native/ReactCommon/dummy.h
-          
-          echo "✅ ReactCommon.podspec criado!"
-          
-      - name: HACK BRUTAL - Criar TODOS os podspecs restantes
-        script: |
-          # Script Ruby para criar todos os outros podspecs
-          cat > fix_podspecs.rb << 'EOF'
-          require 'fileutils'
-
-          def create_podspec(name, path)
-            FileUtils.mkdir_p(path)
-            File.write("#{path}/#{name}.podspec", <<~PODSPEC)
-              Pod::Spec.new do |s|
-                s.name                   = "#{name}"
-                s.version                = "1000.0.0"
-                s.summary                = "Auto-generated podspec for compatibility"
-                s.homepage               = "https://reactnative.dev/"
-                s.license                = "MIT"
-                s.author                 = "Meta Platforms, Inc."
-                s.platforms              = { :ios => "12.0" }
-                s.source                 = { :path => "." }
-                s.source_files           = "*.{h,m,mm,cpp,c}"
-                s.header_dir             = "React"
-                s.public_header_files    = "*.h"
-                s.pod_target_xcconfig    = {
-                  'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
-                  'MACOSX_DEPLOYMENT_TARGET' => '10.15'
-                }
-              end
-            PODSPEC
-            FileUtils.touch("#{path}/dummy.cpp")
-            FileUtils.touch("#{path}/dummy.h")
-            puts "✅ Created #{name}.podspec with iOS 12.0 forced"
-          end
-
-          # Lista COMPLETA de podspecs necessários
-          podspecs = [
-            ["React", "node_modules/react-native"],
-            ["React-RCTFBReactNativeSpec", "node_modules/react-native/React"],
-            ["React-featureflags", "node_modules/react-native/ReactCommon/react/featureflags"],
-            ["React-featureflagsnativemodule", "node_modules/react-native/ReactCommon/react/nativemodule/featureflags"],
-            ["React-idlecallbacksnativemodule", "node_modules/react-native/ReactCommon/react/nativemodule/idlecallbacks"],
-            ["React-jsitooling", "node_modules/react-native/ReactCommon/jsitooling"],
-            ["React-jsinspectortracing", "node_modules/react-native/ReactCommon/jsinspector-modern/tracing"],
-            ["RCTRequired", "node_modules/react-native/Libraries/Required"],
-            ["React-RuntimeApple", "node_modules/react-native/ReactCommon/react/runtime/platform/ios"],
-            ["React-RuntimeCore", "node_modules/react-native/ReactCommon/react/runtime"],
-            ["React-logger", "node_modules/react-native/ReactCommon/logger"],
-            ["React-oscompat", "node_modules/react-native/ReactCommon/oscompat"],
-            ["React-NativeModulesApple", "node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios"],
-            ["React-RCTNetwork", "node_modules/react-native/Libraries/Network"],
-            ["FBLazyVector", "node_modules/react-native/Libraries/FBLazyVector"],
-            ["React-CoreModules", "node_modules/react-native/React/CoreModules"],
-            ["React-RCTAppDelegate", "node_modules/react-native/Libraries/AppDelegate"],
-            ["React-RCTImage", "node_modules/react-native/Libraries/Image"],
-            ["React-RCTText", "node_modules/react-native/Libraries/Text"],
-            ["React-RCTVibration", "node_modules/react-native/Libraries/Vibration"],
-            ["React-RCTLinking", "node_modules/react-native/Libraries/LinkingIOS"],
-            ["React-RCTSettings", "node_modules/react-native/Libraries/Settings"],
-            ["React-RCTBlob", "node_modules/react-native/Libraries/Blob"],
-            ["React-RCTAnimation", "node_modules/react-native/Libraries/NativeAnimation"],
-            ["React-jsi", "node_modules/react-native/ReactCommon/jsi"],
-            ["React-jsiexecutor", "node_modules/react-native/ReactCommon/jsiexecutor"],
-            ["React-callinvoker", "node_modules/react-native/ReactCommon/callinvoker"],
-            ["React-runtimeexecutor", "node_modules/react-native/ReactCommon/runtimeexecutor"],
-            ["React-perflogger", "node_modules/react-native/ReactCommon/reactperflogger"],
-            ["React-cxxreact", "node_modules/react-native/ReactCommon/cxxreact"],
-            ["React-hermes", "node_modules/react-native/ReactCommon/hermes"],
-            ["React-utils", "node_modules/react-native/ReactCommon/react/utils"],
-            ["React-debug", "node_modules/react-native/ReactCommon/react/debug"],
-            ["React-Mapbuffer", "node_modules/react-native/ReactCommon/react/renderer/mapbuffer"],
-            ["Yoga", "node_modules/react-native/ReactCommon/yoga"],
-            ["RCTTypeSafety", "node_modules/react-native/Libraries/TypeSafety"],
-            ["React-RCTActionSheet", "node_modules/react-native/Libraries/ActionSheetIOS"],
-            ["React-RCTAlert", "node_modules/react-native/Libraries/Alert"],
-            ["React-RCTPushNotification", "node_modules/react-native/Libraries/PushNotificationIOS"],
-            ["React-jsinspector", "node_modules/react-native/ReactCommon/jsinspector-modern"]
-          ]
-
-          podspecs.each do |name, path|
-            create_podspec(name, path)
-          end
-
-          puts "✅ Todos os podspecs criados com iOS 12.0 forçado!"
-          EOF
-          
-          # Executar o script Ruby
-          ruby fix_podspecs.rb
+          echo "✅ fmt.podspec corrigido!"
           
       - name: Create Podfile with iOS 12.0 ULTRA FORÇADO
         script: |
@@ -547,20 +83,6 @@ workflows:
           require_relative '../node_modules/react-native/scripts/react_native_pods'
           
           platform :ios, '12.0'
-          
-          # Forçar iOS 12.0 em TODOS os pods
-          def force_ios_12(installer)
-            installer.pods_project.targets.each do |target|
-              target.build_configurations.each do |config|
-                config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.0'
-                config.build_settings['MACOSX_DEPLOYMENT_TARGET'] = '10.15'
-                config.build_settings['RCT_NEW_ARCH_ENABLED'] = 'NO'
-                config.build_settings['ENABLE_BITCODE'] = 'NO'
-                config.build_settings['CODE_SIGNING_REQUIRED'] = 'NO'
-                config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
-              end
-            end
-          end
           
           target 'modamaskavo' do
             config = use_native_modules!
@@ -572,9 +94,8 @@ workflows:
               :new_arch_enabled => false
             )
             
-                        post_install do |installer|
+            post_install do |installer|
               react_native_post_install(installer)
-              force_ios_12(installer)
               
               # Forçar iOS 12.0 em TODOS os pods
               installer.pods_project.targets.each do |target|
@@ -593,13 +114,20 @@ workflows:
           EOF
           
           echo "✅ Podfile criado com iOS 12.0 ULTRA FORÇADO!"
+          
       - name: Install CocoaPods dependencies
         script: |
           cd ios
           pod install --repo-update --verbose
           
+      - name: Verificar arquivos gerados
+        script: |
+          cd ios
+          echo "=== Verificando arquivos no diretório ios ==="
+          ls -la
+          
           # Verificar se workspace existe
-          if [ -f "modamaskavo.xcworkspace" ]; then
+          if [ -d "modamaskavo.xcworkspace" ]; then
             echo "✅ Workspace encontrado!"
           else
             echo "❌ Workspace não encontrado. Listando arquivos .xcworkspace:"
@@ -607,7 +135,7 @@ workflows:
           fi
           
           # Verificar se projeto existe
-          if [ -f "modamaskavo.xcodeproj" ]; then
+          if [ -d "modamaskavo.xcodeproj" ]; then
             echo "✅ Projeto encontrado!"
           else
             echo "❌ Projeto não encontrado. Listando arquivos .xcodeproj:"
@@ -642,17 +170,17 @@ workflows:
           
           echo "✅ exportOptions.plist criado!"
           
-      - name: Build and Archive iOS app (sem CocoaPods)
+      - name: Build and Archive iOS app COM WORKSPACE
         script: |
           cd ios
           
           # Criar diretório de build
           mkdir -p build
           
-          echo "=== Iniciando build do iOS (sem CocoaPods) ==="
+          echo "=== Iniciando build do iOS com WORKSPACE ==="
           
-          # Build e Archive usando PROJECT ao invés de WORKSPACE
-          xcodebuild -project modamaskavo.xcodeproj \
+          # Build e Archive usando WORKSPACE (correto após CocoaPods)
+          xcodebuild -workspace "$XCODE_WORKSPACE" \
                      -scheme "$XCODE_SCHEME" \
                      -configuration Release \
                      -destination generic/platform=iOS \
@@ -681,6 +209,8 @@ workflows:
             echo "❌ IPA não foi criado"
             echo "Conteúdo do diretório build:"
             ls -la build/
+            echo "Conteúdo completo:"
+            find build -type f | head -20
           fi
           
     # SEÇÃO DE ARTEFATOS - CRÍTICA PARA DOWNLOAD
@@ -714,4 +244,12 @@ workflows:
       - ios/exportOptions.plist
       - ios/Podfile
       - ios/Podfile.lock
-    
+      
+    # PUBLICAÇÃO POR EMAIL
+    publishing:
+      email:
+        recipients:
+          - alissonschmitz2@hotmail.com
+        notify:
+          success: true
+          failure: true
