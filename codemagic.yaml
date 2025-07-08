@@ -8,7 +8,7 @@ workflows:
       vars:
         XCODE_WORKSPACE: "modamaskavo.xcworkspace"
         XCODE_SCHEME: "modamaskavo"
-      node: 18.17.0
+      node: 18.20.0
       xcode: latest
       cocoapods: default
     scripts:
