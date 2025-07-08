@@ -111,16 +111,79 @@ workflows:
             echo "✅ RNFBAuth.podspec corrigido!"
           fi
           
-          # Corrigir todos os outros podspecs do Firebase
-          for firebase_module in app auth firestore storage messaging crashlytics analytics; do
-            podspec_path="node_modules/@react-native-firebase/${firebase_module}/RNFB${firebase_module^}.podspec"
-            if [ -f "$podspec_path" ]; then
-              echo "Corrigindo RNFB${firebase_module^}.podspec..."
-              sed -i '' 's/s.ios.deployment_target = .*/s.ios.deployment_target = "12.0"/' "$podspec_path"
-              sed -i '' 's/s.platforms = .*/s.platforms = { :ios => "12.0", :osx => "10.15" }/' "$podspec_path"
-              echo "✅ RNFB${firebase_module^}.podspec corrigido!"
-            fi
-          done
+          # Corrigir RNFBApp.podspec
+          if [ -f "node_modules/@react-native-firebase/app/RNFBApp.podspec" ]; then
+            echo "Corrigindo RNFBApp.podspec..."
+            sed -i '' 's/s.ios.deployment_target = .*/s.ios.deployment_target = "12.0"/' node_modules/@react-native-firebase/app/RNFBApp.podspec
+            sed -i '' 's/s.platforms = .*/s.platforms = { :ios => "12.0", :osx => "10.15" }/' node_modules/@react-native-firebase/app/RNFBApp.podspec
+            echo "✅ RNFBApp.podspec corrigido!"
+          fi
+          
+          # Corrigir RNFBFirestore.podspec
+          if [ -f "node_modules/@react-native-firebase/firestore/RNFBFirestore.podspec" ]; then
+            echo "Corrigindo RNFBFirestore.podspec..."
+            sed -i '' 's/s.ios.deployment_target = .*/s.ios.deployment_target = "12.0"/' node_modules/@react-native-firebase/firestore/RNFBFirestore.podspec
+            sed -i '' 's/s.platforms = .*/s.platforms = { :ios => "12.0", :osx => "10.15" }/' node_modules/@react-native-firebase/firestore/RNFBFirestore.podspec
+            echo "✅ RNFBFirestore.podspec corrigido!"
+          fi
+          
+          # Corrigir RNFBStorage.podspec
+          if [ -f "node_modules/@react-native-firebase/storage/RNFBStorage.podspec" ]; then
+            echo "Corrigindo RNFBStorage.podspec..."
+            sed -i '' 's/s.ios.deployment_target = .*/s.ios.deployment_target = "12.0"/' node_modules/@react-native-firebase/storage/RNFBStorage.podspec
+            sed -i '' 's/s.platforms = .*/s.platforms = { :ios => "12.0", :osx => "10.15" }/' node_modules/@react-native-firebase/storage/RNFBStorage.podspec
+            echo "✅ RNFBStorage.podspec corrigido!"
+          fi
+          
+          # Corrigir RNFBMessaging.podspec
+          if [ -f "node_modules/@react-native-firebase/messaging/RNFBMessaging.podspec" ]; then
+            echo "Corrigindo RNFBMessaging.podspec..."
+            sed -i '' 's/s.ios.deployment_target = .*/s.ios.deployment_target = "12.0"/' node_modules/@react-native-firebase/messaging/RNFBMessaging.podspec
+            sed -i '' 's/s.platforms = .*/s.platforms = { :ios => "12.0", :osx => "10.15" }/' node_modules/@react-native-firebase/messaging/RNFBMessaging.podspec
+            echo "✅ RNFBMessaging.podspec corrigido!"
+          fi
+          
+          # Corrigir RNFBCrashlytics.podspec
+          if [ -f "node_modules/@react-native-firebase/crashlytics/RNFBCrashlytics.podspec" ]; then
+            echo "Corrigindo RNFBCrashlytics.podspec..."
+            sed -i '' 's/s.ios.deployment_target = .*/s.ios.deployment_target = "12.0"/' node_modules/@react-native-firebase/crashlytics/RNFBCrashlytics.podspec
+            sed -i '' 's/s.platforms = .*/s.platforms = { :ios => "12.0", :osx => "10.15" }/' node_modules/@react-native-firebase/crashlytics/RNFBCrashlytics.podspec
+            echo "✅ RNFBCrashlytics.podspec corrigido!"
+          fi
+          
+          # Corrigir RNFBAnalytics.podspec
+          if [ -f "node_modules/@react-native-firebase/analytics/RNFBAnalytics.podspec" ]; then
+            echo "Corrigindo RNFBAnalytics.podspec..."
+            sed -i '' 's/s.ios.deployment_target = .*/s.ios.deployment_target = "12.0"/' node_modules/@react-native-firebase/analytics/RNFBAnalytics.podspec
+            sed -i '' 's/s.platforms = .*/s.platforms = { :ios => "12.0", :osx => "10.15" }/' node_modules/@react-native-firebase/analytics/RNFBAnalytics.podspec
+            echo "✅ RNFBAnalytics.podspec corrigido!"
+          fi
+          
+          # Corrigir RNFBRemoteConfig.podspec
+          if [ -f "node_modules/@react-native-firebase/remote-config/RNFBRemoteConfig.podspec" ]; then
+            echo "Corrigindo RNFBRemoteConfig.podspec..."
+            sed -i '' 's/s.ios.deployment_target = .*/s.ios.deployment_target = "12.0"/' node_modules/@react-native-firebase/remote-config/RNFBRemoteConfig.podspec
+            sed -i '' 's/s.platforms = .*/s.platforms = { :ios => "12.0", :osx => "10.15" }/' node_modules/@react-native-firebase/remote-config/RNFBRemoteConfig.podspec
+            echo "✅ RNFBRemoteConfig.podspec corrigido!"
+          fi
+          
+          # Corrigir RNFBFunctions.podspec
+          if [ -f "node_modules/@react-native-firebase/functions/RNFBFunctions.podspec" ]; then
+            echo "Corrigindo RNFBFunctions.podspec..."
+            sed -i '' 's/s.ios.deployment_target = .*/s.ios.deployment_target = "12.0"/' node_modules/@react-native-firebase/functions/RNFBFunctions.podspec
+            sed -i '' 's/s.platforms = .*/s.platforms = { :ios => "12.0", :osx => "10.15" }/' node_modules/@react-native-firebase/functions/RNFBFunctions.podspec
+            echo "✅ RNFBFunctions.podspec corrigido!"
+          fi
+          
+          # Corrigir RNFBDatabase.podspec
+          if [ -f "node_modules/@react-native-firebase/database/RNFBDatabase.podspec" ]; then
+            echo "Corrigindo RNFBDatabase.podspec..."
+            sed -i '' 's/s.ios.deployment_target = .*/s.ios.deployment_target = "12.0"/' node_modules/@react-native-firebase/database/RNFBDatabase.podspec
+            sed -i '' 's/s.platforms = .*/s.platforms = { :ios => "12.0", :osx => "10.15" }/' node_modules/@react-native-firebase/database/RNFBDatabase.podspec
+            echo "✅ RNFBDatabase.podspec corrigido!"
+          fi
+          
+          echo "✅ Todos os podspecs Firebase corrigidos para iOS 12.0!"
           
       - name: HACK BRUTAL - Criar React-RuntimeApple.podspec FORÇADO
         script: |
