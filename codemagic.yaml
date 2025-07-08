@@ -1,68 +1,480 @@
-# codemagic.yaml - VERSÃO COM Node.js 18.17.0 (com workarounds)
+# codemagic.yaml - VERSÃO CORRIGIDA COM Firebase
 workflows:
   ios-workflow:
     name: iOS Workflow
     instance_type: mac_mini_m1
     max_build_duration: 120
     environment:
-      groups:
-        - apple_developer_portal_credentials
       vars:
         XCODE_WORKSPACE: "modamaskavo.xcworkspace"
         XCODE_SCHEME: "modamaskavo"
-        BUNDLE_ID: "com.modamaskavo"
       node: 18.17.0
       xcode: latest
       cocoapods: default
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.modamaskavo
-
     scripts:
       - name: Install npm dependencies
         script: |
-          # Ignorar avisos de engine e usar legacy peer deps
-          npm ci --legacy-peer-deps --engine-strict=false
+          npm ci
 
-      - name: Install Firebase dependencies (if needed)
+      - name: Install dependencies with Firebase
         script: |
-          # Verificar se Firebase está no package.json
-          if grep -q "@react-native-firebase/app" package.json; then
-            echo "Firebase encontrado no package.json, instalando..."
-            npm install @react-native-firebase/app @react-native-firebase/auth @react-native-firebase/firestore --legacy-peer-deps --engine-strict=false
-          else
-            echo "Firebase não está no package.json, pulando instalação..."
+          # Instalar dependências básicas
+          npm install
+          
+          # Instalar pacotes específicos do Firebase se necessário
+          npm install @react-native-firebase/app @react-native-firebase/auth @react-native-firebase/firestore
+          
+          # Verificar instalação
+          ls -la node_modules/@react-native-firebase/app/scripts/
+      - name: HACK BRUTAL - Corrigir TODOS os podspecs problemáticos
+        script: |
+          # Criar diretório third-party-podspecs se não existir
+          mkdir -p node_modules/react-native/third-party-podspecs
+          
+          # Corrigir fast_float.podspec
+          cat > node_modules/react-native/third-party-podspecs/fast_float.podspec << 'EOF'
+          Pod::Spec.new do |s|
+            s.name                   = "fast_float"
+            s.version                = "3.4.0"
+            s.summary                = "Fast and exact implementation of the C++ from_chars functions for float and double types"
+            s.homepage               = "https://github.com/fastfloat/fast_float"
+            s.license                = "MIT"
+            s.author                 = { "Daniel Lemire" => "lemire@gmail.com" }
+            s.platforms              = { :ios => "12.0", :osx => "10.15" }
+            s.source                 = { :git => "https://github.com/fastfloat/fast_float.git", :tag => "v3.4.0" }
+            s.source_files           = "include/**/*.h"
+            s.header_dir             = "fast_float"
+            s.public_header_files    = "include/**/*.h"
+            s.header_mappings_dir    = "include"
+            s.requires_arc           = false
+            s.pod_target_xcconfig    = {
+              'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
+              'MACOSX_DEPLOYMENT_TARGET' => '10.15',
+              'USE_HEADERMAP' => 'NO',
+              'CLANG_CXX_LANGUAGE_STANDARD' => 'c++14',
+              'CLANG_CXX_LIBRARY' => 'libc++'
+            }
+          end
+          EOF
+          
+          # Corrigir fmt.podspec
+          cat > node_modules/react-native/third-party-podspecs/fmt.podspec << 'EOF'
+          Pod::Spec.new do |s|
+            s.name                   = "fmt"
+            s.version                = "6.2.1"
+            s.summary                = "A modern formatting library"
+            s.homepage               = "https://github.com/fmtlib/fmt"
+            s.license                = "MIT"
+            s.author                 = { "Victor Zverovich" => "victor.zverovich@gmail.com" }
+            s.platforms              = { :ios => "12.0", :osx => "10.15" }
+            s.source                 = { :git => "https://github.com/fmtlib/fmt.git", :tag => "6.2.1" }
+            s.source_files           = "include/**/*.h", "src/*.cc"
+            s.header_dir             = "fmt"
+            s.public_header_files    = "include/**/*.h"
+            s.header_mappings_dir    = "include"
+            s.requires_arc           = false
+            s.pod_target_xcconfig    = {
+              'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
+              'MACOSX_DEPLOYMENT_TARGET' => '10.15',
+              'USE_HEADERMAP' => 'NO',
+              'CLANG_CXX_LANGUAGE_STANDARD' => 'c++14',
+              'CLANG_CXX_LIBRARY' => 'libc++'
+            }
+          end
+          EOF
+          
+          # Corrigir glog.podspec
+          cat > node_modules/react-native/third-party-podspecs/glog.podspec << 'EOF'
+          Pod::Spec.new do |s|
+            s.name                   = "glog"
+            s.version                = "0.3.5"
+            s.summary                = "Google logging library"
+            s.homepage               = "https://github.com/google/glog"
+            s.license                = "BSD"
+            s.author                 = { "Google" => "google-glog@googlegroups.com" }
+            s.platforms              = { :ios => "12.0", :osx => "10.15" }
+            s.source                 = { :git => "https://github.com/google/glog.git", :tag => "v0.3.5" }
+            s.source_files           = "src/**/*.{h,cc}"
+            s.header_dir             = "glog"
+            s.public_header_files    = "src/glog/*.h"
+            s.header_mappings_dir    = "src"
+            s.requires_arc           = false
+            s.pod_target_xcconfig    = {
+              'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
+              'MACOSX_DEPLOYMENT_TARGET' => '10.15',
+              'USE_HEADERMAP' => 'NO',
+              'CLANG_CXX_LANGUAGE_STANDARD' => 'c++14',
+              'CLANG_CXX_LIBRARY' => 'libc++'
+            }
+          end
+          EOF
+          
+          echo "✅ Third-party podspecs corrigidos!"
+      
+      - name: HACK BRUTAL - Corrigir Firebase Auth podspec
+        script: |
+          # Corrigir RNFBAuth.podspec para iOS 12.0
+          if [ -f "node_modules/@react-native-firebase/auth/RNFBAuth.podspec" ]; then
+            echo "Corrigindo RNFBAuth.podspec..."
+            sed -i '' 's/s.ios.deployment_target = .*/s.ios.deployment_target = "12.0"/' node_modules/@react-native-firebase/auth/RNFBAuth.podspec
+            sed -i '' 's/s.platforms = .*/s.platforms = { :ios => "12.0", :osx => "10.15" }/' node_modules/@react-native-firebase/auth/RNFBAuth.podspec
+            echo "✅ RNFBAuth.podspec corrigido!"
           fi
           
-          # Verificar se foi instalado
-          if [ -f "node_modules/@react-native-firebase/app/scripts/RNFBCocoaPods.rb" ]; then
-            echo "✅ Firebase disponível"
-            ls -la node_modules/@react-native-firebase/app/scripts/
-          else
-            echo "⚠️ Firebase não disponível, mas continuando..."
+          # Corrigir RNFBApp.podspec
+          if [ -f "node_modules/@react-native-firebase/app/RNFBApp.podspec" ]; then
+            echo "Corrigindo RNFBApp.podspec..."
+            sed -i '' 's/s.ios.deployment_target = .*/s.ios.deployment_target = "12.0"/' node_modules/@react-native-firebase/app/RNFBApp.podspec
+            sed -i '' 's/s.platforms = .*/s.platforms = { :ios => "12.0", :osx => "10.15" }/' node_modules/@react-native-firebase/app/RNFBApp.podspec
+            echo "✅ RNFBApp.podspec corrigido!"
           fi
+          
+          # Corrigir RNFBFirestore.podspec
+          if [ -f "node_modules/@react-native-firebase/firestore/RNFBFirestore.podspec" ]; then
+            echo "Corrigindo RNFBFirestore.podspec..."
+            sed -i '' 's/s.ios.deployment_target = .*/s.ios.deployment_target = "12.0"/' node_modules/@react-native-firebase/firestore/RNFBFirestore.podspec
+            sed -i '' 's/s.platforms = .*/s.platforms = { :ios => "12.0", :osx => "10.15" }/' node_modules/@react-native-firebase/firestore/RNFBFirestore.podspec
+            echo "✅ RNFBFirestore.podspec corrigido!"
+          fi
+          
+          # Corrigir RNFBStorage.podspec
+          if [ -f "node_modules/@react-native-firebase/storage/RNFBStorage.podspec" ]; then
+            echo "Corrigindo RNFBStorage.podspec..."
+            sed -i '' 's/s.ios.deployment_target = .*/s.ios.deployment_target = "12.0"/' node_modules/@react-native-firebase/storage/RNFBStorage.podspec
+            sed -i '' 's/s.platforms = .*/s.platforms = { :ios => "12.0", :osx => "10.15" }/' node_modules/@react-native-firebase/storage/RNFBStorage.podspec
+            echo "✅ RNFBStorage.podspec corrigido!"
+          fi
+          
+          # Corrigir RNFBMessaging.podspec
+          if [ -f "node_modules/@react-native-firebase/messaging/RNFBMessaging.podspec" ]; then
+            echo "Corrigindo RNFBMessaging.podspec..."
+            sed -i '' 's/s.ios.deployment_target = .*/s.ios.deployment_target = "12.0"/' node_modules/@react-native-firebase/messaging/RNFBMessaging.podspec
+            sed -i '' 's/s.platforms = .*/s.platforms = { :ios => "12.0", :osx => "10.15" }/' node_modules/@react-native-firebase/messaging/RNFBMessaging.podspec
+            echo "✅ RNFBMessaging.podspec corrigido!"
+          fi
+          
+          # Corrigir RNFBCrashlytics.podspec
+          if [ -f "node_modules/@react-native-firebase/crashlytics/RNFBCrashlytics.podspec" ]; then
+            echo "Corrigindo RNFBCrashlytics.podspec..."
+            sed -i '' 's/s.ios.deployment_target = .*/s.ios.deployment_target = "12.0"/' node_modules/@react-native-firebase/crashlytics/RNFBCrashlytics.podspec
+            sed -i '' 's/s.platforms = .*/s.platforms = { :ios => "12.0", :osx => "10.15" }/' node_modules/@react-native-firebase/crashlytics/RNFBCrashlytics.podspec
+            echo "✅ RNFBCrashlytics.podspec corrigido!"
+          fi
+          
+          # Corrigir RNFBAnalytics.podspec
+          if [ -f "node_modules/@react-native-firebase/analytics/RNFBAnalytics.podspec" ]; then
+            echo "Corrigindo RNFBAnalytics.podspec..."
+            sed -i '' 's/s.ios.deployment_target = .*/s.ios.deployment_target = "12.0"/' node_modules/@react-native-firebase/analytics/RNFBAnalytics.podspec
+            sed -i '' 's/s.platforms = .*/s.platforms = { :ios => "12.0", :osx => "10.15" }/' node_modules/@react-native-firebase/analytics/RNFBAnalytics.podspec
+            echo "✅ RNFBAnalytics.podspec corrigido!"
+          fi
+          
+          # Corrigir RNFBRemoteConfig.podspec
+          if [ -f "node_modules/@react-native-firebase/remote-config/RNFBRemoteConfig.podspec" ]; then
+            echo "Corrigindo RNFBRemoteConfig.podspec..."
+            sed -i '' 's/s.ios.deployment_target = .*/s.ios.deployment_target = "12.0"/' node_modules/@react-native-firebase/remote-config/RNFBRemoteConfig.podspec
+            sed -i '' 's/s.platforms = .*/s.platforms = { :ios => "12.0", :osx => "10.15" }/' node_modules/@react-native-firebase/remote-config/RNFBRemoteConfig.podspec
+            echo "✅ RNFBRemoteConfig.podspec corrigido!"
+          fi
+          
+          # Corrigir RNFBFunctions.podspec
+          if [ -f "node_modules/@react-native-firebase/functions/RNFBFunctions.podspec" ]; then
+            echo "Corrigindo RNFBFunctions.podspec..."
+            sed -i '' 's/s.ios.deployment_target = .*/s.ios.deployment_target = "12.0"/' node_modules/@react-native-firebase/functions/RNFBFunctions.podspec
+            sed -i '' 's/s.platforms = .*/s.platforms = { :ios => "12.0", :osx => "10.15" }/' node_modules/@react-native-firebase/functions/RNFBFunctions.podspec
+            echo "✅ RNFBFunctions.podspec corrigido!"
+          fi
+          
+          # Corrigir RNFBDatabase.podspec
+          if [ -f "node_modules/@react-native-firebase/database/RNFBDatabase.podspec" ]; then
+            echo "Corrigindo RNFBDatabase.podspec..."
+            sed -i '' 's/s.ios.deployment_target = .*/s.ios.deployment_target = "12.0"/' node_modules/@react-native-firebase/database/RNFBDatabase.podspec
+            sed -i '' 's/s.platforms = .*/s.platforms = { :ios => "12.0", :osx => "10.15" }/' node_modules/@react-native-firebase/database/RNFBDatabase.podspec
+            echo "✅ RNFBDatabase.podspec corrigido!"
+          fi
+          
+          echo "✅ Todos os podspecs Firebase corrigidos para iOS 12.0!"
+          
+      - name: HACK BRUTAL - Criar React-RuntimeApple.podspec FORÇADO
+        script: |
+          # Criar React-RuntimeApple.podspec com iOS 12.0 FORÇADO
+          mkdir -p node_modules/react-native/ReactCommon/react/runtime/platform/ios
+          cat > node_modules/react-native/ReactCommon/react/runtime/platform/ios/React-RuntimeApple.podspec << 'EOF'
+          Pod::Spec.new do |s|
+            s.name                   = "React-RuntimeApple"
+            s.version                = "1000.0.0"
+            s.summary                = "React Native RuntimeApple with iOS 12.0 forced"
+            s.homepage               = "https://reactnative.dev/"
+            s.license                = "MIT"
+            s.author                 = "Meta Platforms, Inc."
+            s.platforms              = { :ios => "12.0", :osx => "10.15" }
+            s.source                 = { :path => "." }
+            s.source_files           = "*.{h,m,mm,cpp,c}"
+            s.header_dir             = "React"
+            s.public_header_files    = "*.h"
+            s.requires_arc           = true
+            s.pod_target_xcconfig    = {
+              'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
+              'MACOSX_DEPLOYMENT_TARGET' => '10.15',
+              'USE_HEADERMAP' => 'NO',
+              'CLANG_CXX_LANGUAGE_STANDARD' => 'c++17',
+              'CLANG_CXX_LIBRARY' => 'libc++',
+              'GCC_PREPROCESSOR_DEFINITIONS' => 'FOLLY_NO_CONFIG FOLLY_MOBILE FOLLY_USE_LIBCPP'
+            }
+          end
+          EOF
+          
+          # Criar arquivos dummy para React-RuntimeApple
+          touch node_modules/react-native/ReactCommon/react/runtime/platform/ios/dummy.cpp
+          touch node_modules/react-native/ReactCommon/react/runtime/platform/ios/dummy.h
+          
+          echo "✅ React-RuntimeApple.podspec criado com iOS 12.0 FORÇADO!"
+          
+      - name: HACK BRUTAL - Criar React-RuntimeCore.podspec FORÇADO
+        script: |
+          # Criar React-RuntimeCore.podspec com iOS 12.0 FORÇADO
+          mkdir -p node_modules/react-native/ReactCommon/react/runtime
+          cat > node_modules/react-native/ReactCommon/react/runtime/React-RuntimeCore.podspec << 'EOF'
+          Pod::Spec.new do |s|
+            s.name                   = "React-RuntimeCore"
+            s.version                = "1000.0.0"
+            s.summary                = "React Native RuntimeCore with iOS 12.0 forced"
+            s.homepage               = "https://reactnative.dev/"
+            s.license                = "MIT"
+            s.author                 = "Meta Platforms, Inc."
+            s.platforms              = { :ios => "12.0", :osx => "10.15" }
+            s.source                 = { :path => "." }
+            s.source_files           = "*.{h,m,mm,cpp,c}"
+            s.header_dir             = "React"
+            s.public_header_files    = "*.h"
+            s.requires_arc           = true
+            s.pod_target_xcconfig    = {
+              'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
+              'MACOSX_DEPLOYMENT_TARGET' => '10.15',
+              'USE_HEADERMAP' => 'NO',
+              'CLANG_CXX_LANGUAGE_STANDARD' => 'c++17',
+              'CLANG_CXX_LIBRARY' => 'libc++',
+              'GCC_PREPROCESSOR_DEFINITIONS' => 'FOLLY_NO_CONFIG FOLLY_MOBILE FOLLY_USE_LIBCPP'
+            }
+          end
+          EOF
+          
+          # Criar arquivos dummy para React-RuntimeCore
+          touch node_modules/react-native/ReactCommon/react/runtime/dummy.cpp
+          touch node_modules/react-native/ReactCommon/react/runtime/dummy.h
+          
+          echo "✅ React-RuntimeCore.podspec criado com iOS 12.0 FORÇADO!"
+          
+      - name: HACK BRUTAL - Criar TODOS os podspecs React restantes
+        script: |
+          # Script Ruby para criar todos os outros podspecs
+          cat > fix_podspecs.rb << 'EOF'
+          require 'fileutils'
 
+          def create_podspec(name, path)
+            FileUtils.mkdir_p(path)
+            File.write("#{path}/#{name}.podspec", <<~PODSPEC)
+              Pod::Spec.new do |s|
+                s.name                   = "#{name}"
+                s.version                = "1000.0.0"
+                s.summary                = "Auto-generated podspec for compatibility"
+                s.homepage               = "https://reactnative.dev/"
+                s.license                = "MIT"
+                s.author                 = "Meta Platforms, Inc."
+                s.platforms              = { :ios => "12.0", :osx => "10.15" }
+                s.source                 = { :path => "." }
+                s.source_files           = "*.{h,m,mm,cpp,c}"
+                s.header_dir             = "React"
+                s.public_header_files    = "*.h"
+                s.requires_arc           = true
+                s.pod_target_xcconfig    = {
+                  'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
+                  'MACOSX_DEPLOYMENT_TARGET' => '10.15',
+                  'USE_HEADERMAP' => 'NO',
+                  'CLANG_CXX_LANGUAGE_STANDARD' => 'c++17',
+                  'CLANG_CXX_LIBRARY' => 'libc++',
+                  'GCC_PREPROCESSOR_DEFINITIONS' => 'FOLLY_NO_CONFIG FOLLY_MOBILE FOLLY_USE_LIBCPP'
+                }
+              end
+            PODSPEC
+            FileUtils.touch("#{path}/dummy.cpp")
+            FileUtils.touch("#{path}/dummy.h")
+            puts "✅ Created #{name}.podspec with iOS 12.0 forced"
+          end
+
+          # Lista de podspecs necessários
+          podspecs = [
+            ["React-featureflags", "node_modules/react-native/ReactCommon/react/featureflags"],
+            ["React-featureflagsnativemodule", "node_modules/react-native/ReactCommon/react/nativemodule/featureflags"],
+            ["React-idlecallbacksnativemodule", "node_modules/react-native/ReactCommon/react/nativemodule/idlecallbacks"],
+            ["React-utils", "node_modules/react-native/ReactCommon/react/utils"],
+            ["React-debug", "node_modules/react-native/ReactCommon/react/debug"],
+            ["React-NativeModulesApple", "node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios"],
+            ["React-logger", "node_modules/react-native/ReactCommon/logger"],
+            ["React-oscompat", "node_modules/react-native/ReactCommon/oscompat"]
+          ]
+
+          podspecs.each do |name, path|
+            create_podspec(name, path)
+          end
+
+          puts "✅ Todos os podspecs React criados com iOS 12.0 forçado!"
+          EOF
+          
+          # Executar o script Ruby
+          ruby fix_podspecs.rb
+          
+      - name: Create Podfile with iOS 12.0 ULTRA FORÇADO + Firebase
+        script: |
+          cat > ios/Podfile << 'EOF'
+          require_relative '../node_modules/react-native/scripts/react_native_pods'
+          require_relative '../node_modules/@react-native-firebase/app/scripts/RNFBCocoaPods.rb'
+          
+          platform :ios, '12.0'
+          
+          target 'modamaskavo' do
+            config = use_native_modules!
+            
+            use_react_native!(
+              :path => config[:reactNativePath],
+              :hermes_enabled => false,
+              :fabric_enabled => false,
+              :new_arch_enabled => false
+            )
+            
+            # Firebase
+            use_rnfb_pods!
+            
+            post_install do |installer|
+              react_native_post_install(installer)
+              
+              # Forçar iOS 12.0 em TODOS os pods
+              installer.pods_project.targets.each do |target|
+                target.build_configurations.each do |config|
+                  config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.0'
+                  config.build_settings['MACOSX_DEPLOYMENT_TARGET'] = '10.15'
+                  config.build_settings['RCT_NEW_ARCH_ENABLED'] = 'NO'
+                  config.build_settings['ENABLE_BITCODE'] = 'NO'
+                  config.build_settings['CODE_SIGNING_REQUIRED'] = 'NO'
+                  config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
+                  config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
+                  config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
+                  config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
+                  config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = 'FOLLY_NO_CONFIG FOLLY_MOBILE FOLLY_USE_LIBCPP'
+                  
+                  # Forçar iOS 12.0 especificamente para Firebase
+                  if target.name.include?('RNFB') || target.name.include?('Firebase')
+                    config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.0'
+                  end
+                end
+              end
+            end
+          end
+          EOF
+          
+          echo "✅ Podfile criado com iOS 12.0 ULTRA FORÇADO + Firebase!"
+          
       - name: Install CocoaPods dependencies
         script: |
           cd ios
-          pod deintegrate || true
-          rm -rf Pods
-          rm -f Podfile.lock
-          pod install --verbose
-
-      - name: Set up code signing
-        script: |
-          xcode-project use-profiles
-
-      - name: Build iOS app
+          pod install --repo-update --verbose
+          
+      - name: Verificar arquivos gerados
         script: |
           cd ios
-          xcode-project build-ipa \
-            --workspace "$XCODE_WORKSPACE" \
-            --scheme "$XCODE_SCHEME" \
-            --clean
-
+          echo "=== Verificando arquivos no diretório ios ==="
+          ls -la
+          
+          # Verificar se workspace existe
+          if [ -d "modamaskavo.xcworkspace" ]; then
+            echo "✅ Workspace encontrado!"
+          else
+            echo "❌ Workspace não encontrado. Listando arquivos .xcworkspace:"
+            find . -name "*.xcworkspace" -type d
+          fi
+          
+      - name: Criar exportOptions.plist
+        script: |
+          cd ios
+          cat > exportOptions.plist << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>development</string>
+              <key>compileBitcode</key>
+              <false/>
+              <key>uploadBitcode</key>
+              <false/>
+              <key>uploadSymbols</key>
+              <false/>
+              <key>signingStyle</key>
+              <string>automatic</string>
+              <key>stripSwiftSymbols</key>
+              <true/>
+              <key>thinning</key>
+              <string>&lt;none&gt;</string>
+          </dict>
+          </plist>
+          EOF
+          
+          echo "✅ exportOptions.plist criado!"
+          
+      - name: Build and Archive iOS app COM WORKSPACE
+        script: |
+          cd ios
+          
+          # Criar diretório de build
+          mkdir -p build
+          
+          echo "=== Iniciando build do iOS com WORKSPACE ==="
+          
+          # Build e Archive usando WORKSPACE
+          xcodebuild -workspace "$XCODE_WORKSPACE" \
+                     -scheme "$XCODE_SCHEME" \
+                     -configuration Release \
+                     -destination generic/platform=iOS \
+                     -archivePath build/modamaskavo.xcarchive \
+                     archive
+          
+          echo "=== Archive concluído, iniciando export ==="
+          
+          # Exportar IPA
+          xcodebuild -exportArchive \
+                     -archivePath build/modamaskavo.xcarchive \
+                     -exportPath build \
+                     -exportOptionsPlist exportOptions.plist
+          
+          echo "=== Export concluído ==="
+          
+          # Listar arquivos gerados
+          echo "=== Arquivos gerados ==="
+          find build -name "*.ipa" -o -name "*.app" -o -name "*.xcarchive" | head -10
+          
+          # Verificar se IPA foi criado
+          if find build -name "*.ipa" | grep -q .; then
+            echo "✅ IPA criado com sucesso!"
+            find build -name "*.ipa" -exec ls -la {} \;
+          else
+            echo "❌ IPA não foi criado"
+            echo "Conteúdo do diretório build:"
+            ls -la build/
+            echo "Conteúdo completo:"
+            find build -type f | head -20
+          fi
+          
+    # SEÇÃO DE ARTEFATOS
     artifacts:
-      - build/ios/ipa/*.ipa
-      - /tmp/xcodebuild_logs/*.log
-
+      - ios/build/*.ipa
+      - ios/build/**/*.ipa
+      - ios/build/*.xcarchive
+      - ios/build/**/*.xcarchive
+      - ios/build/*.app
+      - ios/build/**/*.app
+      - ios/build/**/*.dSYM
+      - "**/*.log"
+      - ios/exportOptions.plist
+      - ios/Podfile
+      - ios/Podfile.lock
+    
