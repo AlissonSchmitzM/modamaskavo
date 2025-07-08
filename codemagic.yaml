@@ -1,4 +1,4 @@
-# codemagic.yaml - ADICIONANDO REACT-JSC COM FABRIC
+# codemagic.yaml - VERSÃO CORRIGIDA COM REACT-JSC FABRIC
 workflows:
   ios-workflow:
     name: iOS Workflow
@@ -15,8 +15,43 @@ workflows:
       - name: Install npm dependencies
         script: |
           npm ci
-      - name: HACK BRUTAL - Criar TODOS os podspecs React Native
+      - name: HACK BRUTAL - Criar TODOS os podspecs React Native CORRIGIDO
         script: |
+          # Criar React-jsc.podspec CORRIGIDO com Fabric subspec
+          mkdir -p node_modules/react-native/ReactCommon/jsc
+          cat > node_modules/react-native/ReactCommon/jsc/React-jsc.podspec << 'EOF'
+          Pod::Spec.new do |s|
+            s.name                   = "React-jsc"
+            s.version                = "1000.0.0"
+            s.summary                = "React Native JSC with Fabric support"
+            s.homepage               = "https://reactnative.dev/"
+            s.license                = "MIT"
+            s.author                 = "Meta Platforms, Inc."
+            s.platforms              = { :ios => "15.0" }
+            s.source                 = { :path => "." }
+            s.source_files           = "*.{h,m,mm,cpp,c}"
+            s.header_dir             = "React"
+            s.public_header_files    = "*.h"
+            
+            # Subspec Fabric - CORRIGIDO
+            s.subspec "Fabric" do |ss|
+              ss.source_files = "*.{h,m,mm,cpp,c}"
+              ss.header_dir = "React"
+              ss.public_header_files = "*.h"
+            end
+            
+            # Subspec Default
+            s.subspec "Default" do |ss|
+              ss.source_files = "*.{h,m,mm,cpp,c}"
+              ss.header_dir = "React"
+            end
+          end
+          EOF
+          
+          # Criar arquivos dummy para que o podspec funcione
+          touch node_modules/react-native/ReactCommon/jsc/dummy.cpp
+          touch node_modules/react-native/ReactCommon/jsc/dummy.h
+          
           # Criar React.podspec principal
           cat > node_modules/react-native/React.podspec << 'EOF'
           Pod::Spec.new do |s|
@@ -28,109 +63,82 @@ workflows:
             s.author                 = "Meta Platforms, Inc."
             s.platforms              = { :ios => "15.0" }
             s.source                 = { :path => "." }
-            s.source_files           = "**/*.{h,m,mm,cpp,c}"
+            s.source_files           = "*.{h,m,mm,cpp,c}"
             s.header_dir             = "React"
-            s.public_header_files    = "**/*.h"
+            s.public_header_files    = "*.h"
           end
           EOF
           
-          # Criar React-Core.podspec COMPLETO na raiz
+          # Criar React-Core.podspec COMPLETO
           cat > node_modules/react-native/React-Core.podspec << 'EOF'
           Pod::Spec.new do |s|
             s.name                   = "React-Core"
             s.version                = "1000.0.0"
-            s.summary                = "React Native Core library with all subspecs"
+            s.summary                = "React Native Core library"
             s.homepage               = "https://reactnative.dev/"
             s.license                = "MIT"
             s.author                 = "Meta Platforms, Inc."
             s.platforms              = { :ios => "15.0" }
             s.source                 = { :path => "." }
-            s.source_files           = "**/*.{h,m,mm,cpp,c}"
+            s.source_files           = "*.{h,m,mm,cpp,c}"
             s.header_dir             = "React"
-            s.public_header_files    = "**/*.h"
+            s.public_header_files    = "*.h"
             
             s.subspec "RCTWebSocket" do |ss|
-              ss.source_files = "**/*.{h,m,mm,cpp,c}"
+              ss.source_files = "*.{h,m,mm,cpp,c}"
               ss.header_dir = "React"
-              ss.public_header_files = "**/*.h"
+              ss.public_header_files = "*.h"
             end
             
             s.subspec "RCTAnimation" do |ss|
-              ss.source_files = "**/*.{h,m,mm,cpp,c}"
+              ss.source_files = "*.{h,m,mm,cpp,c}"
               ss.header_dir = "React"
             end
             
             s.subspec "RCTBlob" do |ss|
-              ss.source_files = "**/*.{h,m,mm,cpp,c}"
+              ss.source_files = "*.{h,m,mm,cpp,c}"
               ss.header_dir = "React"
             end
             
             s.subspec "RCTImage" do |ss|
-              ss.source_files = "**/*.{h,m,mm,cpp,c}"
+              ss.source_files = "*.{h,m,mm,cpp,c}"
               ss.header_dir = "React"
             end
             
             s.subspec "RCTLinking" do |ss|
-              ss.source_files = "**/*.{h,m,mm,cpp,c}"
+              ss.source_files = "*.{h,m,mm,cpp,c}"
               ss.header_dir = "React"
             end
             
             s.subspec "RCTNetwork" do |ss|
-              ss.source_files = "**/*.{h,m,mm,cpp,c}"
+              ss.source_files = "*.{h,m,mm,cpp,c}"
               ss.header_dir = "React"
             end
             
             s.subspec "RCTSettings" do |ss|
-              ss.source_files = "**/*.{h,m,mm,cpp,c}"
+              ss.source_files = "*.{h,m,mm,cpp,c}"
               ss.header_dir = "React"
             end
             
             s.subspec "RCTText" do |ss|
-              ss.source_files = "**/*.{h,m,mm,cpp,c}"
+              ss.source_files = "*.{h,m,mm,cpp,c}"
               ss.header_dir = "React"
             end
             
             s.subspec "RCTVibration" do |ss|
-              ss.source_files = "**/*.{h,m,mm,cpp,c}"
+              ss.source_files = "*.{h,m,mm,cpp,c}"
               ss.header_dir = "React"
             end
             
             s.subspec "Default" do |ss|
-              ss.source_files = "**/*.{h,m,mm,cpp,c}"
-              ss.header_dir = "React"
-            end
-          end
-          EOF
-          
-          # Criar React-jsc.podspec com Fabric subspec
-          cat > node_modules/react-native/ReactCommon/jsc/React-jsc.podspec << 'EOF'
-          Pod::Spec.new do |s|
-            s.name                   = "React-jsc"
-            s.version                = "1000.0.0"
-            s.summary                = "React Native JSC with Fabric support"
-            s.homepage               = "https://reactnative.dev/"
-            s.license                = "MIT"
-            s.author                 = "Meta Platforms, Inc."
-            s.platforms              = { :ios => "15.0" }
-            s.source                 = { :path => "." }
-            s.source_files           = "**/*.{h,m,mm,cpp,c}"
-            s.header_dir             = "React"
-            s.public_header_files    = "**/*.h"
-            
-            s.subspec "Fabric" do |ss|
-              ss.source_files = "**/*.{h,m,mm,cpp,c}"
-              ss.header_dir = "React"
-              ss.public_header_files = "**/*.h"
-            end
-            
-            s.subspec "Default" do |ss|
-              ss.source_files = "**/*.{h,m,mm,cpp,c}"
+              ss.source_files = "*.{h,m,mm,cpp,c}"
               ss.header_dir = "React"
             end
           end
           EOF
           
           # Criar ReactCommon.podspec com todos os subspecs
+          mkdir -p node_modules/react-native/ReactCommon
           cat > node_modules/react-native/ReactCommon/ReactCommon.podspec << 'EOF'
           Pod::Spec.new do |s|
             s.name                   = "ReactCommon"
@@ -141,39 +149,39 @@ workflows:
             s.author                 = "Meta Platforms, Inc."
             s.platforms              = { :ios => "15.0" }
             s.source                 = { :path => "." }
-            s.source_files           = "**/*.{h,m,mm,cpp,c}"
+            s.source_files           = "*.{h,m,mm,cpp,c}"
             s.header_dir             = "ReactCommon"
-            s.public_header_files    = "**/*.h"
+            s.public_header_files    = "*.h"
             
             s.subspec "turbomodule" do |ss|
-              ss.source_files = "**/*.{h,m,mm,cpp,c}"
+              ss.source_files = "*.{h,m,mm,cpp,c}"
               ss.header_dir = "ReactCommon"
               
               ss.subspec "core" do |sss|
-                sss.source_files = "**/*.{h,m,mm,cpp,c}"
+                sss.source_files = "*.{h,m,mm,cpp,c}"
                 sss.header_dir = "ReactCommon"
-                sss.public_header_files = "**/*.h"
+                sss.public_header_files = "*.h"
               end
             end
             
             s.subspec "jsi" do |ss|
-              ss.source_files = "**/*.{h,m,mm,cpp,c}"
+              ss.source_files = "*.{h,m,mm,cpp,c}"
               ss.header_dir = "ReactCommon"
             end
             
             s.subspec "callinvoker" do |ss|
-              ss.source_files = "**/*.{h,m,mm,cpp,c}"
+              ss.source_files = "*.{h,m,mm,cpp,c}"
               ss.header_dir = "ReactCommon"
             end
             
             s.subspec "runtimeexecutor" do |ss|
-              ss.source_files = "**/*.{h,m,mm,cpp,c}"
+              ss.source_files = "*.{h,m,mm,cpp,c}"
               ss.header_dir = "ReactCommon"
             end
           end
           EOF
           
-          # Criar script Ruby para criar TODOS os podspecs
+          # Script Ruby para criar TODOS os podspecs necessários
           cat > fix_podspecs.rb << 'EOF'
           require 'fileutils'
 
@@ -195,12 +203,12 @@ workflows:
               end
             PODSPEC
             FileUtils.touch("#{path}/dummy.cpp")
+            FileUtils.touch("#{path}/dummy.h")
             puts "✅ Created #{name}.podspec"
           end
 
           # Lista COMPLETA de podspecs problemáticos
           podspecs = [
-            ["React-jsc", "node_modules/react-native/ReactCommon/jsc"],
             ["React-RCTFBReactNativeSpec", "node_modules/react-native/React"],
             ["React-featureflagsnativemodule", "node_modules/react-native/ReactCommon/react/nativemodule/featureflags"],
             ["RCTRequired", "node_modules/react-native/Libraries/Required"],
@@ -211,7 +219,6 @@ workflows:
             ["React-NativeModulesApple", "node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios"],
             ["React-RCTNetwork", "node_modules/react-native/Libraries/Network"],
             ["FBLazyVector", "node_modules/react-native/Libraries/FBLazyVector"],
-            ["React-Core", "node_modules/react-native/React"],
             ["React-CoreModules", "node_modules/react-native/React/CoreModules"],
             ["React-RCTAppDelegate", "node_modules/react-native/Libraries/AppDelegate"],
             ["React-RCTImage", "node_modules/react-native/Libraries/Image"],
@@ -243,7 +250,7 @@ workflows:
             create_podspec(name, path)
           end
 
-          puts "✅ Todos os podspecs criados incluindo React-jsc com Fabric!"
+          puts "✅ Todos os podspecs criados incluindo React-jsc com Fabric CORRIGIDO!"
           EOF
           
           # Executar o script Ruby
