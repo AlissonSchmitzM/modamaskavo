@@ -373,12 +373,12 @@ workflows:
             echo "⚠️ RNBootSplash.podspec não encontrado"
           fi
           
-      - name: HACK BRUTAL - Corrigir TODOS os podspecs para iOS 12.0
+           - name: HACK BRUTAL - Corrigir TODOS os podspecs para iOS 12.0 (VERSÃO SEGURA)
         script: |
-          echo "🔥 HACK BRUTAL - Corrigindo TODOS os podspecs para iOS 12.0..."
+          echo "🔥 HACK BRUTAL - Corrigindo TODOS os podspecs para iOS 12.0 (VERSÃO SEGURA)..."
           
-          # Função para corrigir qualquer podspec
-          fix_podspec() {
+          # Função para corrigir qualquer podspec de forma mais segura
+          fix_podspec_safe() {
             local podspec_file="$1"
             local pod_name=$(basename "$podspec_file" .podspec)
             
@@ -387,36 +387,31 @@ workflows:
             # Backup
             cp "$podspec_file" "$podspec_file.backup"
             
-            # Usar sed para forçar iOS 12.0 em todas as linhas relevantes
-            sed -i '' 's/s\.ios\.deployment_target = .*/s.ios.deployment_target = "12.0"/' "$podspec_file"
-            sed -i '' 's/s\.platforms = .*/s.platforms = { :ios => "12.0", :osx => "10.15" }/' "$podspec_file"
-            sed -i '' 's/spec\.ios\.deployment_target = .*/spec.ios.deployment_target = "12.0"/' "$podspec_file"
-            sed -i '' 's/spec\.platforms = .*/spec.platforms = { :ios => "12.0", :osx => "10.15" }/' "$podspec_file"
-            
-            # Adicionar deployment target se não existir
-            if ! grep -q "deployment_target" "$podspec_file"; then
-              # Adicionar após a primeira linha que contém s.name
-              sed -i '' '/s\.name.*=/a\
-              s.ios.deployment_target = "12.0"' "$podspec_file"
+            # Verificar se o arquivo tem sintaxe válida antes de modificar
+            if ruby -c "$podspec_file" > /dev/null 2>&1; then
+              # Usar sed para forçar iOS 12.0 em todas as linhas relevantes, mas de forma mais cuidadosa
+              sed -i '' 's/s\.ios\.deployment_target *= *"[^"]*"/s.ios.deployment_target = "12.0"/' "$podspec_file"
+              sed -i '' 's/spec\.ios\.deployment_target *= *"[^"]*"/spec.ios.deployment_target = "12.0"/' "$podspec_file"
+              
+              # Verificar se a modificação quebrou a sintaxe
+              if ! ruby -c "$podspec_file" > /dev/null 2>&1; then
+                echo "⚠️ Sintaxe quebrada em $pod_name, restaurando backup..."
+                cp "$podspec_file.backup" "$podspec_file"
+              else
+                echo "✅ $pod_name corrigido com sucesso!"
+              fi
+            else
+              echo "⚠️ $pod_name já tem sintaxe inválida, pulando..."
             fi
-            
-            # Adicionar xcconfig se não existir
-            if ! grep -q "pod_target_xcconfig" "$podspec_file"; then
-              # Adicionar antes do end
-              sed -i '' '/^end$/i\
-              s.pod_target_xcconfig = { "IPHONEOS_DEPLOYMENT_TARGET" => "12.0", "MACOSX_DEPLOYMENT_TARGET" => "10.15" }' "$podspec_file"
-            fi
-            
-            echo "✅ $pod_name corrigido!"
           }
           
-          # Encontrar e corrigir TODOS os podspecs
+          # Encontrar e corrigir TODOS os podspecs de forma segura
           echo "Procurando todos os podspecs..."
           find node_modules -name "*.podspec" -type f | while read podspec; do
-            fix_podspec "$podspec"
+            fix_podspec_safe "$podspec"
           done
           
-          echo "🎉 TODOS os podspecs corrigidos para iOS 12.0!"
+          echo "🎉 TODOS os podspecs processados!"
 
       - name: HACK BRUTAL - Criar React-RuntimeApple.podspec FORÇADO
         script: |
