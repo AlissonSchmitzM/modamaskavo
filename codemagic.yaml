@@ -1,4 +1,4 @@
-# codemagic.yaml - VERSÃO FINAL COM REACT-JSC/FABRIC CORRIGIDO
+# codemagic.yaml - VERSÃO FINAL COM FAST_FLOAT CORRIGIDO
 workflows:
   ios-workflow:
     name: iOS Workflow
@@ -27,13 +27,13 @@ workflows:
             s.homepage               = "https://reactnative.dev/"
             s.license                = "MIT"
             s.author                 = "Meta Platforms, Inc."
-            s.platforms              = { :ios => "15.0" }
+            s.platforms              = { :ios => "12.0" }
             s.source                 = { :path => "." }
             s.source_files           = "*.{h,m,mm,cpp,c}"
             s.header_dir             = "React"
             s.public_header_files    = "*.h"
             s.pod_target_xcconfig    = {
-              'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
+              'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
               'MACOSX_DEPLOYMENT_TARGET' => '10.15'
             }
             
@@ -43,7 +43,7 @@ workflows:
               ss.header_dir = "React"
               ss.public_header_files = "*.h"
               ss.pod_target_xcconfig = {
-                'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
+                'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
                 'MACOSX_DEPLOYMENT_TARGET' => '10.15'
               }
             end
@@ -54,7 +54,7 @@ workflows:
               ss.header_dir = "React"
               ss.public_header_files = "*.h"
               ss.pod_target_xcconfig = {
-                'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
+                'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
                 'MACOSX_DEPLOYMENT_TARGET' => '10.15'
               }
             end
@@ -66,6 +66,148 @@ workflows:
           touch node_modules/react-native/ReactCommon/jsc/dummy.h
           
           echo "✅ React-jsc.podspec com Fabric criado!"
+          
+      - name: HACK BRUTAL - Corrigir fast_float.podspec
+        script: |
+          # Corrigir fast_float.podspec para usar iOS 12.0
+          mkdir -p node_modules/react-native/third-party-podspecs
+          cat > node_modules/react-native/third-party-podspecs/fast_float.podspec << 'EOF'
+          Pod::Spec.new do |s|
+            s.name                   = "fast_float"
+            s.version                = "3.4.0"
+            s.summary                = "Fast and exact implementation of the C++ from_chars functions for float and double types"
+            s.homepage               = "https://github.com/fastfloat/fast_float"
+            s.license                = { :type => "MIT", :file => "LICENSE" }
+            s.author                 = { "Daniel Lemire" => "lemire@gmail.com" }
+            s.platforms              = { :ios => "12.0", :osx => "10.15" }
+            s.source                 = { :git => "https://github.com/fastfloat/fast_float.git", :tag => "v3.4.0" }
+            s.source_files           = "include/**/*.h"
+            s.header_dir             = "fast_float"
+            s.public_header_files    = "include/**/*.h"
+            s.header_mappings_dir    = "include"
+            s.requires_arc           = false
+            s.pod_target_xcconfig    = {
+              'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
+              'MACOSX_DEPLOYMENT_TARGET' => '10.15',
+              'USE_HEADERMAP' => 'NO',
+              'CLANG_CXX_LANGUAGE_STANDARD' => 'c++14',
+              'CLANG_CXX_LIBRARY' => 'libc++'
+            }
+          end
+          EOF
+          
+          echo "✅ fast_float.podspec corrigido para iOS 12.0!"
+          
+      - name: HACK BRUTAL - Corrigir TODOS os third-party-podspecs
+        script: |
+          # Criar diretório third-party-podspecs se não existir
+          mkdir -p node_modules/react-native/third-party-podspecs
+          
+          # Corrigir boost.podspec
+          cat > node_modules/react-native/third-party-podspecs/boost.podspec << 'EOF'
+          Pod::Spec.new do |s|
+            s.name                   = "boost"
+            s.version                = "1.76.0"
+            s.summary                = "Boost C++ Libraries"
+            s.homepage               = "https://www.boost.org/"
+            s.license                = { :type => "Boost Software License", :file => "LICENSE_1_0.txt" }
+            s.author                 = { "Boost" => "boost@boost.org" }
+            s.platforms              = { :ios => "12.0", :osx => "10.15" }
+            s.source                 = { :http => "https://boostorg.jfrog.io/artifactory/main/release/1.76.0/source/boost_1_76_0.tar.bz2" }
+            s.source_files           = "boost/**/*.{h,hpp}"
+            s.header_dir             = "boost"
+            s.public_header_files    = "boost/**/*.{h,hpp}"
+            s.header_mappings_dir    = "."
+            s.requires_arc           = false
+            s.pod_target_xcconfig    = {
+              'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
+              'MACOSX_DEPLOYMENT_TARGET' => '10.15',
+              'USE_HEADERMAP' => 'NO',
+              'CLANG_CXX_LANGUAGE_STANDARD' => 'c++14',
+              'CLANG_CXX_LIBRARY' => 'libc++'
+            }
+          end
+          EOF
+          
+          # Corrigir glog.podspec
+          cat > node_modules/react-native/third-party-podspecs/glog.podspec << 'EOF'
+          Pod::Spec.new do |s|
+            s.name                   = "glog"
+            s.version                = "0.3.5"
+            s.summary                = "Google logging library"
+            s.homepage               = "https://github.com/google/glog"
+            s.license                = { :type => "BSD", :file => "COPYING" }
+            s.author                 = { "Google" => "google-glog@googlegroups.com" }
+            s.platforms              = { :ios => "12.0", :osx => "10.15" }
+            s.source                 = { :git => "https://github.com/google/glog.git", :tag => "v0.3.5" }
+            s.source_files           = "src/**/*.{h,cc}"
+            s.header_dir             = "glog"
+            s.public_header_files    = "src/glog/*.h"
+            s.header_mappings_dir    = "src"
+            s.requires_arc           = false
+            s.pod_target_xcconfig    = {
+              'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
+              'MACOSX_DEPLOYMENT_TARGET' => '10.15',
+              'USE_HEADERMAP' => 'NO',
+              'CLANG_CXX_LANGUAGE_STANDARD' => 'c++14',
+              'CLANG_CXX_LIBRARY' => 'libc++'
+            }
+          end
+          EOF
+          
+          # Corrigir folly.podspec
+          cat > node_modules/react-native/third-party-podspecs/folly.podspec << 'EOF'
+          Pod::Spec.new do |s|
+            s.name                   = "folly"
+            s.version                = "2021.07.22.00"
+            s.summary                = "Facebook's C++ library"
+            s.homepage               = "https://github.com/facebook/folly"
+            s.license                = { :type => "Apache License, Version 2.0", :file => "LICENSE" }
+            s.author                 = { "Facebook" => "folly@fb.com" }
+            s.platforms              = { :ios => "12.0", :osx => "10.15" }
+            s.source                 = { :git => "https://github.com/facebook/folly.git", :tag => "v2021.07.22.00" }
+            s.source_files           = "folly/**/*.{h,cpp}"
+            s.header_dir             = "folly"
+            s.public_header_files    = "folly/**/*.h"
+            s.header_mappings_dir    = "."
+            s.requires_arc           = false
+            s.pod_target_xcconfig    = {
+              'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
+              'MACOSX_DEPLOYMENT_TARGET' => '10.15',
+              'USE_HEADERMAP' => 'NO',
+              'CLANG_CXX_LANGUAGE_STANDARD' => 'c++14',
+              'CLANG_CXX_LIBRARY' => 'libc++'
+            }
+          end
+          EOF
+          
+          # Corrigir fmt.podspec
+          cat > node_modules/react-native/third-party-podspecs/fmt.podspec << 'EOF'
+          Pod::Spec.new do |s|
+            s.name                   = "fmt"
+            s.version                = "6.2.1"
+            s.summary                = "A modern formatting library"
+            s.homepage               = "https://github.com/fmtlib/fmt"
+            s.license                = { :type => "MIT", :file => "LICENSE.rst" }
+            s.author                 = { "Victor Zverovich" => "victor.zverovich@gmail.com" }
+            s.platforms              = { :ios => "12.0", :osx => "10.15" }
+            s.source                 = { :git => "https://github.com/fmtlib/fmt.git", :tag => "6.2.1" }
+            s.source_files           = "include/**/*.h", "src/*.cc"
+            s.header_dir             = "fmt"
+            s.public_header_files    = "include/**/*.h"
+            s.header_mappings_dir    = "include"
+            s.requires_arc           = false
+            s.pod_target_xcconfig    = {
+              'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
+              'MACOSX_DEPLOYMENT_TARGET' => '10.15',
+              'USE_HEADERMAP' => 'NO',
+              'CLANG_CXX_LANGUAGE_STANDARD' => 'c++14',
+              'CLANG_CXX_LIBRARY' => 'libc++'
+            }
+          end
+          EOF
+          
+          echo "✅ Todos os third-party-podspecs corrigidos para iOS 12.0!"
           
       - name: HACK BRUTAL - Criar React-Core.podspec COM SUBSPECS CORRETOS
         script: |
@@ -79,13 +221,13 @@ workflows:
             s.homepage               = "https://reactnative.dev/"
             s.license                = "MIT"
             s.author                 = "Meta Platforms, Inc."
-            s.platforms              = { :ios => "15.0" }
+            s.platforms              = { :ios => "12.0" }
             s.source                 = { :path => "." }
             s.source_files           = "*.{h,m,mm,cpp,c}"
             s.header_dir             = "React"
             s.public_header_files    = "*.h"
             s.pod_target_xcconfig    = {
-              'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
+              'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
               'MACOSX_DEPLOYMENT_TARGET' => '10.15'
             }
             
@@ -95,7 +237,7 @@ workflows:
               ss.header_dir = "React"
               ss.public_header_files = "*.h"
               ss.pod_target_xcconfig = {
-                'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
+                'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
                 'MACOSX_DEPLOYMENT_TARGET' => '10.15'
               }
             end
@@ -105,7 +247,7 @@ workflows:
               ss.header_dir = "React"
               ss.public_header_files = "*.h"
               ss.pod_target_xcconfig = {
-                'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
+                'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
                 'MACOSX_DEPLOYMENT_TARGET' => '10.15'
               }
             end
@@ -115,7 +257,7 @@ workflows:
               ss.header_dir = "React"
               ss.public_header_files = "*.h"
               ss.pod_target_xcconfig = {
-                'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
+                'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
                 'MACOSX_DEPLOYMENT_TARGET' => '10.15'
               }
             end
@@ -125,7 +267,7 @@ workflows:
               ss.header_dir = "React"
               ss.public_header_files = "*.h"
               ss.pod_target_xcconfig = {
-                'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
+                'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
                 'MACOSX_DEPLOYMENT_TARGET' => '10.15'
               }
             end
@@ -135,7 +277,7 @@ workflows:
               ss.header_dir = "React"
               ss.public_header_files = "*.h"
               ss.pod_target_xcconfig = {
-                'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
+                'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
                 'MACOSX_DEPLOYMENT_TARGET' => '10.15'
               }
             end
@@ -145,7 +287,7 @@ workflows:
               ss.header_dir = "React"
               ss.public_header_files = "*.h"
               ss.pod_target_xcconfig = {
-                'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
+                'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
                 'MACOSX_DEPLOYMENT_TARGET' => '10.15'
               }
             end
@@ -155,7 +297,7 @@ workflows:
               ss.header_dir = "React"
               ss.public_header_files = "*.h"
               ss.pod_target_xcconfig = {
-                'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
+                'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
                 'MACOSX_DEPLOYMENT_TARGET' => '10.15'
               }
             end
@@ -165,7 +307,7 @@ workflows:
               ss.header_dir = "React"
               ss.public_header_files = "*.h"
               ss.pod_target_xcconfig = {
-                'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
+                'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
                 'MACOSX_DEPLOYMENT_TARGET' => '10.15'
               }
             end
@@ -175,7 +317,7 @@ workflows:
               ss.header_dir = "React"
               ss.public_header_files = "*.h"
               ss.pod_target_xcconfig = {
-                'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
+                'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
                 'MACOSX_DEPLOYMENT_TARGET' => '10.15'
               }
             end
@@ -185,7 +327,7 @@ workflows:
               ss.header_dir = "React"
               ss.public_header_files = "*.h"
               ss.pod_target_xcconfig = {
-                'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
+                'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
                 'MACOSX_DEPLOYMENT_TARGET' => '10.15'
               }
             end
@@ -206,13 +348,13 @@ workflows:
             s.homepage               = "https://reactnative.dev/"
             s.license                = "MIT"
             s.author                 = "Meta Platforms, Inc."
-            s.platforms              = { :ios => "15.0" }
+            s.platforms              = { :ios => "12.0" }
             s.source                 = { :path => "." }
             s.source_files           = "*.{h,m,mm,cpp,c}"
             s.header_dir             = "ReactCommon"
             s.public_header_files    = "*.h"
             s.pod_target_xcconfig    = {
-              'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
+              'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
               'MACOSX_DEPLOYMENT_TARGET' => '10.15'
             }
             
@@ -222,7 +364,7 @@ workflows:
               ss.header_dir = "ReactCommon"
               ss.public_header_files = "*.h"
               ss.pod_target_xcconfig = {
-                'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
+                'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
                 'MACOSX_DEPLOYMENT_TARGET' => '10.15'
               }
               
@@ -232,7 +374,7 @@ workflows:
                 sss.header_dir = "ReactCommon"
                 sss.public_header_files = "*.h"
                 sss.pod_target_xcconfig = {
-                  'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
+                  'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
                   'MACOSX_DEPLOYMENT_TARGET' => '10.15'
                 }
               end
@@ -243,7 +385,7 @@ workflows:
                 sss.header_dir = "ReactCommon"
                 sss.public_header_files = "*.h"
                 sss.pod_target_xcconfig = {
-                  'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
+                  'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
                   'MACOSX_DEPLOYMENT_TARGET' => '10.15'
                 }
               end
@@ -255,7 +397,7 @@ workflows:
               ss.header_dir = "ReactCommon"
               ss.public_header_files = "*.h"
               ss.pod_target_xcconfig = {
-                'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
+                'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
                 'MACOSX_DEPLOYMENT_TARGET' => '10.15'
               }
             end
@@ -265,7 +407,7 @@ workflows:
               ss.header_dir = "ReactCommon"
               ss.public_header_files = "*.h"
               ss.pod_target_xcconfig = {
-                'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
+                'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
                 'MACOSX_DEPLOYMENT_TARGET' => '10.15'
               }
             end
@@ -275,7 +417,7 @@ workflows:
               ss.header_dir = "ReactCommon"
               ss.public_header_files = "*.h"
               ss.pod_target_xcconfig = {
-                'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
+                'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
                 'MACOSX_DEPLOYMENT_TARGET' => '10.15'
               }
             end
@@ -285,7 +427,7 @@ workflows:
               ss.header_dir = "ReactCommon"
               ss.public_header_files = "*.h"
               ss.pod_target_xcconfig = {
-                'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
+                'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
                 'MACOSX_DEPLOYMENT_TARGET' => '10.15'
               }
             end
@@ -295,7 +437,7 @@ workflows:
               ss.header_dir = "ReactCommon"
               ss.public_header_files = "*.h"
               ss.pod_target_xcconfig = {
-                'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
+                'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
                 'MACOSX_DEPLOYMENT_TARGET' => '10.15'
               }
             end
@@ -320,20 +462,20 @@ workflows:
                 s.homepage               = "https://reactnative.dev/"
                 s.license                = "MIT"
                 s.author                 = "Meta Platforms, Inc."
-                s.platforms              = { :ios => "15.0" }
+                s.platforms              = { :ios => "12.0" }
                 s.source                 = { :path => "." }
                 s.source_files           = "*.{h,m,mm,cpp,c}"
                 s.header_dir             = "React"
                 s.public_header_files    = "*.h"
                 s.pod_target_xcconfig    = {
-                  'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
+                  'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
                   'MACOSX_DEPLOYMENT_TARGET' => '10.15'
                 }
               end
             PODSPEC
             FileUtils.touch("#{path}/dummy.cpp")
             FileUtils.touch("#{path}/dummy.h")
-            puts "✅ Created #{name}.podspec with iOS 15.0 forced"
+            puts "✅ Created #{name}.podspec with iOS 12.0 forced"
           end
 
           # Lista COMPLETA de podspecs necessários
@@ -377,35 +519,35 @@ workflows:
             ["React-RCTActionSheet", "node_modules/react-native/Libraries/ActionSheetIOS"],
             ["React-RCTAlert", "node_modules/react-native/Libraries/Alert"],
             ["React-RCTPushNotification", "node_modules/react-native/Libraries/PushNotificationIOS"],
-            ["React-jsinspector", "node_modules/react-native/ReactCommon/jsinspector-modern"],
-            ["boost", "node_modules/react-native/third-party-podspecs"]
+            ["React-jsinspector", "node_modules/react-native/ReactCommon/jsinspector-modern"]
           ]
 
           podspecs.each do |name, path|
             create_podspec(name, path)
           end
 
-          puts "✅ Todos os podspecs criados com iOS 15.0 forçado!"
+          puts "✅ Todos os podspecs criados com iOS 12.0 forçado!"
           puts "✅ React-jsc/Fabric já foi criado manualmente!"
           puts "✅ React-Core/RCTWebSocket já foi criado manualmente!"
           puts "✅ ReactCommon/turbomodule/core já foi criado manualmente!"
+          puts "✅ fast_float.podspec já foi corrigido manualmente!"
           EOF
           
           # Executar o script Ruby
           ruby fix_podspecs.rb
           
-      - name: Create Podfile with iOS 15.0 ULTRA FORÇADO
+      - name: Create Podfile with iOS 12.0 ULTRA FORÇADO
         script: |
           cat > ios/Podfile << 'EOF'
           require_relative '../node_modules/react-native/scripts/react_native_pods'
           
-          platform :ios, '15.0'
+          platform :ios, '12.0'
           
-          # Forçar iOS 15.0 em TODOS os pods
-          def force_ios_15(installer)
+          # Forçar iOS 12.0 em TODOS os pods
+          def force_ios_12(installer)
             installer.pods_project.targets.each do |target|
               target.build_configurations.each do |config|
-                config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
+                config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.0'
                 config.build_settings['MACOSX_DEPLOYMENT_TARGET'] = '10.15'
                 config.build_settings['RCT_NEW_ARCH_ENABLED'] = 'NO'
                 config.build_settings['ENABLE_BITCODE'] = 'NO'
@@ -421,40 +563,4 @@ workflows:
             use_react_native!(
               :path => config[:reactNativePath],
               :hermes_enabled => false,
-              :fabric_enabled => false,
-              :new_arch_enabled => false
-            )
-            
-            post_install do |installer|
-              react_native_post_install(installer)
-              force_ios_15(installer)
-              
-              # Forçar deployment target em TODOS os pods
-              installer.pods_project.build_configurations.each do |config|
-                config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
-                config.build_settings['MACOSX_DEPLOYMENT_TARGET'] = '10.15'
-              end
-            end
-          end
-          EOF
-      - name: Clean everything
-        script: |
-          cd ios
-          rm -rf Pods
-          rm -f Podfile.lock
-          rm -rf build
-          rm -rf ~/Library/Developer/Xcode/DerivedData
-      - name: Install CocoaPods dependencies
-        script: |
-          cd ios && pod install --repo-update --verbose
-      - name: Build iOS
-        script: |
-          cd ios
-          xcodebuild -workspace "$XCODE_WORKSPACE" \
-                     -scheme "$XCODE_SCHEME" \
-                     -configuration Release \
-                     -destination generic/platform=iOS \
-                     -archivePath build-output/app.xcarchive \
-                     archive | xcpretty
-    artifacts:
-      - ios/build-output/app.xcarchive
+              :fabric_
