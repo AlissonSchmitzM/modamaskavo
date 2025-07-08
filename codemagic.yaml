@@ -1,42 +1,20 @@
-# codemagic.yaml
+# codemagic.yaml - VERSÃO CORRIGIDA COM Firebase
 workflows:
   ios-workflow:
     name: iOS Workflow
     instance_type: mac_mini_m1
-
+    max_build_duration: 120
     environment:
-      groups:
-        - apple_developer_portal_credentials
       vars:
-        XCODE_SCHEME: 'modamaskavo'
-        APP_STORE_CONNECT_KEY_IDENTIFIER: CL49L4J3WD
-        APP_STORE_CONNECT_ISSUER_ID: c2fddb00-7914-4c86-aed9-dbc0c242dad8
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.modamaskavo 
-
+        XCODE_WORKSPACE: "modamaskavo.xcworkspace"
+        XCODE_SCHEME: "modamaskavo"
+      node: 18.17.0
+      xcode: latest
+      cocoapods: default
     scripts:
       - name: Install npm dependencies
         script: |
-          npm install
-          # Verificar se o React Native Firebase está instalado
-          npm list @react-native-firebase/app || npm install @react-native-firebase/app
-
-      - name: Verify Firebase installation
-        script: |
-          # Verificar se o arquivo existe
-          if [ ! -f "node_modules/@react-native-firebase/app/scripts/RNFBCocoaPods.rb" ]; then
-            echo "Arquivo RNFBCocoaPods.rb não encontrado. Reinstalando Firebase..."
-            npm install @react-native-firebase/app
-          fi
-
-      - name: Clean and Install CocoaPods
-        script: |
-          cd ios
-          pod deintegrate || true
-          rm -rf Pods
-          rm -f Podfile.lock
-          pod install
+          npm ci
           
       - name: HACK BRUTAL - Corrigir TODOS os podspecs problemáticos
         script: |
