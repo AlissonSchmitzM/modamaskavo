@@ -599,7 +599,7 @@ workflows:
           cd ios
           pod install --repo-update --verbose
           
-- name: Skip CocoaPods (usando build direto)
+      - name: Skip CocoaPods (usando build direto)
         script: |
           cd ios
           echo "⚠️ Pulando CocoaPods - usando build direto do projeto"
