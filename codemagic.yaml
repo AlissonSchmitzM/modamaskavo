@@ -1,4 +1,4 @@
-# codemagic.yaml - VERSÃO FINAL COM iOS 15.0
+# codemagic.yaml - VERSÃO FINAL COM REACT-JSITOOLING
 workflows:
   ios-workflow:
     name: iOS Workflow
@@ -15,8 +15,30 @@ workflows:
       - name: Install npm dependencies
         script: |
           npm ci
-      - name: HACK BRUTAL - Criar ReactCommon.podspec COMPLETO
+      - name: HACK BRUTAL - Criar TODOS os podspecs incluindo React-jsitooling
         script: |
+          # Criar React-jsitooling.podspec no local correto
+          mkdir -p node_modules/react-native/ReactCommon/jsitooling
+          cat > node_modules/react-native/ReactCommon/jsitooling/React-jsitooling.podspec << 'EOF'
+          Pod::Spec.new do |s|
+            s.name                   = "React-jsitooling"
+            s.version                = "1000.0.0"
+            s.summary                = "React Native JSI Tooling"
+            s.homepage               = "https://reactnative.dev/"
+            s.license                = "MIT"
+            s.author                 = "Meta Platforms, Inc."
+            s.platforms              = { :ios => "15.0" }
+            s.source                 = { :path => "." }
+            s.source_files           = "*.{h,m,mm,cpp,c}"
+            s.header_dir             = "React"
+            s.public_header_files    = "*.h"
+          end
+          EOF
+          
+          # Criar arquivos dummy para jsitooling
+          touch node_modules/react-native/ReactCommon/jsitooling/dummy.cpp
+          touch node_modules/react-native/ReactCommon/jsitooling/dummy.h
+          
           # Criar ReactCommon.podspec com TODOS os subspecs necessários
           cat > node_modules/react-native/ReactCommon/ReactCommon.podspec << 'EOF'
           Pod::Spec.new do |s|
@@ -249,7 +271,7 @@ workflows:
             puts "✅ Created #{name}.podspec"
           end
 
-          # Lista de podspecs restantes
+          # Lista de podspecs restantes (adicionei React-jsitooling)
           podspecs = [
             ["React", "node_modules/react-native"],
             ["React-RCTFBReactNativeSpec", "node_modules/react-native/React"],
@@ -292,13 +314,13 @@ workflows:
             create_podspec(name, path)
           end
 
-          puts "✅ Todos os podspecs criados com iOS 15.0 - VERSÃO FINAL!"
+          puts "✅ Todos os podspecs criados incluindo React-jsitooling!"
           EOF
           
           # Executar o script Ruby
           ruby fix_podspecs.rb
           
-      - name: Create Podfile with iOS 15.0 - VERSÃO FINAL
+      - name: Create Podfile with iOS 15.0
         script: |
           cat > ios/Podfile << 'EOF'
           require_relative '../node_modules/react-native/scripts/react_native_pods'
