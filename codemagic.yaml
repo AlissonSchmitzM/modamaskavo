@@ -1,4 +1,4 @@
-# codemagic.yaml - VERSÃO CORRIGIDA COM iOS 13.0 PARA FIREBASE
+# codemagic.yaml - VERSÃO FINAL COM iOS 15.0
 workflows:
   ios-workflow:
     name: iOS Workflow
@@ -26,7 +26,7 @@ workflows:
             s.homepage               = "https://reactnative.dev/"
             s.license                = "MIT"
             s.author                 = "Meta Platforms, Inc."
-            s.platforms              = { :ios => "13.0" }
+            s.platforms              = { :ios => "15.0" }
             s.source                 = { :path => "." }
             s.source_files           = "*.{h,m,mm,cpp,c}"
             s.header_dir             = "ReactCommon"
@@ -99,7 +99,7 @@ workflows:
             s.homepage               = "https://reactnative.dev/"
             s.license                = "MIT"
             s.author                 = "Meta Platforms, Inc."
-            s.platforms              = { :ios => "13.0" }
+            s.platforms              = { :ios => "15.0" }
             s.source                 = { :path => "." }
             s.source_files           = "*.{h,m,mm,cpp,c}"
             s.header_dir             = "React"
@@ -180,7 +180,7 @@ workflows:
             s.homepage               = "https://reactnative.dev/"
             s.license                = "MIT"
             s.author                 = "Meta Platforms, Inc."
-            s.platforms              = { :ios => "13.0" }
+            s.platforms              = { :ios => "15.0" }
             s.source                 = { :path => "." }
             s.source_files           = "*.{h,m,mm,cpp,c}"
             s.header_dir             = "React"
@@ -212,7 +212,7 @@ workflows:
             s.homepage               = "https://reactnative.dev/"
             s.license                = "MIT"
             s.author                 = "Meta Platforms, Inc."
-            s.platforms              = { :ios => "13.0" }
+            s.platforms              = { :ios => "15.0" }
             s.source                 = { :path => "." }
             s.source_files           = "*.{h,m,mm,cpp,c}"
             s.header_dir             = "React"
@@ -237,7 +237,7 @@ workflows:
                 s.homepage               = "https://reactnative.dev/"
                 s.license                = "MIT"
                 s.author                 = "Meta Platforms, Inc."
-                s.platforms              = { :ios => "13.0" }
+                s.platforms              = { :ios => "15.0" }
                 s.source                 = { :path => "." }
                 s.source_files           = "*.{h,m,mm,cpp,c}"
                 s.header_dir             = "React"
@@ -292,18 +292,18 @@ workflows:
             create_podspec(name, path)
           end
 
-          puts "✅ Todos os podspecs criados com iOS 13.0 para Firebase!"
+          puts "✅ Todos os podspecs criados com iOS 15.0 - VERSÃO FINAL!"
           EOF
           
           # Executar o script Ruby
           ruby fix_podspecs.rb
           
-      - name: Create Podfile with iOS 13.0 para Firebase
+      - name: Create Podfile with iOS 15.0 - VERSÃO FINAL
         script: |
           cat > ios/Podfile << 'EOF'
           require_relative '../node_modules/react-native/scripts/react_native_pods'
           
-          platform :ios, '13.0'
+          platform :ios, '15.0'
           
           target 'modamaskavo' do
             config = use_native_modules!
@@ -320,7 +320,7 @@ workflows:
               
               installer.pods_project.targets.each do |target|
                 target.build_configurations.each do |config|
-                  config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+                  config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
                   config.build_settings['RCT_NEW_ARCH_ENABLED'] = 'NO'
                   config.build_settings['ENABLE_BITCODE'] = 'NO'
                   config.build_settings['CODE_SIGNING_REQUIRED'] = 'NO'
