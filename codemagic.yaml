@@ -11,20 +11,20 @@ workflows:
       node: 18.17.0
       xcode: latest
       cocoapods: default
-    scripts:
+  scripts:
       - name: Install npm dependencies
         script: |
           npm ci
 
       - name: Install dependencies with Firebase
         script: |
-        # Instalar dependências básicas
+          # Instalar dependências básicas
           npm install
-      
-        # Instalar pacotes específicos do Firebase se necessário
+          
+          # Instalar pacotes específicos do Firebase se necessário
           npm install @react-native-firebase/app @react-native-firebase/auth @react-native-firebase/firestore
-      
-        # Verificar instalação
+          
+          # Verificar instalação
           ls -la node_modules/@react-native-firebase/app/scripts/
       - name: HACK BRUTAL - Corrigir TODOS os podspecs problemáticos
         script: |
