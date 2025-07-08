@@ -1,6 +1,6 @@
 workflows:
-  ios-workflow-react-native:
-    name: iOS Build com React Native
+  ios-workflow-debug-pods:
+    name: iOS Build - Debug CocoaPods
     instance_type: mac_mini_m1
     environment:
       node: 18
@@ -11,66 +11,209 @@ workflows:
           echo "📦 Instalando dependências npm..."
           npm install
           
-      - name: Install CocoaPods dependencies
+      - name: Verificar estrutura antes do pod install
         script: |
           cd ios
           
-          echo "📦 Instalando CocoaPods..."
+          echo "🔍 Verificando estrutura antes do pod install..."
           
-          # Instalar CocoaPods se não estiver instalado
-          if ! command -v pod &> /dev/null; then
-            echo "Instalando CocoaPods..."
-            gem install cocoapods
-          fi
-          
-          # Executar pod install
-          pod install --verbose
-          
-          echo "✅ CocoaPods instalado com sucesso!"
-          
-      - name: Verificar estrutura após pod install
-        script: |
-          cd ios
-          
-          echo "🔍 Verificando estrutura após pod install..."
-          
-          # Verificar se workspace foi criado
-          if [ -f "modamaskavo.xcworkspace/contents.xcworkspacedata" ]; then
-            echo "✅ Workspace criado com sucesso!"
+          # Verificar se Podfile existe
+          if [ -f "Podfile" ]; then
+            echo "✅ Podfile encontrado"
+            echo "📄 Conteúdo do Podfile:"
+            cat Podfile
           else
-            echo "❌ Workspace não foi criado!"
-            exit 1
+            echo "❌ Podfile não encontrado!"
+            echo "📁 Arquivos na pasta ios:"
+            ls -la
           fi
           
-          # Verificar se Pods foram instalados
+          # Verificar se já existe workspace
+          if [ -f "modamaskavo.xcworkspace/contents.xcworkspacedata" ]; then
+            echo "✅ Workspace já existe"
+          else
+            echo "ℹ️  Workspace não existe ainda (normal)"
+          fi
+          
+      - name: Install CocoaPods com diagnóstico
+        script: |
+          cd ios
+          
+          echo "📦 Instalando CocoaPods com diagnóstico..."
+          
+          # Verificar se CocoaPods está instalado
+          if ! command -v pod &> /dev/null; then
+            echo "📦 Instalando CocoaPods..."
+            gem install cocoapods
+          else
+            echo "✅ CocoaPods já instalado"
+            pod --version
+          fi
+          
+          # Executar pod install com logs completos
+          echo "🔨 Executando pod install..."
+          pod install --verbose 2>&1 | tee pod-install.log
+          
+          POD_RESULT=$?
+          
+          echo ""
+          echo "📊 Resultado do pod install: $POD_RESULT"
+          
+          if [ $POD_RESULT -eq 0 ]; then
+            echo "✅ pod install executado com sucesso!"
+          else
+            echo "❌ pod install falhou!"
+            echo "🔍 Últimas linhas do log:"
+            tail -30 pod-install.log
+            
+            echo ""
+            echo "🔍 Procurando por erros específicos:"
+            grep -i "error" pod-install.log | head -5
+            grep -i "could not" pod-install.log | head -5
+            grep -i "unable" pod-install.log | head -5
+          fi
+          
+      - name: Verificar o que foi criado
+        script: |
+          cd ios
+          
+          echo "🔍 Verificando o que foi criado após pod install..."
+          
+          # Verificar workspace
+          if [ -f "modamaskavo.xcworkspace/contents.xcworkspacedata" ]; then
+            echo "✅ Workspace criado!"
+          else
+            echo "❌ Workspace NÃO foi criado!"
+            
+            # Verificar se existe algum workspace
+            WORKSPACES=$(find . -name "*.xcworkspace" -type d)
+            if [ -n "$WORKSPACES" ]; then
+              echo "📁 Workspaces encontrados:"
+              echo "$WORKSPACES"
+            else
+              echo "❌ Nenhum workspace encontrado!"
+            fi
+          fi
+          
+          # Verificar Podfile.lock
+          if [ -f "Podfile.lock" ]; then
+            echo "✅ Podfile.lock criado!"
+            echo "📄 Primeiras linhas do Podfile.lock:"
+            head -20 Podfile.lock
+          else
+            echo "❌ Podfile.lock NÃO foi criado!"
+          fi
+          
+          # Verificar pasta Pods
           if [ -d "Pods" ]; then
             echo "✅ Pasta Pods criada!"
-            echo "📁 Pods instalados:"
+            echo "📁 Conteúdo da pasta Pods:"
             ls -la Pods/ | head -10
           else
-            echo "❌ Pasta Pods não encontrada!"
-            exit 1
+            echo "❌ Pasta Pods NÃO foi criada!"
           fi
           
           # Verificar se React foi instalado
-          if [ -d "Pods/React-Core" ] || [ -d "Pods/React" ]; then
-            echo "✅ React encontrado nos Pods!"
+          if [ -d "Pods/React-Core" ] || [ -d "Pods/React" ] || [ -d "Pods/RCT-Folly" ]; then
+            echo "✅ Componentes React encontrados!"
           else
-            echo "❌ React não encontrado nos Pods!"
-            echo "📁 Pods disponíveis:"
-            ls -la Pods/ | grep -i react || echo "Nenhum pod React encontrado"
+            echo "❌ Componentes React NÃO encontrados!"
+            if [ -d "Pods" ]; then
+              echo "📁 Pods disponíveis:"
+              ls -la Pods/ | grep -v "^d.*\.$"
+            fi
           fi
           
-      - name: Build iOS com workspace
+      - name: Tentar corrigir problemas comuns
         script: |
           cd ios
           
+          echo "🔧 Tentando corrigir problemas comuns..."
+          
+          # Se pod install falhou, tentar soluções
+          if [ ! -f "modamaskavo.xcworkspace/contents.xcworkspacedata" ]; then
+            echo "⚠️  Workspace não foi criado, tentando soluções..."
+            
+            # Limpar cache do CocoaPods
+            echo "🧹 Limpando cache do CocoaPods..."
+            pod cache clean --all
+            
+            # Remover Pods e tentar novamente
+            if [ -d "Pods" ]; then
+              echo "🗑️  Removendo Pods existentes..."
+              rm -rf Pods
+            fi
+            
+            if [ -f "Podfile.lock" ]; then
+              echo "🗑️  Removendo Podfile.lock..."
+              rm -f Podfile.lock
+            fi
+            
+            # Tentar pod install novamente
+            echo "🔄 Tentando pod install novamente..."
+            pod install --repo-update --verbose 2>&1 | tee pod-install-retry.log
+            
+            RETRY_RESULT=$?
+            
+            if [ $RETRY_RESULT -eq 0 ]; then
+              echo "✅ pod install funcionou na segunda tentativa!"
+            else
+              echo "❌ pod install falhou novamente!"
+              echo "🔍 Erros da segunda tentativa:"
+              tail -20 pod-install-retry.log
+            fi
+          fi
+          
+      - name: Criar workspace manualmente se necessário
+        script: |
+          cd ios
+          
+          echo "🔧 Verificando se precisamos criar workspace manualmente..."
+          
+          if [ ! -f "modamaskavo.xcworkspace/contents.xcworkspacedata" ]; then
+            echo "⚠️  Criando workspace manualmente..."
+            
+            # Criar estrutura do workspace
+            mkdir -p modamaskavo.xcworkspace
+            
+            # Criar contents.xcworkspacedata
+            cat > modamaskavo.xcworkspace/contents.xcworkspacedata << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <Workspace
+             version = "1.0">
+             <FileRef
+                location = "group:modamaskavo.xcodeproj">
+             </FileRef>
+             <FileRef
+                location = "group:Pods/Pods.xcodeproj">
+             </FileRef>
+          </Workspace>
+          EOF
+            
+            echo "✅ Workspace criado manualmente!"
+          else
+            echo "✅ Workspace já existe!"
+          fi
+          
+      - name: Tentar build com o que temos
+        script: |
+          cd ios
+          
+          echo "🔨 Tentando build com o que temos..."
+          
+          # Decidir se usar workspace ou project
+          if [ -f "modamaskavo.xcworkspace/contents.xcworkspacedata" ]; then
+            echo "📱 Usando workspace para build..."
+            BUILD_TYPE="-workspace modamaskavo.xcworkspace"
+          else
+            echo "📱 Usando project para build..."
+            BUILD_TYPE="-project modamaskavo.xcodeproj"
+          fi
+          
           mkdir -p build
           
-          echo "🔨 Iniciando build com workspace..."
-          
-          # Build usando WORKSPACE (não project) para React Native
-          xcodebuild -workspace modamaskavo.xcworkspace \
+          # Tentar build
+          xcodebuild $BUILD_TYPE \
                      -scheme modamaskavo \
                      -configuration Release \
                      -destination generic/platform=iOS \
@@ -81,7 +224,7 @@ workflows:
                      SKIP_INSTALL=NO \
                      ONLY_ACTIVE_ARCH=NO \
                      -allowProvisioningUpdates \
-                     2>&1 | tee build-success.log
+                     2>&1 | tee build-attempt.log
           
           BUILD_RESULT=$?
           
@@ -89,139 +232,65 @@ workflows:
           echo "📊 Resultado do build: $BUILD_RESULT"
           
           if [ $BUILD_RESULT -eq 0 ]; then
-            echo "✅ BUILD SUCESSO!"
+            echo "✅ Build funcionou!"
             
-            # Verificar se archive foi criado
+            # Verificar archive
             if [ -d "build/modamaskavo.xcarchive" ]; then
-              echo "✅ Archive criado com sucesso!"
+              echo "✅ Archive criado!"
               
-              # Mostrar tamanho do archive
-              ARCHIVE_SIZE=$(du -sh build/modamaskavo.xcarchive | cut -f1)
-              echo "📊 Tamanho do archive: $ARCHIVE_SIZE"
+              # Procurar .app
+              APP_PATH=$(find build/modamaskavo.xcarchive -name "*.app" -type d | head -1)
               
-              # Procurar por .app
-              echo "📱 Procurando .app no archive:"
-              find build/modamaskavo.xcarchive -name "*.app" -type d -exec ls -lah {} \;
-              
-            else
-              echo "❌ Archive não foi criado!"
+              if [ -n "$APP_PATH" ]; then
+                echo "📱 App encontrado: $APP_PATH"
+                
+                # Criar IPA
+                cd build
+                cp -r "$APP_PATH" ./modamaskavo.app
+                mkdir -p Payload
+                cp -r modamaskavo.app Payload/
+                zip -r modamaskavo.ipa Payload/
+                
+                if [ -f "modamaskavo.ipa" ]; then
+                  IPA_SIZE=$(du -sh modamaskavo.ipa | cut -f1)
+                  echo "✅ IPA criado: $IPA_SIZE"
+                  cp modamaskavo.ipa ../../modamaskavo-debug.ipa
+                fi
+              fi
             fi
           else
             echo "❌ Build falhou!"
             echo "🔍 Últimas linhas do erro:"
-            tail -50 build-success.log
+            tail -20 build-attempt.log
           fi
           
-      - name: Criar IPA do archive
+      - name: Relatório de diagnóstico
         script: |
+          echo "📋 RELATÓRIO DE DIAGNÓSTICO"
+          echo "=========================="
+          
           cd ios
           
-          echo "📦 Criando IPA do archive..."
+          echo "📊 Status dos arquivos:"
+          echo "- Podfile: $([ -f "Podfile" ] && echo "✅" || echo "❌")"
+          echo "- Podfile.lock: $([ -f "Podfile.lock" ] && echo "✅" || echo "❌")"
+          echo "- Workspace: $([ -f "modamaskavo.xcworkspace/contents.xcworkspacedata" ] && echo "✅" || echo "❌")"
+          echo "- Pasta Pods: $([ -d "Pods" ] && echo "✅" || echo "❌")"
           
-          # Verificar se archive existe
-          if [ -d "build/modamaskavo.xcarchive" ]; then
-            echo "✅ Archive encontrado!"
-            
-            # Procurar por .app no archive
-            APP_PATH=$(find build/modamaskavo.xcarchive -name "*.app" -type d | head -1)
-            
-            if [ -n "$APP_PATH" ]; then
-              echo "📱 App encontrado: $APP_PATH"
-              
-              # Verificar tamanho do app
-              APP_SIZE=$(du -sh "$APP_PATH" | cut -f1)
-              FILE_COUNT=$(find "$APP_PATH" -type f | wc -l)
-              
-              echo "📊 Tamanho do app: $APP_SIZE"
-              echo "📄 Número de arquivos: $FILE_COUNT"
-              
-              # Listar alguns arquivos para verificar se está completo
-              echo "📄 Alguns arquivos do app:"
-              find "$APP_PATH" -type f | head -10
-              
-              # Criar IPA
-              cd build
-              
-              # Copiar .app
-              cp -r "$APP_PATH" ./modamaskavo.app
-              
-              # Criar estrutura IPA
-              mkdir -p Payload
-              cp -r modamaskavo.app Payload/
-              
-              # Criar ZIP/IPA
-              zip -r modamaskavo.ipa Payload/
-              
-              # Verificar IPA criado
-              if [ -f "modamaskavo.ipa" ]; then
-                IPA_SIZE=$(du -sh modamaskavo.ipa | cut -f1)
-                IPA_BYTES=$(wc -c < modamaskavo.ipa)
-                
-                echo "✅ IPA criado com sucesso!"
-                echo "📊 Tamanho do IPA: $IPA_SIZE ($IPA_BYTES bytes)"
-                
-                # Copiar para raiz
-                cp modamaskavo.ipa ../../modamaskavo-react-native.ipa
-                
-                if [ $IPA_BYTES -gt 5000000 ]; then  # Maior que 5MB
-                  echo "🎉 IPA parece válido para React Native!"
-                else
-                  echo "⚠️  IPA ainda pequeno para React Native"
-                fi
-                
-                # Verificar conteúdo do IPA
-                echo "📄 Verificando conteúdo do IPA:"
-                unzip -l modamaskavo.ipa | head -20
-                
-              else
-                echo "❌ Falha ao criar IPA!"
-              fi
-            else
-              echo "❌ Nenhum .app encontrado no archive!"
-            fi
-          else
-            echo "❌ Archive não existe!"
-          fi
-          
-      - name: Relatório final
-        script: |
-          echo "📋 RELATÓRIO FINAL"
-          echo "=================="
-          
-          # Verificar IPAs criados
-          echo "📱 IPAs encontrados:"
-          find . -name "*.ipa" -exec ls -lh {} \;
-          
-          # Verificar se build foi bem-sucedido
-          if [ -f "ios/build-success.log" ]; then
-            echo ""
-            echo "📊 Status do build:"
-            if grep -q "BUILD SUCCEEDED" ios/build-success.log; then
-              echo "✅ Build bem-sucedido!"
-            else
-              echo "❌ Build falhou"
-            fi
-          fi
-          
-          # Verificar se CocoaPods funcionou
           echo ""
-          echo "📊 Status CocoaPods:"
-          if [ -f "ios/Podfile.lock" ]; then
-            echo "✅ Podfile.lock encontrado"
-          else
-            echo "❌ Podfile.lock não encontrado"
-          fi
+          echo "📱 IPAs encontrados:"
+          find .. -name "*.ipa" -exec ls -lh {} \;
           
-          if [ -d "ios/Pods" ]; then
-            echo "✅ Pods instalados"
-          else
-            echo "❌ Pods não instalados"
-          fi
+          echo ""
+          echo "📄 Logs disponíveis:"
+          ls -la *.log 2>/dev/null || echo "Nenhum log encontrado"
           
     artifacts:
+      - ios/pod-install.log
+      - ios/pod-install-retry.log
+      - ios/build-attempt.log
+      - ios/Podfile.lock
       - ios/build/*.ipa
       - ios/build/*.app
       - ios/build/*.xcarchive
-      - ios/build-success.log
-      - ios/Podfile.lock
       - "*.ipa"
