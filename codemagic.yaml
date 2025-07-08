@@ -1,4 +1,4 @@
-# codemagic.yaml - VERSÃO CORRIGIDA COM React-RuntimeApple
+# codemagic.yaml - VERSÃO CORRIGIDA COM Firebase
 workflows:
   ios-workflow:
     name: iOS Workflow
@@ -100,6 +100,27 @@ workflows:
           EOF
           
           echo "✅ Third-party podspecs corrigidos!"
+          
+      - name: HACK BRUTAL - Corrigir Firebase Auth podspec
+        script: |
+          # Corrigir RNFBAuth.podspec para iOS 12.0
+          if [ -f "node_modules/@react-native-firebase/auth/RNFBAuth.podspec" ]; then
+            echo "Corrigindo RNFBAuth.podspec..."
+            sed -i '' 's/s.ios.deployment_target = .*/s.ios.deployment_target = "12.0"/' node_modules/@react-native-firebase/auth/RNFBAuth.podspec
+            sed -i '' 's/s.platforms = .*/s.platforms = { :ios => "12.0", :osx => "10.15" }/' node_modules/@react-native-firebase/auth/RNFBAuth.podspec
+            echo "✅ RNFBAuth.podspec corrigido!"
+          fi
+          
+          # Corrigir todos os outros podspecs do Firebase
+          for firebase_module in app auth firestore storage messaging crashlytics analytics; do
+            podspec_path="node_modules/@react-native-firebase/${firebase_module}/RNFB${firebase_module^}.podspec"
+            if [ -f "$podspec_path" ]; then
+              echo "Corrigindo RNFB${firebase_module^}.podspec..."
+              sed -i '' 's/s.ios.deployment_target = .*/s.ios.deployment_target = "12.0"/' "$podspec_path"
+              sed -i '' 's/s.platforms = .*/s.platforms = { :ios => "12.0", :osx => "10.15" }/' "$podspec_path"
+              echo "✅ RNFB${firebase_module^}.podspec corrigido!"
+            fi
+          done
           
       - name: HACK BRUTAL - Criar React-RuntimeApple.podspec FORÇADO
         script: |
@@ -230,10 +251,11 @@ workflows:
           # Executar o script Ruby
           ruby fix_podspecs.rb
           
-      - name: Create Podfile with iOS 12.0 ULTRA FORÇADO
+      - name: Create Podfile with iOS 12.0 ULTRA FORÇADO + Firebase
         script: |
           cat > ios/Podfile << 'EOF'
           require_relative '../node_modules/react-native/scripts/react_native_pods'
+          require_relative '../node_modules/@react-native-firebase/app/scripts/RNFBCocoaPods.rb'
           
           platform :ios, '12.0'
           
@@ -246,6 +268,9 @@ workflows:
               :fabric_enabled => false,
               :new_arch_enabled => false
             )
+            
+            # Firebase
+            use_rnfb_pods!
             
             post_install do |installer|
               react_native_post_install(installer)
@@ -263,13 +288,18 @@ workflows:
                   config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
                   config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
                   config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = 'FOLLY_NO_CONFIG FOLLY_MOBILE FOLLY_USE_LIBCPP'
+                  
+                  # Forçar iOS 12.0 especificamente para Firebase
+                  if target.name.include?('RNFB') || target.name.include?('Firebase')
+                    config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.0'
+                  end
                 end
               end
             end
           end
           EOF
           
-          echo "✅ Podfile criado com iOS 12.0 ULTRA FORÇADO!"
+          echo "✅ Podfile criado com iOS 12.0 ULTRA FORÇADO + Firebase!"
           
       - name: Install CocoaPods dependencies
         script: |
@@ -374,3 +404,4 @@ workflows:
       - ios/exportOptions.plist
       - ios/Podfile
       - ios/Podfile.lock
+    
