@@ -1,68 +1,70 @@
 workflows:
   ios-workflow:
-    name: iOS Build Definitivo
+    name: iOS Build Sem Dependências
     instance_type: mac_mini_m1
     environment:
       node: 18
       xcode: latest
-      cocoapods: default
     scripts:
-      - name: Install dependencies
+      - name: Install npm dependencies only
         script: |
-          npm install
+          npm install --production
           
-      - name: Create minimal Podfile
+      - name: Skip CocoaPods - Use pre-built workspace
         script: |
-          cat > ios/Podfile << 'EOF'
-          platform :ios, '13.0'
+          echo "Pulando CocoaPods, usando workspace existente..."
+          cd ios
           
-          target 'modamaskavo' do
-            # Apenas o essencial
-            pod 'React', :path => '../node_modules/react-native', :subspecs => [
-              'Core',
-              'CxxBridge',
-              'DevSupport',
-              'RCTActionSheet',
-              'RCTAnimation',
-              'RCTBlob',
-              'RCTImage',
-              'RCTLinking',
-              'RCTNetwork',
-              'RCTSettings',
-              'RCTText',
-              'RCTVibration',
-              'RCTWebSocket',
-            ]
-            
-            # Yoga
-            pod 'Yoga', :path => '../node_modules/react-native/ReactCommon/yoga'
-            
-            # Third party
-            pod 'DoubleConversion', :podspec => '../node_modules/react-native/third-party-podspecs/DoubleConversion.podspec'
-            pod 'glog', :podspec => '../node_modules/react-native/third-party-podspecs/glog.podspec'
-            
-            # Suas libs
-            pod 'react-native-safe-area-context', :path => '../node_modules/react-native-safe-area-context'
-            pod 'react-native-webview', :path => '../node_modules/react-native-webview'
-            
-            post_install do |installer|
-              installer.pods_project.targets.each do |target|
-                target.build_configurations.each do |config|
-                  config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
-                end
-              end
-            end
-          end
+          # Verificar se workspace existe
+          if [ -d "modamaskavo.xcworkspace" ]; then
+            echo "✅ Workspace encontrado!"
+          else
+            echo "❌ Workspace não existe, criando minimal..."
+            # Criar workspace mínimo
+            mkdir -p modamaskavo.xcworkspace
+            cat > modamaskavo.xcworkspace/contents.xcworkspacedata << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <Workspace version="1.0">
+             <FileRef location="group:modamaskavo.xcodeproj">
+             </FileRef>
+          </Workspace>
           EOF
+          fi
           
-      - name: Pod install
-        script: |
-          cd ios && pod install
-          
-      - name: Build
+      - name: Build iOS app DIRETO
         script: |
           cd ios
-          xcodebuild -workspace modamaskavo.xcworkspace -scheme modamaskavo -configuration Release -destination generic/platform=iOS archive -archivePath build/app.xcarchive
+          
+          # Tentar build direto do projeto
+          xcodebuild -project modamaskavo.xcodeproj \
+                     -scheme modamaskavo \
+                     -configuration Release \
+                     -destination generic/platform=iOS \
+                     -archivePath build/modamaskavo.xcarchive \
+                     archive \
+                     CODE_SIGNING_REQUIRED=NO \
+                     CODE_SIGNING_ALLOWED=NO
+          
+          echo "✅ Build concluído!"
+          
+      - name: Create IPA manually
+        script: |
+          cd ios/build
+          
+          # Extrair .app do archive
+          cp -r modamaskavo.xcarchive/Products/Applications/modamaskavo.app ./
+          
+          # Criar Payload
+          mkdir Payload
+          cp -r modamaskavo.app Payload/
+          
+          # Criar IPA
+          zip -r modamaskavo.ipa Payload/
+          
+          echo "✅ IPA criado manualmente!"
+          ls -la *.ipa
           
     artifacts:
+      - ios/build/*.ipa
+      - ios/build/*.app
       - ios/build/*.xcarchive
