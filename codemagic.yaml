@@ -1,4 +1,4 @@
-# codemagic.yaml - VERSÃO CORRIGIDA COM Node.js atualizado
+# codemagic.yaml - VERSÃO COM Node.js 18.17.0 (com workarounds)
 workflows:
   ios-workflow:
     name: iOS Workflow
@@ -11,7 +11,7 @@ workflows:
         XCODE_WORKSPACE: "modamaskavo.xcworkspace"
         XCODE_SCHEME: "modamaskavo"
         BUNDLE_ID: "com.modamaskavo"
-      node: 18.20.0  # Atualizado para versão compatível
+      node: 18.17.0
       xcode: latest
       cocoapods: default
       ios_signing:
@@ -19,38 +19,27 @@ workflows:
         bundle_identifier: com.modamaskavo
 
     scripts:
-      - name: Check Node version
-        script: |
-          node --version
-          npm --version
-
       - name: Install npm dependencies
         script: |
-          npm ci --legacy-peer-deps
+          # Ignorar avisos de engine e usar legacy peer deps
+          npm ci --legacy-peer-deps --engine-strict=false
 
-      - name: Install Firebase dependencies
+      - name: Install Firebase dependencies (if needed)
         script: |
-          # Instalar Firebase apenas se necessário
-          if ! npm list @react-native-firebase/app > /dev/null 2>&1; then
-            echo "Instalando Firebase..."
-            npm install @react-native-firebase/app --legacy-peer-deps
+          # Verificar se Firebase está no package.json
+          if grep -q "@react-native-firebase/app" package.json; then
+            echo "Firebase encontrado no package.json, instalando..."
+            npm install @react-native-firebase/app @react-native-firebase/auth @react-native-firebase/firestore --legacy-peer-deps --engine-strict=false
+          else
+            echo "Firebase não está no package.json, pulando instalação..."
           fi
           
           # Verificar se foi instalado
           if [ -f "node_modules/@react-native-firebase/app/scripts/RNFBCocoaPods.rb" ]; then
-            echo "✅ Firebase instalado com sucesso"
+            echo "✅ Firebase disponível"
             ls -la node_modules/@react-native-firebase/app/scripts/
           else
-            echo "❌ Firebase não foi instalado corretamente"
-            echo "Tentando instalar novamente..."
-            npm install @react-native-firebase/app @react-native-firebase/auth @react-native-firebase/firestore --legacy-peer-deps
-            
-            # Verificar novamente
-            if [ -f "node_modules/@react-native-firebase/app/scripts/RNFBCocoaPods.rb" ]; then
-              echo "✅ Firebase instalado na segunda tentativa"
-            else
-              echo "❌ Falha ao instalar Firebase. Continuando sem Firebase..."
-            fi
+            echo "⚠️ Firebase não disponível, mas continuando..."
           fi
 
       - name: Install CocoaPods dependencies
@@ -76,3 +65,9 @@ workflows:
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        submit_to_app_store: false
