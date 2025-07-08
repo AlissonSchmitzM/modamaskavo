@@ -509,7 +509,52 @@ workflows:
           end
           EOF
           
-          echo "✅ DoubleConversion.podspec criado com iOS 12.0 FORÇADO!"    
+          echo "✅ DoubleConversion.podspec criado com iOS 12.0 FORÇADO!"   
+            - name: HACK BRUTAL - Corrigir RNBootSplash.podspec para iOS 12.0
+        script: |
+          echo "Corrigindo RNBootSplash.podspec para iOS 12.0..."
+          
+          # Encontrar o arquivo RNBootSplash.podspec
+          BOOTSPLASH_PODSPEC=$(find node_modules/react-native-bootsplash -name "*.podspec" -type f)
+          
+          if [ -n "$BOOTSPLASH_PODSPEC" ]; then
+            echo "Encontrado RNBootSplash.podspec em: $BOOTSPLASH_PODSPEC"
+            
+            # Fazer backup
+            cp "$BOOTSPLASH_PODSPEC" "$BOOTSPLASH_PODSPEC.backup"
+            
+            # Reescrever completamente o arquivo
+            cat > "$BOOTSPLASH_PODSPEC" << 'EOF'
+          Pod::Spec.new do |s|
+            s.name                   = "RNBootSplash"
+            s.version                = "5.7.1"
+            s.summary                = "Display a splash screen during app launch. Hide it when you are ready."
+            s.homepage               = "https://github.com/zoontek/react-native-bootsplash"
+            s.license                = "MIT"
+            s.author                 = { "Mathieu Acthernoene" => "zoontek@gmail.com" }
+            s.platforms              = { :ios => "12.0", :osx => "10.15" }
+            s.source                 = { :path => "." }
+            s.source_files           = "ios/**/*.{h,m,mm,swift}"
+            s.header_dir             = "RNBootSplash"
+            s.public_header_files    = "ios/**/*.h"
+            s.requires_arc           = true
+            s.ios.deployment_target  = "12.0"
+            s.dependency             "React-Core"
+            s.pod_target_xcconfig    = {
+              'IPHONEOS_DEPLOYMENT_TARGET' => '12.0',
+              'MACOSX_DEPLOYMENT_TARGET' => '10.15',
+              'USE_HEADERMAP' => 'NO',
+              'CLANG_CXX_LANGUAGE_STANDARD' => 'c++17',
+              'CLANG_CXX_LIBRARY' => 'libc++',
+              'GCC_PREPROCESSOR_DEFINITIONS' => 'FOLLY_NO_CONFIG FOLLY_MOBILE FOLLY_USE_LIBCPP'
+            }
+          end
+          EOF
+            
+            echo "✅ RNBootSplash.podspec reescrito para iOS 12.0!"
+          else
+            echo "⚠️ RNBootSplash.podspec não encontrado"
+          fi    
       - name: Install CocoaPods dependencies
         script: |
           cd ios
