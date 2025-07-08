@@ -1,6 +1,6 @@
 workflows:
-  ios-workflow-fixed:
-    name: iOS Build com CocoaPods Completo
+  ios-workflow-react-native:
+    name: iOS Build com React Native
     instance_type: mac_mini_m1
     environment:
       node: 18
@@ -8,148 +8,69 @@ workflows:
     scripts:
       - name: Install npm dependencies
         script: |
-          npm install --production
+          echo "📦 Instalando dependências npm..."
+          npm install
           
-      - name: Criar Podfile.lock e estrutura CocoaPods REAL
+      - name: Install CocoaPods dependencies
         script: |
           cd ios
           
-          echo "🔧 Criando Podfile.lock e estrutura CocoaPods completa..."
+          echo "📦 Instalando CocoaPods..."
           
-          # Criar Podfile.lock (arquivo que o Xcode está procurando)
-          cat > Podfile.lock << 'EOF'
-          PODS:
-
-          DEPENDENCIES:
-
-          SPEC REPOS:
-            trunk:
-
-          SPEC CHECKSUMS:
-
-          PODFILE CHECKSUM: d41d8cd98f00b204e9800998ecf8427e
-
-          COCOAPODS: 1.12.0
-          EOF
+          # Instalar CocoaPods se não estiver instalado
+          if ! command -v pod &> /dev/null; then
+            echo "Instalando CocoaPods..."
+            gem install cocoapods
+          fi
           
-          # Criar estrutura completa do CocoaPods
-          mkdir -p "Pods/Target Support Files/Pods-modamaskavo"
-          mkdir -p "Target Support Files/Pods-modamaskavo"
+          # Executar pod install
+          pod install --verbose
           
-          # Arquivo xcconfig
-          cat > "Pods/Target Support Files/Pods-modamaskavo/Pods-modamaskavo.release.xcconfig" << 'EOF'
-          CLANG_ENABLE_OBJC_ARC = YES
-          IPHONEOS_DEPLOYMENT_TARGET = 11.0
-          OTHER_LDFLAGS = 
-          PODS_BUILD_DIR = ${BUILD_DIR}
-          PODS_CONFIGURATION_BUILD_DIR = ${PODS_BUILD_DIR}/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)
-          PODS_PODFILE_DIR_PATH = ${SRCROOT}/.
-          PODS_ROOT = ${SRCROOT}/Pods
-          EOF
+          echo "✅ CocoaPods instalado com sucesso!"
           
-          # Criar xcconfig para debug também
-          cat > "Pods/Target Support Files/Pods-modamaskavo/Pods-modamaskavo.debug.xcconfig" << 'EOF'
-          CLANG_ENABLE_OBJC_ARC = YES
-          IPHONEOS_DEPLOYMENT_TARGET = 11.0
-          OTHER_LDFLAGS = 
-          PODS_BUILD_DIR = ${BUILD_DIR}
-          PODS_CONFIGURATION_BUILD_DIR = ${PODS_BUILD_DIR}/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)
-          PODS_PODFILE_DIR_PATH = ${SRCROOT}/.
-          PODS_ROOT = ${SRCROOT}/Pods
-          EOF
-          
-          # Copiar para Target Support Files
-          cp "Pods/Target Support Files/Pods-modamaskavo/"*.xcconfig "Target Support Files/Pods-modamaskavo/"
-          
-          # Criar todos os arquivos xcfilelist (VAZIOS)
-          touch "Pods/Target Support Files/Pods-modamaskavo/Pods-modamaskavo-frameworks-Release-input-files.xcfilelist"
-          touch "Pods/Target Support Files/Pods-modamaskavo/Pods-modamaskavo-frameworks-Release-output-files.xcfilelist"
-          touch "Pods/Target Support Files/Pods-modamaskavo/Pods-modamaskavo-resources-Release-input-files.xcfilelist"
-          touch "Pods/Target Support Files/Pods-modamaskavo/Pods-modamaskavo-resources-Release-output-files.xcfilelist"
-          
-          # Criar para debug também
-          touch "Pods/Target Support Files/Pods-modamaskavo/Pods-modamaskavo-frameworks-Debug-input-files.xcfilelist"
-          touch "Pods/Target Support Files/Pods-modamaskavo/Pods-modamaskavo-frameworks-Debug-output-files.xcfilelist"
-          touch "Pods/Target Support Files/Pods-modamaskavo/Pods-modamaskavo-resources-Debug-input-files.xcfilelist"
-          touch "Pods/Target Support Files/Pods-modamaskavo/Pods-modamaskavo-resources-Debug-output-files.xcfilelist"
-          
-          # Copiar para Target Support Files
-          cp "Pods/Target Support Files/Pods-modamaskavo/"*.xcfilelist "Target Support Files/Pods-modamaskavo/"
-          
-          # Criar scripts vazios mas funcionais
-          cat > "Pods/Target Support Files/Pods-modamaskavo/Pods-modamaskavo-frameworks.sh" << 'EOF'
-          #!/bin/sh
-          set -e
-          set -u
-          set -o pipefail
-          
-          echo "CocoaPods frameworks script (vazio)"
-          exit 0
-          EOF
-          
-          cat > "Pods/Target Support Files/Pods-modamaskavo/Pods-modamaskavo-resources.sh" << 'EOF'
-          #!/bin/sh
-          set -e
-          set -u
-          set -o pipefail
-          
-          echo "CocoaPods resources script (vazio)"
-          exit 0
-          EOF
-          
-          # Tornar executáveis
-          chmod +x "Pods/Target Support Files/Pods-modamaskavo/"*.sh
-          
-          # Copiar para Target Support Files
-          cp "Pods/Target Support Files/Pods-modamaskavo/"*.sh "Target Support Files/Pods-modamaskavo/"
-          
-          # Criar Manifest.lock (arquivo que o script está verificando)
-          cp Podfile.lock "Pods/Manifest.lock"
-          
-          echo "✅ Podfile.lock e estrutura CocoaPods completa criados!"
-          
-      - name: Verificar estrutura CocoaPods
+      - name: Verificar estrutura após pod install
         script: |
           cd ios
           
-          echo "🔍 Verificando estrutura CocoaPods..."
+          echo "🔍 Verificando estrutura após pod install..."
           
-          # Verificar arquivos essenciais
-          REQUIRED_FILES=(
-            "Podfile.lock"
-            "Pods/Manifest.lock"
-            "Pods/Target Support Files/Pods-modamaskavo/Pods-modamaskavo.release.xcconfig"
-            "Pods/Target Support Files/Pods-modamaskavo/Pods-modamaskavo-frameworks.sh"
-            "Pods/Target Support Files/Pods-modamaskavo/Pods-modamaskavo-resources.sh"
-          )
-          
-          ALL_OK=true
-          for file in "${REQUIRED_FILES[@]}"; do
-            if [ -f "$file" ]; then
-              echo "✅ $file"
-            else
-              echo "❌ $file - FALTANDO!"
-              ALL_OK=false
-            fi
-          done
-          
-          if [ "$ALL_OK" = true ]; then
-            echo "✅ Estrutura CocoaPods completa!"
+          # Verificar se workspace foi criado
+          if [ -f "modamaskavo.xcworkspace/contents.xcworkspacedata" ]; then
+            echo "✅ Workspace criado com sucesso!"
           else
-            echo "❌ Estrutura CocoaPods incompleta!"
+            echo "❌ Workspace não foi criado!"
             exit 1
           fi
           
-      - name: Build iOS com CocoaPods funcionando
+          # Verificar se Pods foram instalados
+          if [ -d "Pods" ]; then
+            echo "✅ Pasta Pods criada!"
+            echo "📁 Pods instalados:"
+            ls -la Pods/ | head -10
+          else
+            echo "❌ Pasta Pods não encontrada!"
+            exit 1
+          fi
+          
+          # Verificar se React foi instalado
+          if [ -d "Pods/React-Core" ] || [ -d "Pods/React" ]; then
+            echo "✅ React encontrado nos Pods!"
+          else
+            echo "❌ React não encontrado nos Pods!"
+            echo "📁 Pods disponíveis:"
+            ls -la Pods/ | grep -i react || echo "Nenhum pod React encontrado"
+          fi
+          
+      - name: Build iOS com workspace
         script: |
           cd ios
           
           mkdir -p build
           
-          echo "🔨 Iniciando build com CocoaPods funcionando..."
+          echo "🔨 Iniciando build com workspace..."
           
-          # Build sem -quiet para ver progresso
-          xcodebuild -project modamaskavo.xcodeproj \
+          # Build usando WORKSPACE (não project) para React Native
+          xcodebuild -workspace modamaskavo.xcworkspace \
                      -scheme modamaskavo \
                      -configuration Release \
                      -destination generic/platform=iOS \
@@ -188,7 +109,7 @@ workflows:
           else
             echo "❌ Build falhou!"
             echo "🔍 Últimas linhas do erro:"
-            tail -30 build-success.log
+            tail -50 build-success.log
           fi
           
       - name: Criar IPA do archive
@@ -214,6 +135,10 @@ workflows:
               echo "📊 Tamanho do app: $APP_SIZE"
               echo "📄 Número de arquivos: $FILE_COUNT"
               
+              # Listar alguns arquivos para verificar se está completo
+              echo "📄 Alguns arquivos do app:"
+              find "$APP_PATH" -type f | head -10
+              
               # Criar IPA
               cd build
               
@@ -236,13 +161,18 @@ workflows:
                 echo "📊 Tamanho do IPA: $IPA_SIZE ($IPA_BYTES bytes)"
                 
                 # Copiar para raiz
-                cp modamaskavo.ipa ../../modamaskavo-final.ipa
+                cp modamaskavo.ipa ../../modamaskavo-react-native.ipa
                 
-                if [ $IPA_BYTES -gt 1000000 ]; then  # Maior que 1MB
-                  echo "🎉 IPA parece válido (maior que 1MB)!"
+                if [ $IPA_BYTES -gt 5000000 ]; then  # Maior que 5MB
+                  echo "🎉 IPA parece válido para React Native!"
                 else
-                  echo "⚠️  IPA ainda pequeno, mas melhor que antes"
+                  echo "⚠️  IPA ainda pequeno para React Native"
                 fi
+                
+                # Verificar conteúdo do IPA
+                echo "📄 Verificando conteúdo do IPA:"
+                unzip -l modamaskavo.ipa | head -20
+                
               else
                 echo "❌ Falha ao criar IPA!"
               fi
@@ -273,13 +203,19 @@ workflows:
             fi
           fi
           
-          # Verificar estrutura CocoaPods
+          # Verificar se CocoaPods funcionou
           echo ""
           echo "📊 Status CocoaPods:"
           if [ -f "ios/Podfile.lock" ]; then
-            echo "✅ Podfile.lock criado"
+            echo "✅ Podfile.lock encontrado"
           else
             echo "❌ Podfile.lock não encontrado"
+          fi
+          
+          if [ -d "ios/Pods" ]; then
+            echo "✅ Pods instalados"
+          else
+            echo "❌ Pods não instalados"
           fi
           
     artifacts:
@@ -287,4 +223,5 @@ workflows:
       - ios/build/*.app
       - ios/build/*.xcarchive
       - ios/build-success.log
+      - ios/Podfile.lock
       - "*.ipa"
