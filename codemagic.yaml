@@ -1,4 +1,4 @@
-# codemagic.yaml - VERSÃO FINAL COM REACT-JSITOOLING E JSINSPECTORTRACING
+# codemagic.yaml - VERSÃO FINAL COM REACT-FEATUREFLAGS
 workflows:
   ios-workflow:
     name: iOS Workflow
@@ -15,8 +15,30 @@ workflows:
       - name: Install npm dependencies
         script: |
           npm ci
-      - name: HACK BRUTAL - Criar TODOS os podspecs incluindo React-jsitooling E jsinspectortracing
+      - name: HACK BRUTAL - Criar TODOS os podspecs incluindo React-featureflags
         script: |
+          # Criar React-featureflags.podspec no local correto
+          mkdir -p node_modules/react-native/ReactCommon/react/featureflags
+          cat > node_modules/react-native/ReactCommon/react/featureflags/React-featureflags.podspec << 'EOF'
+          Pod::Spec.new do |s|
+            s.name                   = "React-featureflags"
+            s.version                = "1000.0.0"
+            s.summary                = "React Native Feature Flags"
+            s.homepage               = "https://reactnative.dev/"
+            s.license                = "MIT"
+            s.author                 = "Meta Platforms, Inc."
+            s.platforms              = { :ios => "15.0" }
+            s.source                 = { :path => "." }
+            s.source_files           = "*.{h,m,mm,cpp,c}"
+            s.header_dir             = "React"
+            s.public_header_files    = "*.h"
+          end
+          EOF
+          
+          # Criar arquivos dummy para featureflags
+          touch node_modules/react-native/ReactCommon/react/featureflags/dummy.cpp
+          touch node_modules/react-native/ReactCommon/react/featureflags/dummy.h
+          
           # Criar React-jsitooling.podspec no local correto
           mkdir -p node_modules/react-native/ReactCommon/jsitooling
           cat > node_modules/react-native/ReactCommon/jsitooling/React-jsitooling.podspec << 'EOF'
@@ -293,7 +315,7 @@ workflows:
             puts "✅ Created #{name}.podspec"
           end
 
-          # Lista COMPLETA de podspecs incluindo React-jsinspectortracing
+          # Lista COMPLETA de podspecs incluindo React-featureflags
           podspecs = [
             ["React", "node_modules/react-native"],
             ["React-RCTFBReactNativeSpec", "node_modules/react-native/React"],
@@ -336,7 +358,7 @@ workflows:
             create_podspec(name, path)
           end
 
-          puts "✅ Todos os podspecs criados incluindo React-jsitooling e React-jsinspectortracing!"
+          puts "✅ Todos os podspecs criados incluindo React-featureflags!"
           EOF
           
           # Executar o script Ruby
