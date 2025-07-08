@@ -1,20 +1,20 @@
 workflows:
-  ios-workflow:
-    name: iOS Build Sem Dependências
+  ios-workflow-debug:
+    name: iOS Build com Diagnóstico Completo
     instance_type: mac_mini_m1
     environment:
       node: 18
       xcode: latest
     scripts:
-      - name: Install npm dependencies only
+      - name: Install npm dependencies
         script: |
           npm install --production
           
-      - name: Criar estrutura CocoaPods completa
+      - name: Criar estrutura CocoaPods
         script: |
           cd ios
           
-          echo "🔧 Criando estrutura CocoaPods completa..."
+          echo "🔧 Criando estrutura CocoaPods..."
           
           # Criar todas as pastas necessárias
           mkdir -p "Pods/Target Support Files/Pods-modamaskavo"
@@ -31,89 +31,65 @@ workflows:
           PODS_ROOT = ${SRCROOT}/Pods
           EOF
           
-          # Copiar para o local alternativo
           cp "Pods/Target Support Files/Pods-modamaskavo/Pods-modamaskavo.release.xcconfig" "Target Support Files/Pods-modamaskavo/"
           
-          # Criar arquivos xcfilelist VAZIOS mas válidos
-          echo "# Arquivo vazio - sem frameworks" > "Pods/Target Support Files/Pods-modamaskavo/Pods-modamaskavo-frameworks-Release-input-files.xcfilelist"
-          echo "# Arquivo vazio - sem frameworks" > "Pods/Target Support Files/Pods-modamaskavo/Pods-modamaskavo-frameworks-Release-output-files.xcfilelist"
-          echo "# Arquivo vazio - sem resources" > "Pods/Target Support Files/Pods-modamaskavo/Pods-modamaskavo-resources-Release-input-files.xcfilelist"
-          echo "# Arquivo vazio - sem resources" > "Pods/Target Support Files/Pods-modamaskavo/Pods-modamaskavo-resources-Release-output-files.xcfilelist"
+          # Criar arquivos xcfilelist COMPLETAMENTE VAZIOS
+          touch "Pods/Target Support Files/Pods-modamaskavo/Pods-modamaskavo-frameworks-Release-input-files.xcfilelist"
+          touch "Pods/Target Support Files/Pods-modamaskavo/Pods-modamaskavo-frameworks-Release-output-files.xcfilelist"
+          touch "Pods/Target Support Files/Pods-modamaskavo/Pods-modamaskavo-resources-Release-input-files.xcfilelist"
+          touch "Pods/Target Support Files/Pods-modamaskavo/Pods-modamaskavo-resources-Release-output-files.xcfilelist"
           
-          # Copiar para ambos os locais
           cp "Pods/Target Support Files/Pods-modamaskavo/"*.xcfilelist "Target Support Files/Pods-modamaskavo/"
           
-          # Criar na raiz também (caso o Xcode procure lá)
-          mkdir -p "Target Support Files/Pods-modamaskavo"
-          cp "Pods/Target Support Files/Pods-modamaskavo/"*.xcfilelist "./Target Support Files/Pods-modamaskavo/"
-          
-          # Criar scripts vazios
+          # Scripts vazios
           cat > "Pods/Target Support Files/Pods-modamaskavo/Pods-modamaskavo-frameworks.sh" << 'EOF'
           #!/bin/sh
-          echo "CocoaPods frameworks script vazio - sem frameworks para processar"
+          echo "CocoaPods frameworks script vazio"
           exit 0
           EOF
           
           cat > "Pods/Target Support Files/Pods-modamaskavo/Pods-modamaskavo-resources.sh" << 'EOF'
           #!/bin/sh
-          echo "CocoaPods resources script vazio - sem resources para processar"
+          echo "CocoaPods resources script vazio"
           exit 0
           EOF
           
           chmod +x "Pods/Target Support Files/Pods-modamaskavo/"*.sh
-          
-          # Copiar scripts para todos os locais
           cp "Pods/Target Support Files/Pods-modamaskavo/"*.sh "Target Support Files/Pods-modamaskavo/"
           
-          echo "✅ Estrutura CocoaPods completa criada!"
+          echo "✅ Estrutura CocoaPods criada!"
           
-          # Verificar se os arquivos foram criados
-          echo "📁 Arquivos criados:"
-          find . -name "*Pods-modamaskavo*" -type f | head -20
-          
-      - name: Verificar estrutura criada
+      - name: Verificar projeto antes do build
         script: |
           cd ios
           
-          echo "🔍 Verificando se todos os arquivos necessários existem..."
+          echo "🔍 Verificando estrutura do projeto..."
           
-          # Lista de arquivos que o Xcode espera
-          FILES_TO_CHECK=(
-            "Target Support Files/Pods-modamaskavo/Pods-modamaskavo-frameworks-Release-input-files.xcfilelist"
-            "Target Support Files/Pods-modamaskavo/Pods-modamaskavo-frameworks-Release-output-files.xcfilelist"
-            "Target Support Files/Pods-modamaskavo/Pods-modamaskavo-resources-Release-input-files.xcfilelist"
-            "Target Support Files/Pods-modamaskavo/Pods-modamaskavo-resources-Release-output-files.xcfilelist"
-            "Pods/Target Support Files/Pods-modamaskavo/Pods-modamaskavo.release.xcconfig"
-          )
-          
-          ALL_EXIST=true
-          for file in "${FILES_TO_CHECK[@]}"; do
-            if [ -f "$file" ]; then
-              echo "✅ $file"
-            else
-              echo "❌ $file - FALTANDO!"
-              ALL_EXIST=false
-            fi
-          done
-          
-          if [ "$ALL_EXIST" = true ]; then
-            echo "✅ Todos os arquivos necessários existem!"
+          # Verificar se o projeto existe
+          if [ -f "modamaskavo.xcodeproj/project.pbxproj" ]; then
+            echo "✅ Projeto Xcode encontrado"
           else
-            echo "❌ Alguns arquivos estão faltando!"
-            exit 1
+            echo "❌ Projeto Xcode não encontrado!"
+            ls -la
           fi
           
-      - name: Build iOS app com estrutura completa
+          # Verificar schemes disponíveis
+          echo "📋 Schemes disponíveis:"
+          xcodebuild -project modamaskavo.xcodeproj -list
+          
+          # Verificar configurações
+          echo "📋 Configurações disponíveis:"
+          xcodebuild -project modamaskavo.xcodeproj -showBuildSettings -configuration Release | head -20
+          
+      - name: Build com diagnóstico detalhado
         script: |
           cd ios
           
           mkdir -p build
           
-          echo "🔨 Iniciando build com estrutura CocoaPods completa..."
+          echo "🔨 Iniciando build com diagnóstico completo..."
           
-          # Tentar build com mais tolerância a erros
-          set +e  # Não sair imediatamente em caso de erro
-          
+          # Build SEM -quiet para ver todos os erros
           xcodebuild -project modamaskavo.xcodeproj \
                      -scheme modamaskavo \
                      -configuration Release \
@@ -124,84 +100,249 @@ workflows:
                      CODE_SIGNING_ALLOWED=NO \
                      SKIP_INSTALL=NO \
                      ONLY_ACTIVE_ARCH=NO \
-                     VALIDATE_WORKSPACE=NO \
                      -allowProvisioningUpdates \
-                     -quiet
+                     -verbose
           
           BUILD_RESULT=$?
-          set -e  # Voltar a sair em caso de erro
           
-          if [ $BUILD_RESULT -eq 0 ]; then
-            echo "✅ Build concluído com sucesso!"
-          else
-            echo "⚠️  Build falhou, mas continuando para verificar arquivos gerados..."
-            
-            # Verificar se algum arquivo foi gerado mesmo com erro
-            if [ -d "build" ]; then
-              echo "📁 Conteúdo da pasta build:"
-              find build -type f -name "*" | head -20
-            fi
+          echo "📊 Resultado do build: $BUILD_RESULT"
+          
+          # Verificar o que foi gerado independente do resultado
+          echo "📁 Conteúdo da pasta build:"
+          if [ -d "build" ]; then
+            find build -type f -exec ls -lh {} \; | head -30
           fi
           
-      - name: Procurar e criar IPA de qualquer arquivo gerado
+          # Verificar se archive foi criado
+          if [ -d "build/modamaskavo.xcarchive" ]; then
+            echo "✅ Archive criado!"
+            
+            # Mostrar estrutura do archive
+            echo "📁 Estrutura do archive:"
+            find build/modamaskavo.xcarchive -type f -name "*.app" -exec ls -lh {} \;
+            
+            # Verificar conteúdo do archive
+            echo "📱 Procurando .app no archive:"
+            find build/modamaskavo.xcarchive -name "*.app" -type d
+          else
+            echo "❌ Archive não foi criado!"
+          fi
+          
+      - name: Análise detalhada do .app
         script: |
           cd ios
           
-          echo "🔍 Procurando por arquivos .app em qualquer lugar..."
+          echo "🔍 Analisando arquivos .app gerados..."
           
-          # Procurar em toda a estrutura do projeto
-          APP_FILES=$(find . -name "*.app" -type d 2>/dev/null | grep -v "Pods" | head -5)
+          # Procurar por TODOS os .app
+          ALL_APPS=$(find . -name "*.app" -type d 2>/dev/null)
           
-          if [ -n "$APP_FILES" ]; then
-            echo "📱 Arquivos .app encontrados:"
-            echo "$APP_FILES"
+          if [ -n "$ALL_APPS" ]; then
+            echo "📱 Todos os .app encontrados:"
+            echo "$ALL_APPS"
             
-            # Criar pasta build se não existir
+            # Analisar cada .app
+            for app_path in $ALL_APPS; do
+              echo ""
+              echo "🔍 Analisando: $app_path"
+              echo "===================="
+              
+              # Tamanho do .app
+              APP_SIZE=$(du -sh "$app_path" | cut -f1)
+              echo "📊 Tamanho: $APP_SIZE"
+              
+              # Número de arquivos
+              FILE_COUNT=$(find "$app_path" -type f | wc -l)
+              echo "📄 Arquivos: $FILE_COUNT"
+              
+              # Listar conteúdo
+              echo "📄 Conteúdo:"
+              ls -lah "$app_path" | head -10
+              
+              # Verificar se tem executável
+              if [ -f "$app_path/modamaskavo" ]; then
+                echo "✅ Executável encontrado"
+                ls -lh "$app_path/modamaskavo"
+              else
+                echo "❌ Executável não encontrado"
+                echo "📄 Arquivos no root do .app:"
+                find "$app_path" -maxdepth 1 -type f
+              fi
+              
+              # Verificar Info.plist
+              if [ -f "$app_path/Info.plist" ]; then
+                echo "✅ Info.plist encontrado"
+              else
+                echo "❌ Info.plist não encontrado"
+              fi
+            done
+          else
+            echo "❌ Nenhum .app encontrado!"
+            
+            # Procurar por arquivos de build alternativos
+            echo "🔍 Procurando arquivos de build alternativos..."
+            find . -name "*.o" -o -name "*.a" -o -name "*.dylib" | head -10
+          fi
+          
+      - name: Criar IPA com validação de tamanho
+        script: |
+          cd ios
+          
+          echo "📦 Criando IPA com validação completa..."
+          
+          # Encontrar o melhor .app (maior tamanho)
+          BEST_APP=""
+          BEST_SIZE=0
+          
+          for app_path in $(find . -name "*.app" -type d 2>/dev/null); do
+            APP_SIZE_BYTES=$(du -sb "$app_path" | cut -f1)
+            
+            if [ $APP_SIZE_BYTES -gt $BEST_SIZE ]; then
+              BEST_APP="$app_path"
+              BEST_SIZE=$APP_SIZE_BYTES
+            fi
+          done
+          
+          if [ -n "$BEST_APP" ] && [ $BEST_SIZE -gt 1000 ]; then
+            echo "📱 Usando melhor .app: $BEST_APP"
+            echo "📊 Tamanho: $BEST_SIZE bytes"
+            
+            # Criar pasta build
             mkdir -p build
             cd build
             
-            # Pegar o primeiro .app encontrado
-            FIRST_APP=$(echo "$APP_FILES" | head -1)
-            echo "📱 Usando: $FIRST_APP"
+            # Copiar .app
+            cp -r "../$BEST_APP" ./modamaskavo.app
             
-            # Copiar para nome padrão
-            cp -r "../$FIRST_APP" ./modamaskavo.app
-            
-            # Criar IPA
-            mkdir -p Payload
-            cp -r modamaskavo.app Payload/
-            zip -r modamaskavo.ipa Payload/
-            
-            echo "✅ IPA criado a partir do .app encontrado!"
-            ls -la *.ipa
-            
-            # Copiar para raiz
-            cp modamaskavo.ipa ../../modamaskavo-final.ipa
+            # Verificar se a cópia foi bem-sucedida
+            if [ -d "modamaskavo.app" ]; then
+              COPY_SIZE=$(du -sb modamaskavo.app | cut -f1)
+              echo "📊 Tamanho da cópia: $COPY_SIZE bytes"
+              
+              # Criar estrutura do IPA
+              mkdir -p Payload
+              cp -r modamaskavo.app Payload/
+              
+              # Verificar Payload
+              PAYLOAD_SIZE=$(du -sb Payload | cut -f1)
+              echo "📊 Tamanho do Payload: $PAYLOAD_SIZE bytes"
+              
+              # Criar IPA
+              zip -r modamaskavo.ipa Payload/
+              
+              # Verificar IPA final
+              if [ -f "modamaskavo.ipa" ]; then
+                IPA_SIZE=$(du -sb modamaskavo.ipa | cut -f1)
+                IPA_SIZE_MB=$(echo "scale=2; $IPA_SIZE / 1024 / 1024" | bc)
+                
+                echo "📊 IPA criado!"
+                echo "📊 Tamanho: $IPA_SIZE bytes ($IPA_SIZE_MB MB)"
+                
+                if [ $IPA_SIZE -lt 100000 ]; then  # Menos de 100KB
+                  echo "🚨 IPA muito pequeno! Verificando conteúdo..."
+                  
+                  # Verificar conteúdo do ZIP
+                  echo "📄 Conteúdo do IPA:"
+                  unzip -l modamaskavo.ipa | head -20
+                  
+                  # Extrair e verificar
+                  mkdir -p ipa_check
+                  cd ipa_check
+                  unzip -q ../modamaskavo.ipa
+                  
+                  if [ -d "Payload/modamaskavo.app" ]; then
+                    echo "📊 Tamanho do app extraído:"
+                    du -sh Payload/modamaskavo.app
+                    
+                    echo "📄 Conteúdo do app extraído:"
+                    find Payload/modamaskavo.app -type f | head -10
+                  fi
+                  
+                  cd ..
+                else
+                  echo "✅ IPA parece ter tamanho normal!"
+                fi
+                
+                # Copiar para raiz
+                cp modamaskavo.ipa ../../modamaskavo-debug.ipa
+                
+              else
+                echo "❌ Falha ao criar IPA!"
+              fi
+            else
+              echo "❌ Falha ao copiar .app!"
+            fi
             
           else
-            echo "❌ Nenhum arquivo .app encontrado!"
+            echo "❌ Nenhum .app válido encontrado!"
+            echo "📋 Criando relatório de falha..."
             
-            # Procurar por qualquer arquivo de build
-            echo "📁 Procurando outros arquivos de build..."
-            find . -name "*.o" -o -name "*.a" -o -name "*.dylib" | head -10
+            # Criar relatório detalhado
+            cat > ../../build-failure-report.txt << EOF
+            Build Failure Report
+            ===================
             
-            # Criar IPA de teste
-            mkdir -p build/Payload/modamaskavo.app
-            echo "Test App" > build/Payload/modamaskavo.app/test.txt
-            cd build
-            zip -r modamaskavo-test.ipa Payload/
+            Data: $(date)
             
-            echo "⚠️  IPA de teste criado!"
-            cp modamaskavo-test.ipa ../../modamaskavo-test.ipa
+            Problema: Nenhum .app válido foi gerado
+            
+            Apps encontrados:
+            $(find . -name "*.app" -type d 2>/dev/null | while read app; do
+              echo "$app: $(du -sh "$app" | cut -f1)"
+            done)
+            
+            Possíveis causas:
+            1. Erro de compilação
+            2. Dependências faltando
+            3. Configuração incorreta do projeto
+            4. Problemas com CocoaPods
+            
+            Próximos passos:
+            1. Verificar logs de build
+            2. Verificar dependências
+            3. Verificar configurações do projeto
+            EOF
+            
+            echo "📄 Relatório de falha criado!"
           fi
           
-      - name: Verificar arquivos finais
+      - name: Relatório final detalhado
         script: |
-          echo "📁 Arquivos disponíveis para download:"
-          find . -name "*.ipa" -type f -exec ls -lh {} \;
+          echo "📋 RELATÓRIO FINAL DETALHADO"
+          echo "============================"
+          
+          # Verificar todos os IPAs
+          echo "📱 IPAs encontrados:"
+          find . -name "*.ipa" -exec ls -lh {} \;
+          
+          # Verificar todos os .app
+          echo ""
+          echo "📱 Apps encontrados:"
+          find . -name "*.app" -type d -exec du -sh {} \;
+          
+          # Verificar archives
+          echo ""
+          echo "📦 Archives encontrados:"
+          find . -name "*.xcarchive" -type d -exec du -sh {} \;
+          
+          # Resumo final
+          echo ""
+          echo "📊 RESUMO:"
+          
+          IPA_COUNT=$(find . -name "*.ipa" | wc -l)
+          APP_COUNT=$(find . -name "*.app" -type d | wc -l)
+          
+          echo "- IPAs gerados: $IPA_COUNT"
+          echo "- Apps gerados: $APP_COUNT"
+          
+          if [ $IPA_COUNT -gt 0 ]; then
+            LARGEST_IPA=$(find . -name "*.ipa" -exec ls -l {} \; | sort -k5 -nr | head -1)
+            echo "- Maior IPA: $LARGEST_IPA"
+          fi
           
     artifacts:
       - ios/build/*.ipa
       - ios/build/*.app
       - ios/build/*.xcarchive
       - "*.ipa"
+      - build-failure-report.txt
