@@ -1,4 +1,4 @@
-# codemagic.yaml - VERSÃO FINAL COM REACT-CORE SUBSPECS CORRETOS
+# codemagic.yaml - VERSÃO FINAL COM REACT-JSC/FABRIC CORRIGIDO
 workflows:
   ios-workflow:
     name: iOS Workflow
@@ -15,6 +15,58 @@ workflows:
       - name: Install npm dependencies
         script: |
           npm ci
+      - name: HACK BRUTAL - Criar React-jsc.podspec COM FABRIC
+        script: |
+          # Criar React-jsc.podspec com subspec Fabric
+          mkdir -p node_modules/react-native/ReactCommon/jsc
+          cat > node_modules/react-native/ReactCommon/jsc/React-jsc.podspec << 'EOF'
+          Pod::Spec.new do |s|
+            s.name                   = "React-jsc"
+            s.version                = "1000.0.0"
+            s.summary                = "React Native JavaScriptCore with Fabric support"
+            s.homepage               = "https://reactnative.dev/"
+            s.license                = "MIT"
+            s.author                 = "Meta Platforms, Inc."
+            s.platforms              = { :ios => "15.0" }
+            s.source                 = { :path => "." }
+            s.source_files           = "*.{h,m,mm,cpp,c}"
+            s.header_dir             = "React"
+            s.public_header_files    = "*.h"
+            s.pod_target_xcconfig    = {
+              'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
+              'MACOSX_DEPLOYMENT_TARGET' => '10.15'
+            }
+            
+            # Subspec Fabric - CRÍTICO
+            s.subspec "Fabric" do |ss|
+              ss.source_files = "*.{h,m,mm,cpp,c}"
+              ss.header_dir = "React"
+              ss.public_header_files = "*.h"
+              ss.pod_target_xcconfig = {
+                'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
+                'MACOSX_DEPLOYMENT_TARGET' => '10.15'
+              }
+            end
+            
+            # Subspec Default
+            s.subspec "Default" do |ss|
+              ss.source_files = "*.{h,m,mm,cpp,c}"
+              ss.header_dir = "React"
+              ss.public_header_files = "*.h"
+              ss.pod_target_xcconfig = {
+                'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
+                'MACOSX_DEPLOYMENT_TARGET' => '10.15'
+              }
+            end
+          end
+          EOF
+          
+          # Criar arquivos dummy para React-jsc
+          touch node_modules/react-native/ReactCommon/jsc/dummy.cpp
+          touch node_modules/react-native/ReactCommon/jsc/dummy.h
+          
+          echo "✅ React-jsc.podspec com Fabric criado!"
+          
       - name: HACK BRUTAL - Criar React-Core.podspec COM SUBSPECS CORRETOS
         script: |
           # Criar React-Core.podspec com TODOS os subspecs necessários
@@ -254,136 +306,6 @@ workflows:
           touch node_modules/react-native/ReactCommon/dummy.cpp
           touch node_modules/react-native/ReactCommon/dummy.h
           
-          # Criar boost.podspec com iOS 15.0 forçado
-          mkdir -p node_modules/react-native/third-party-podspecs
-          cat > node_modules/react-native/third-party-podspecs/boost.podspec << 'EOF'
-          Pod::Spec.new do |s|
-            s.name                   = "boost"
-            s.version                = "1.76.0"
-            s.summary                = "Boost C++ Libraries"
-            s.homepage               = "https://www.boost.org/"
-            s.license                = "MIT"
-            s.author                 = "Boost"
-            s.platforms              = { :ios => "15.0" }
-            s.source                 = { :path => "." }
-            s.source_files           = "*.{h,hpp,cpp,c}"
-            s.header_dir             = "boost"
-            s.public_header_files    = "*.{h,hpp}"
-            s.pod_target_xcconfig    = {
-              'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
-              'MACOSX_DEPLOYMENT_TARGET' => '10.15'
-            }
-          end
-          EOF
-          
-          # Criar arquivos dummy para boost
-          touch node_modules/react-native/third-party-podspecs/dummy.cpp
-          touch node_modules/react-native/third-party-podspecs/dummy.h
-          
-          # Criar React-idlecallbacksnativemodule.podspec no local correto
-          mkdir -p node_modules/react-native/ReactCommon/react/nativemodule/idlecallbacks
-          cat > node_modules/react-native/ReactCommon/react/nativemodule/idlecallbacks/React-idlecallbacksnativemodule.podspec << 'EOF'
-          Pod::Spec.new do |s|
-            s.name                   = "React-idlecallbacksnativemodule"
-            s.version                = "1000.0.0"
-            s.summary                = "React Native Idle Callbacks Native Module"
-            s.homepage               = "https://reactnative.dev/"
-            s.license                = "MIT"
-            s.author                 = "Meta Platforms, Inc."
-            s.platforms              = { :ios => "15.0" }
-            s.source                 = { :path => "." }
-            s.source_files           = "*.{h,m,mm,cpp,c}"
-            s.header_dir             = "React"
-            s.public_header_files    = "*.h"
-            s.pod_target_xcconfig    = {
-              'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
-              'MACOSX_DEPLOYMENT_TARGET' => '10.15'
-            }
-          end
-          EOF
-          
-          # Criar arquivos dummy para idlecallbacks
-          touch node_modules/react-native/ReactCommon/react/nativemodule/idlecallbacks/dummy.cpp
-          touch node_modules/react-native/ReactCommon/react/nativemodule/idlecallbacks/dummy.h
-          
-          # Criar React-featureflags.podspec no local correto
-          mkdir -p node_modules/react-native/ReactCommon/react/featureflags
-          cat > node_modules/react-native/ReactCommon/react/featureflags/React-featureflags.podspec << 'EOF'
-          Pod::Spec.new do |s|
-            s.name                   = "React-featureflags"
-            s.version                = "1000.0.0"
-            s.summary                = "React Native Feature Flags"
-            s.homepage               = "https://reactnative.dev/"
-            s.license                = "MIT"
-            s.author                 = "Meta Platforms, Inc."
-            s.platforms              = { :ios => "15.0" }
-            s.source                 = { :path => "." }
-            s.source_files           = "*.{h,m,mm,cpp,c}"
-            s.header_dir             = "React"
-            s.public_header_files    = "*.h"
-            s.pod_target_xcconfig    = {
-              'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
-              'MACOSX_DEPLOYMENT_TARGET' => '10.15'
-            }
-          end
-          EOF
-          
-          # Criar arquivos dummy para featureflags
-          touch node_modules/react-native/ReactCommon/react/featureflags/dummy.cpp
-          touch node_modules/react-native/ReactCommon/react/featureflags/dummy.h
-          
-          # Criar React-jsitooling.podspec no local correto
-          mkdir -p node_modules/react-native/ReactCommon/jsitooling
-          cat > node_modules/react-native/ReactCommon/jsitooling/React-jsitooling.podspec << 'EOF'
-          Pod::Spec.new do |s|
-            s.name                   = "React-jsitooling"
-            s.version                = "1000.0.0"
-            s.summary                = "React Native JSI Tooling"
-            s.homepage               = "https://reactnative.dev/"
-            s.license                = "MIT"
-            s.author                 = "Meta Platforms, Inc."
-            s.platforms              = { :ios => "15.0" }
-            s.source                 = { :path => "." }
-            s.source_files           = "*.{h,m,mm,cpp,c}"
-            s.header_dir             = "React"
-            s.public_header_files    = "*.h"
-            s.pod_target_xcconfig    = {
-              'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
-              'MACOSX_DEPLOYMENT_TARGET' => '10.15'
-            }
-          end
-          EOF
-          
-          # Criar arquivos dummy para jsitooling
-          touch node_modules/react-native/ReactCommon/jsitooling/dummy.cpp
-          touch node_modules/react-native/ReactCommon/jsitooling/dummy.h
-          
-          # Criar React-jsinspectortracing.podspec no local correto
-          mkdir -p node_modules/react-native/ReactCommon/jsinspector-modern/tracing
-          cat > node_modules/react-native/ReactCommon/jsinspector-modern/tracing/React-jsinspectortracing.podspec << 'EOF'
-          Pod::Spec.new do |s|
-            s.name                   = "React-jsinspectortracing"
-            s.version                = "1000.0.0"
-            s.summary                = "React Native JSI Inspector Tracing"
-            s.homepage               = "https://reactnative.dev/"
-            s.license                = "MIT"
-            s.author                 = "Meta Platforms, Inc."
-            s.platforms              = { :ios => "15.0" }
-            s.source                 = { :path => "." }
-            s.source_files           = "*.{h,m,mm,cpp,c}"
-            s.header_dir             = "React"
-            s.public_header_files    = "*.h"
-            s.pod_target_xcconfig    = {
-              'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
-              'MACOSX_DEPLOYMENT_TARGET' => '10.15'
-            }
-          end
-          EOF
-          
-          # Criar arquivos dummy para jsinspectortracing
-          touch node_modules/react-native/ReactCommon/jsinspector-modern/tracing/dummy.cpp
-          touch node_modules/react-native/ReactCommon/jsinspector-modern/tracing/dummy.h
-          
           # Script Ruby para criar todos os outros podspecs
           cat > fix_podspecs.rb << 'EOF'
           require 'fileutils'
@@ -414,11 +336,15 @@ workflows:
             puts "✅ Created #{name}.podspec with iOS 15.0 forced"
           end
 
-          # Lista COMPLETA de podspecs (SEM React-Core e ReactCommon que já foram criados)
+          # Lista COMPLETA de podspecs necessários
           podspecs = [
             ["React", "node_modules/react-native"],
             ["React-RCTFBReactNativeSpec", "node_modules/react-native/React"],
+            ["React-featureflags", "node_modules/react-native/ReactCommon/react/featureflags"],
             ["React-featureflagsnativemodule", "node_modules/react-native/ReactCommon/react/nativemodule/featureflags"],
+            ["React-idlecallbacksnativemodule", "node_modules/react-native/ReactCommon/react/nativemodule/idlecallbacks"],
+            ["React-jsitooling", "node_modules/react-native/ReactCommon/jsitooling"],
+            ["React-jsinspectortracing", "node_modules/react-native/ReactCommon/jsinspector-modern/tracing"],
             ["RCTRequired", "node_modules/react-native/Libraries/Required"],
             ["React-RuntimeApple", "node_modules/react-native/ReactCommon/react/runtime/platform/ios"],
             ["React-RuntimeCore", "node_modules/react-native/ReactCommon/react/runtime"],
@@ -451,8 +377,8 @@ workflows:
             ["React-RCTActionSheet", "node_modules/react-native/Libraries/ActionSheetIOS"],
             ["React-RCTAlert", "node_modules/react-native/Libraries/Alert"],
             ["React-RCTPushNotification", "node_modules/react-native/Libraries/PushNotificationIOS"],
-            ["React-jsc", "node_modules/react-native/ReactCommon/jsc"],
-            ["React-jsinspector", "node_modules/react-native/ReactCommon/jsinspector-modern"]
+            ["React-jsinspector", "node_modules/react-native/ReactCommon/jsinspector-modern"],
+            ["boost", "node_modules/react-native/third-party-podspecs"]
           ]
 
           podspecs.each do |name, path|
@@ -460,6 +386,7 @@ workflows:
           end
 
           puts "✅ Todos os podspecs criados com iOS 15.0 forçado!"
+          puts "✅ React-jsc/Fabric já foi criado manualmente!"
           puts "✅ React-Core/RCTWebSocket já foi criado manualmente!"
           puts "✅ ReactCommon/turbomodule/core já foi criado manualmente!"
           EOF
