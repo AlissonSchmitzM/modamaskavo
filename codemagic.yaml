@@ -22,10 +22,10 @@ workflows:
           npm install
       
         # Instalar pacotes específicos do Firebase se necessário
-        npm install @react-native-firebase/app @react-native-firebase/auth @react-native-firebase/firestore
+          npm install @react-native-firebase/app @react-native-firebase/auth @react-native-firebase/firestore
       
         # Verificar instalação
-        ls -la node_modules/@react-native-firebase/app/scripts/
+          ls -la node_modules/@react-native-firebase/app/scripts/
       - name: HACK BRUTAL - Corrigir TODOS os podspecs problemáticos
         script: |
           # Criar diretório third-party-podspecs se não existir
