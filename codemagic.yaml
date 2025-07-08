@@ -1,4 +1,4 @@
-# codemagic.yaml - REACT-CORE COM SUBSPECS COMPLETOS
+# codemagic.yaml - ADICIONANDO REACT-FEATUREFLAGSNATIVEMODULE
 workflows:
   ios-workflow:
     name: iOS Workflow
@@ -15,7 +15,7 @@ workflows:
       - name: Install npm dependencies
         script: |
           npm ci
-      - name: HACK BRUTAL - Criar React-Core com TODOS os subspecs
+      - name: HACK BRUTAL - Criar TODOS os podspecs React Native
         script: |
           # Criar React.podspec principal
           cat > node_modules/react-native/React.podspec << 'EOF'
@@ -49,7 +49,6 @@ workflows:
             s.header_dir             = "React"
             s.public_header_files    = "**/*.h"
             
-            # Todos os subspecs do React-Core
             s.subspec "RCTWebSocket" do |ss|
               ss.source_files = "**/*.{h,m,mm,cpp,c}"
               ss.header_dir = "React"
@@ -173,6 +172,7 @@ workflows:
 
           # Lista COMPLETA de podspecs problemáticos
           podspecs = [
+            ["React-featureflagsnativemodule", "node_modules/react-native/ReactCommon/react/nativemodule/featureflags"],
             ["RCTRequired", "node_modules/react-native/Libraries/Required"],
             ["React-RuntimeApple", "node_modules/react-native/ReactCommon/react/runtime/platform/ios"],
             ["React-RuntimeCore", "node_modules/react-native/ReactCommon/react/runtime"],
@@ -213,7 +213,7 @@ workflows:
             create_podspec(name, path)
           end
 
-          puts "✅ Todos os podspecs criados incluindo React-Core com subspecs!"
+          puts "✅ Todos os podspecs criados incluindo React-featureflagsnativemodule!"
           EOF
           
           # Executar o script Ruby
