@@ -1,6 +1,6 @@
 workflows:
-  ios-workflow-fixed-podfile:
-    name: iOS Build com Podfile Ruby Correto
+  ios-workflow-fixed:
+    name: iOS Build com Podfile Correto
     instance_type: mac_mini_m1
     environment:
       node: 18
@@ -27,53 +27,28 @@ workflows:
             # Fazer backup do Podfile original
             cp Podfile Podfile.backup
             
-            # Criar um novo Podfile com sintaxe Ruby correta
-            cat > Podfile << 'EOF'
-# Uncomment the next line to define a global platform for your project
-platform :ios, '13.0'
-
-require_relative '../node_modules/react-native/scripts/react_native_pods'
-require_relative '../node_modules/@react-native-community/cli-platform-ios/native_modules'
-
-target 'modamaskavo' do
-  config = use_native_modules!
-
-  # Flags change depending on the env values.
-  flags = get_default_flags()
-
-  use_react_native!(
-    :path => config[:reactNativePath],
-    # to enable hermes on iOS, change `false` to `true` and then install pods
-    :hermes_enabled => flags[:hermes_enabled],
-    :fabric_enabled => flags[:fabric_enabled],
-    # An absolute path to your application root.
-    :app_path => "#{Pod::Config.instance.installation_root}/.."
-  )
-
-  target 'modamaskavoTests' do
-    inherit! :complete
-    # Pods for testing
-  end
-
-  # Enables Flipper.
-  #
-  # Note that if you have use_frameworks! enabled, Flipper will not work and
-  # you should disable the next line.
-  use_flipper!()
-
-  post_install do |installer|
-    react_native_post_install(installer)
-    __apply_Xcode_12_5_M1_post_install_workaround(installer)
-    
-    # Forçar deployment target em todos os pods
-    installer.pods_project.targets.each do |target|
-      target.build_configurations.each do |config|
-        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
-      end
-    end
-  end
-end
-EOF
+            # Usar sed para corrigir o deployment target
+            sed -i.bak "s/platform :ios, '[^']*'/platform :ios, '13.0'/" Podfile
+            
+            # Se não encontrou a linha platform, adicionar no início
+            if ! grep -q "platform :ios" Podfile; then
+              # Criar novo Podfile com platform correto
+              echo "platform :ios, '13.0'" > Podfile.new
+              cat Podfile >> Podfile.new
+              mv Podfile.new Podfile
+            fi
+            
+            # Verificar se tem post_install, se não tiver, adicionar
+            if ! grep -q "post_install" Podfile; then
+              echo "" >> Podfile
+              echo "post_install do |installer|" >> Podfile
+              echo "  installer.pods_project.targets.each do |target|" >> Podfile
+              echo "    target.build_configurations.each do |config|" >> Podfile
+              echo "      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'" >> Podfile
+              echo "    end" >> Podfile
+              echo "  end" >> Podfile
+              echo "end" >> Podfile
+            fi
             
             echo ""
             echo "📄 Podfile corrigido:"
@@ -130,9 +105,6 @@ EOF
             echo "✅ Workspace criado com sucesso!"
           else
             echo "❌ Workspace não foi criado!"
-            
-            # Verificar se existe algum workspace
-            find . -name "*.xcworkspace" -type d -exec echo "Workspace encontrado: {}" \;
             exit 1
           fi
           
@@ -149,8 +121,6 @@ EOF
           # Verificar Podfile.lock
           if [ -f "Podfile.lock" ]; then
             echo "✅ Podfile.lock criado!"
-            echo "📊 Verificando deployment target:"
-            grep -A 2 -B 2 "13.0" Podfile.lock | head -10
           else
             echo "❌ Podfile.lock não encontrado!"
             exit 1
@@ -189,105 +159,31 @@ EOF
             
             # Verificar se archive foi criado
             if [ -d "build/modamaskavo.xcarchive" ]; then
-              echo "✅ Archive criado com sucesso!"
-              
-              # Mostrar tamanho do archive
-              ARCHIVE_SIZE=$(du -sh build/modamaskavo.xcarchive | cut -f1)
-              echo "📊 Tamanho do archive: $ARCHIVE_SIZE"
+              echo "✅ Archive criado!"
               
               # Procurar por .app
-              echo "📱 Procurando .app no archive:"
-              find build/modamaskavo.xcarchive -name "*.app" -type d -exec ls -lah {} \;
+              APP_PATH=$(find build/modamaskavo.xcarchive -name "*.app" -type d | head -1)
               
-            else
-              echo "❌ Archive não foi criado!"
+              if [ -n "$APP_PATH" ]; then
+                echo "📱 App encontrado: $APP_PATH"
+                
+                # Criar IPA
+                cd build
+                cp -r "$APP_PATH" ./modamaskavo.app
+                mkdir -p Payload
+                cp -r modamaskavo.app Payload/
+                zip -r modamaskavo.ipa Payload/
+                
+                if [ -f "modamaskavo.ipa" ]; then
+                  IPA_SIZE=$(du -sh modamaskavo.ipa | cut -f1)
+                  echo "✅ IPA criado: $IPA_SIZE"
+                  cp modamaskavo.ipa ../../modamaskavo-final.ipa
+                fi
+              fi
             fi
           else
             echo "❌ Build falhou!"
-            echo "🔍 Últimas linhas do erro:"
-            tail -50 build-success.log
-            
-            # Procurar por erros específicos
-            echo ""
-            echo "🔍 Erros de deployment target:"
-            grep -i "deployment" build-success.log | head -5
-            
-            echo ""
-            echo "🔍 Outros erros:"
-            grep -i "error:" build-success.log | head -10
-          fi
-          
-      - name: Criar IPA do archive
-        script: |
-          cd ios
-          
-          echo "📦 Criando IPA do archive..."
-          
-          # Verificar se archive existe
-          if [ -d "build/modamaskavo.xcarchive" ]; then
-            echo "✅ Archive encontrado!"
-            
-            # Procurar por .app no archive
-            APP_PATH=$(find build/modamaskavo.xcarchive -name "*.app" -type d | head -1)
-            
-            if [ -n "$APP_PATH" ]; then
-              echo "📱 App encontrado: $APP_PATH"
-              
-              # Verificar tamanho do app
-              APP_SIZE=$(du -sh "$APP_PATH" | cut -f1)
-              FILE_COUNT=$(find "$APP_PATH" -type f | wc -l)
-              
-              echo "📊 Tamanho do app: $APP_SIZE"
-              echo "📄 Número de arquivos: $FILE_COUNT"
-              
-              # Verificar se app tem conteúdo React Native
-              echo "📱 Verificando conteúdo React Native:"
-              find "$APP_PATH" -name "*React*" -o -name "*RN*" -o -name "*Hermes*" | head -5
-              
-              # Criar IPA
-              cd build
-              
-              # Copiar .app
-              cp -r "$APP_PATH" ./modamaskavo.app
-              
-              # Criar estrutura IPA
-              mkdir -p Payload
-              cp -r modamaskavo.app Payload/
-              
-              # Criar ZIP/IPA
-              zip -r modamaskavo.ipa Payload/
-              
-              # Verificar IPA criado
-              if [ -f "modamaskavo.ipa" ]; then
-                IPA_SIZE=$(du -sh modamaskavo.ipa | cut -f1)
-                IPA_BYTES=$(wc -c < modamaskavo.ipa)
-                
-                echo "✅ IPA criado com sucesso!"
-                echo "📊 Tamanho do IPA: $IPA_SIZE ($IPA_BYTES bytes)"
-                
-                # Copiar para raiz
-                cp modamaskavo.ipa ../../modamaskavo-react-native.ipa
-                
-                if [ $IPA_BYTES -gt 10000000 ]; then  # Maior que 10MB
-                  echo "🎉 IPA parece válido para React Native!"
-                else
-                  echo "⚠️  IPA pequeno, mas foi criado"
-                fi
-                
-                # Verificar conteúdo do IPA
-                echo "📄 Estrutura do IPA:"
-                unzip -l modamaskavo.ipa | head -20
-                
-              else
-                echo "❌ Falha ao criar IPA!"
-              fi
-            else
-              echo "❌ Nenhum .app encontrado no archive!"
-              echo "📁 Conteúdo do archive:"
-              find build/modamaskavo.xcarchive -type f | head -10
-            fi
-          else
-            echo "❌ Archive não existe - build falhou!"
+            tail -30 build-success.log
           fi
           
       - name: Relatório final
@@ -295,36 +191,8 @@ EOF
           echo "📋 RELATÓRIO FINAL"
           echo "=================="
           
-          # Verificar IPAs criados
           echo "📱 IPAs encontrados:"
           find . -name "*.ipa" -exec ls -lh {} \;
-          
-          # Status do build
-          echo ""
-          echo "📊 Status do build:"
-          if [ -f "ios/build-success.log" ]; then
-            if grep -q "BUILD SUCCEEDED" ios/build-success.log; then
-              echo "✅ Build bem-sucedido!"
-            else
-              echo "❌ Build falhou"
-            fi
-          fi
-          
-          # Status do CocoaPods
-          echo ""
-          echo "📊 Status CocoaPods:"
-          if [ -f "ios/Podfile.lock" ]; then
-            echo "✅ Podfile.lock criado"
-          else
-            echo "❌ Podfile.lock não encontrado"
-          fi
-          
-          # Status do workspace
-          if [ -f "ios/modamaskavo.xcworkspace/contents.xcworkspacedata" ]; then
-            echo "✅ Workspace criado"
-          else
-            echo "❌ Workspace não criado"
-          fi
           
     artifacts:
       - ios/build/*.ipa
@@ -333,5 +201,4 @@ EOF
       - ios/build-success.log
       - ios/pod-install.log
       - ios/Podfile.lock
-      - ios/Podfile.backup
       - "*.ipa"
