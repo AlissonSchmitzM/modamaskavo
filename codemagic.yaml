@@ -1,4 +1,4 @@
-# codemagic.yaml - VERSÃO CORRIGIDA COM REACT-CORE SUBSPECS
+# codemagic.yaml - VERSÃO CORRIGIDA COM REACTCOMMON TURBOMODULE
 workflows:
   ios-workflow:
     name: iOS Workflow
@@ -15,9 +15,82 @@ workflows:
       - name: Install npm dependencies
         script: |
           npm ci
-      - name: HACK BRUTAL - Criar React-Core.podspec COMPLETO
+      - name: HACK BRUTAL - Criar ReactCommon.podspec COMPLETO
         script: |
-          # Criar React-Core.podspec com TODOS os subspecs necessários
+          # Criar ReactCommon.podspec com TODOS os subspecs necessários
+          cat > node_modules/react-native/ReactCommon/ReactCommon.podspec << 'EOF'
+          Pod::Spec.new do |s|
+            s.name                   = "ReactCommon"
+            s.version                = "1000.0.0"
+            s.summary                = "ReactCommon with all turbomodule subspecs"
+            s.homepage               = "https://reactnative.dev/"
+            s.license                = "MIT"
+            s.author                 = "Meta Platforms, Inc."
+            s.platforms              = { :ios => "12.4" }
+            s.source                 = { :path => "." }
+            s.source_files           = "*.{h,m,mm,cpp,c}"
+            s.header_dir             = "ReactCommon"
+            s.public_header_files    = "*.h"
+            
+            # Subspec turbomodule - OBRIGATÓRIO
+            s.subspec "turbomodule" do |ss|
+              ss.source_files = "*.{h,m,mm,cpp,c}"
+              ss.header_dir = "ReactCommon"
+              ss.public_header_files = "*.h"
+              
+              # Subspec turbomodule/core - OBRIGATÓRIO
+              ss.subspec "core" do |sss|
+                sss.source_files = "*.{h,m,mm,cpp,c}"
+                sss.header_dir = "ReactCommon"
+                sss.public_header_files = "*.h"
+              end
+              
+              # Outros subspecs do turbomodule
+              ss.subspec "samples" do |sss|
+                sss.source_files = "*.{h,m,mm,cpp,c}"
+                sss.header_dir = "ReactCommon"
+                sss.public_header_files = "*.h"
+              end
+            end
+            
+            # Outros subspecs importantes
+            s.subspec "jsi" do |ss|
+              ss.source_files = "*.{h,m,mm,cpp,c}"
+              ss.header_dir = "ReactCommon"
+              ss.public_header_files = "*.h"
+            end
+            
+            s.subspec "callinvoker" do |ss|
+              ss.source_files = "*.{h,m,mm,cpp,c}"
+              ss.header_dir = "ReactCommon"
+              ss.public_header_files = "*.h"
+            end
+            
+            s.subspec "runtimeexecutor" do |ss|
+              ss.source_files = "*.{h,m,mm,cpp,c}"
+              ss.header_dir = "ReactCommon"
+              ss.public_header_files = "*.h"
+            end
+            
+            s.subspec "react" do |ss|
+              ss.source_files = "*.{h,m,mm,cpp,c}"
+              ss.header_dir = "ReactCommon"
+              ss.public_header_files = "*.h"
+            end
+            
+            s.subspec "Default" do |ss|
+              ss.source_files = "*.{h,m,mm,cpp,c}"
+              ss.header_dir = "ReactCommon"
+              ss.public_header_files = "*.h"
+            end
+          end
+          EOF
+          
+          # Criar arquivos dummy para ReactCommon
+          touch node_modules/react-native/ReactCommon/dummy.cpp
+          touch node_modules/react-native/ReactCommon/dummy.h
+          
+          # Criar React-Core.podspec com TODOS os subspecs
           cat > node_modules/react-native/React-Core.podspec << 'EOF'
           Pod::Spec.new do |s|
             s.name                   = "React-Core"
@@ -32,14 +105,12 @@ workflows:
             s.header_dir             = "React"
             s.public_header_files    = "*.h"
             
-            # Subspec RCTWebSocket - OBRIGATÓRIO
             s.subspec "RCTWebSocket" do |ss|
               ss.source_files = "*.{h,m,mm,cpp,c}"
               ss.header_dir = "React"
               ss.public_header_files = "*.h"
             end
             
-            # Outros subspecs necessários
             s.subspec "RCTAnimation" do |ss|
               ss.source_files = "*.{h,m,mm,cpp,c}"
               ss.header_dir = "React"
@@ -88,24 +159,6 @@ workflows:
               ss.public_header_files = "*.h"
             end
             
-            s.subspec "RCTActionSheet" do |ss|
-              ss.source_files = "*.{h,m,mm,cpp,c}"
-              ss.header_dir = "React"
-              ss.public_header_files = "*.h"
-            end
-            
-            s.subspec "RCTAlert" do |ss|
-              ss.source_files = "*.{h,m,mm,cpp,c}"
-              ss.header_dir = "React"
-              ss.public_header_files = "*.h"
-            end
-            
-            s.subspec "RCTPushNotification" do |ss|
-              ss.source_files = "*.{h,m,mm,cpp,c}"
-              ss.header_dir = "React"
-              ss.public_header_files = "*.h"
-            end
-            
             s.subspec "Default" do |ss|
               ss.source_files = "*.{h,m,mm,cpp,c}"
               ss.header_dir = "React"
@@ -114,7 +167,6 @@ workflows:
           end
           EOF
           
-          # Criar arquivos dummy para React-Core
           touch node_modules/react-native/dummy.cpp
           touch node_modules/react-native/dummy.h
           
@@ -233,15 +285,14 @@ workflows:
             ["RCTTypeSafety", "node_modules/react-native/Libraries/TypeSafety"],
             ["React-RCTActionSheet", "node_modules/react-native/Libraries/ActionSheetIOS"],
             ["React-RCTAlert", "node_modules/react-native/Libraries/Alert"],
-            ["React-RCTPushNotification", "node_modules/react-native/Libraries/PushNotificationIOS"],
-            ["ReactCommon", "node_modules/react-native/ReactCommon"]
+            ["React-RCTPushNotification", "node_modules/react-native/Libraries/PushNotificationIOS"]
           ]
 
           podspecs.each do |name, path|
             create_podspec(name, path)
           end
 
-          puts "✅ Todos os podspecs criados incluindo React-Core com RCTWebSocket!"
+          puts "✅ Todos os podspecs criados incluindo ReactCommon com turbomodule/core!"
           EOF
           
           # Executar o script Ruby
