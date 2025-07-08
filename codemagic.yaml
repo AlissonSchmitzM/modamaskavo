@@ -15,7 +15,17 @@ workflows:
       - name: Install npm dependencies
         script: |
           npm ci
-          
+
+      - name: Install dependencies with Firebase
+        script: |
+        # Instalar dependências básicas
+          npm install
+      
+        # Instalar pacotes específicos do Firebase se necessário
+        npm install @react-native-firebase/app @react-native-firebase/auth @react-native-firebase/firestore
+      
+        # Verificar instalação
+        ls -la node_modules/@react-native-firebase/app/scripts/
       - name: HACK BRUTAL - Corrigir TODOS os podspecs problemáticos
         script: |
           # Criar diretório third-party-podspecs se não existir
@@ -100,7 +110,7 @@ workflows:
           EOF
           
           echo "✅ Third-party podspecs corrigidos!"
-          
+      
       - name: HACK BRUTAL - Corrigir Firebase Auth podspec
         script: |
           # Corrigir RNFBAuth.podspec para iOS 12.0
