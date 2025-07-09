@@ -1,19 +1,16 @@
-name: Build iOS App
+name: Build iOS with Auto Signing
 
 on:
   push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
-  workflow_dispatch: # Permite executar manualmente
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
-  build-ios:
+  build:
     runs-on: macos-latest
     
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
     
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -24,15 +21,8 @@ jobs:
     - name: Install dependencies
       run: npm install
     
-    - name: Setup Ruby
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: '3.0'
-        bundler-cache: true
-    
     - name: Install CocoaPods
       run: |
-        sudo gem install cocoapods
         cd ios && pod install
     
     - name: Setup Xcode
@@ -40,27 +30,22 @@ jobs:
       with:
         xcode-version: latest-stable
     
-    - name: Import Code-Signing Certificates
-      uses: Apple-Actions/import-codesign-certs@v1
-      with:
-        p12-file-base64: ${{ secrets.CERTIFICATES_P12 }}
-        p12-password: ${{ secrets.CERTIFICATES_P12_PASSWORD }}
+    - name: Create API Key file
+      run: |
+        mkdir -p ~/.appstoreconnect/private_keys
+        echo "${{ secrets.APPSTORE_PRIVATE_KEY }}" | base64 -d > ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8
     
-    - name: Install Provisioning Profile
-      uses: Apple-Actions/download-provisioning-profiles@v1
-      with:
-        bundle-id: com.modamaskavo # Substitua pelo seu bundle ID
-        issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
-        api-key-id: ${{ secrets.APPSTORE_KEY_ID }}
-        api-private-key: ${{ secrets.APPSTORE_PRIVATE_KEY }}
-    
-    - name: Build iOS Archive
+    - name: Build with automatic signing
       run: |
         cd ios
         xcodebuild -workspace modamaskavo.xcworkspace \
                    -scheme modamaskavo \
                    -configuration Release \
                    -destination generic/platform=iOS \
+                   -allowProvisioningUpdates \
+                   -authenticationKeyPath ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8 \
+                   -authenticationKeyID ${{ secrets.APPSTORE_KEY_ID }} \
+                   -authenticationKeyIssuerID ${{ secrets.APPSTORE_ISSUER_ID }} \
                    -archivePath $PWD/build/modamaskavo.xcarchive \
                    archive
     
@@ -70,21 +55,14 @@ jobs:
         xcodebuild -exportArchive \
                    -archivePath $PWD/build/modamaskavo.xcarchive \
                    -exportOptionsPlist exportOptions.plist \
-                   -exportPath $PWD/build
+                   -exportPath $PWD/build \
+                   -allowProvisioningUpdates \
+                   -authenticationKeyPath ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8 \
+                   -authenticationKeyID ${{ secrets.APPSTORE_KEY_ID }} \
+                   -authenticationKeyIssuerID ${{ secrets.APPSTORE_ISSUER_ID }}
     
-    - name: Upload IPA Artifact
+    - name: Upload IPA
       uses: actions/upload-artifact@v4
       with:
         name: modamaskavo-ios
         path: ios/build/*.ipa
-        retention-days: 30
-    
-    - name: Upload to TestFlight (opcional)
-      if: github.ref == 'refs/heads/main'
-      run: |
-        cd ios
-        xcrun altool --upload-app \
-                     --type ios \
-                     --file build/*.ipa \
-                     --username ${{ secrets.APPLE_ID }} \
-                     --password ${{ secrets.APPLE_PASSWORD }}
