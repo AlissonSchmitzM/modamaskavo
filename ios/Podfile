@@ -1,11 +1,10 @@
 require_relative '../node_modules/react-native/scripts/react_native_pods'
 require_relative '../node_modules/@react-native-community/cli-platform-ios/native_modules'
 
-# Desabilitar New Architecture completamente
+# Desabilitar New Architecture
 ENV['RCT_NEW_ARCH_ENABLED'] = '0'
-ENV['USE_HERMES'] = '1'
 
-platform :ios, '15.0'  # ← Mude para 15.0
+platform :ios, '15.0'  # ← Atualizar para 15.0
 install! 'cocoapods', :deterministic_uuids => false
 
 target 'modamaskavo' do
@@ -14,8 +13,8 @@ target 'modamaskavo' do
   use_react_native!(
     :path => config[:reactNativePath],
     :hermes_enabled => true,
-    :fabric_enabled => false,  # ← Desabilita Fabric
-    :flipper_configuration => FlipperConfiguration.disabled,  # ← Desabilita Flipper
+    :fabric_enabled => false,  # ← Desabilitar Fabric
+    :flipper_configuration => FlipperConfiguration.disabled,
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
 
@@ -30,11 +29,10 @@ target 'modamaskavo' do
       :mac_catalyst_enabled => false
     )
     
-    # Força iOS 15.0 em TODOS os targets
+    # Força iOS 15.0 em todos os targets
     installer.pods_project.targets.each do |target|
       target.build_configurations.each do |config|
         config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
-        config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
       end
     end
   end
