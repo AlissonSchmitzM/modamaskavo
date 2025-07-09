@@ -1,4 +1,4 @@
-name: Build iOS with RN CLI
+name: Build iOS RN 0.79 FINAL
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: macos-14  # ← Mudança para macOS mais recente
+    runs-on: macos-14
     
     steps:
     - uses: actions/checkout@v4
@@ -15,7 +15,7 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '20'
         cache: 'npm'
     
     - name: Install dependencies
@@ -26,14 +26,25 @@ jobs:
       with:
         xcode-version: '15.4'
     
-    - name: Clean and install iOS dependencies
+    - name: Setup Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.2'
+    
+    - name: Install latest CocoaPods
+      run: |
+        sudo gem install cocoapods -v 1.15.2
+        pod --version
+    
+    - name: Complete clean install
       run: |
         cd ios
-        rm -rf Pods Podfile.lock
+        rm -rf Pods Podfile.lock build
         rm -rf ~/Library/Caches/CocoaPods
+        rm -rf ~/.cocoapods
         pod cache clean --all
         pod repo update
-        pod install --repo-update --verbose
+        pod install --repo-update --verbose --clean-install
     
     - name: Create API Key file
       run: |
@@ -52,7 +63,8 @@ jobs:
                    -authenticationKeyID ${{ secrets.APPSTORE_KEY_ID }} \
                    -authenticationKeyIssuerID ${{ secrets.APPSTORE_ISSUER_ID }} \
                    -archivePath $PWD/build/modamaskavo.xcarchive \
-                   archive
+                   archive \
+                   DEVELOPMENT_TEAM=${{ secrets.TEAM_ID }}
     
     - name: Export IPA
       run: |
