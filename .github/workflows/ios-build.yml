@@ -20,6 +20,13 @@ jobs:
     
     - name: Install dependencies
       run: npm install
+      
+    - name: Clean and reinstall CocoaPods
+      run: |
+        cd ios
+        rm -rf Pods
+        rm -rf Podfile.lock
+        pod install --repo-update
     
     - name: Install CocoaPods
       run: |
