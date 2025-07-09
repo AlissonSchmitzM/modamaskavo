@@ -1,4 +1,4 @@
-name: Build iOS with Auto Signing
+name: Build iOS with RN CLI
 
 on:
   push:
@@ -8,8 +8,7 @@ on:
 jobs:
   build:
     runs-on: macos-latest
-    continue-on-error: true
-    
+  
     steps:
     - uses: actions/checkout@v4
     
@@ -22,21 +21,20 @@ jobs:
     - name: Install dependencies
       run: npm install
       
-    - name: Clean and reinstall CocoaPods
-      run: |
-        cd ios
-        rm -rf Pods
-        rm -rf Podfile.lock
-        pod install --repo-update
-    
-    - name: Install CocoaPods
-      run: |
-        cd ios && pod install
-    
     - name: Setup Xcode
       uses: maxim-lobanov/setup-xcode@v1
       with:
-        xcode-version: latest-stable
+        xcode-version: '15.4'
+    
+    - name: Install iOS dependencies
+      run: |
+        cd ios
+        rm -rf Pods Podfile.lock
+        pod install --repo-update
+    
+    - name: Build with React Native CLI
+      run: |
+        npx react-native build-ios --mode Debug
     
     - name: Create API Key file
       run: |
