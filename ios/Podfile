@@ -1,7 +1,7 @@
 require_relative '../node_modules/react-native/scripts/react_native_pods'
 require_relative '../node_modules/@react-native-community/cli-platform-ios/native_modules'
 
-platform :ios, '13.0'  # ← Mude de 12.4 para 13.0
+platform :ios, '14.0'  # ← Mude para 14.0
 install! 'cocoapods', :deterministic_uuids => false
 
 target 'modamaskavo' do
@@ -13,7 +13,7 @@ target 'modamaskavo' do
     :path => config[:reactNativePath],
     :hermes_enabled => flags[:hermes_enabled],
     :fabric_enabled => flags[:fabric_enabled],
-    :flipper_configuration => FlipperConfiguration.enabled,
+    :flipper_configuration => FlipperConfiguration.disabled, # ← Desabilite Flipper
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
 
@@ -28,10 +28,11 @@ target 'modamaskavo' do
       :mac_catalyst_enabled => false
     )
     
-    # Força iOS 13.0 em todos os targets
+    # Força iOS 14.0 em TODOS os targets
     installer.pods_project.targets.each do |target|
       target.build_configurations.each do |config|
-        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '14.0'
+        config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
       end
     end
   end
