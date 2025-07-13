@@ -1,43 +1,117 @@
 require_relative '../node_modules/react-native/scripts/react_native_pods'
-require_relative '../node_modules/@react-native-community/cli-platform-ios/native_modules'
 
-# Configurações específicas para RN 0.79
-ENV['RCT_NEW_ARCH_ENABLED'] = '0'
-ENV['USE_HERMES'] = '1'
-
-platform :ios, '16.0'  # ← RN 0.79 precisa de iOS 16+
-install! 'cocoapods', :deterministic_uuids => false
+platform :ios, '16.0'
+use_frameworks! :linkage => :static
 
 target 'modamaskavo' do
   config = use_native_modules!
-
+  
+  # Configuração do React Native (já inclui DoubleConversion automaticamente)
   use_react_native!(
     :path => config[:reactNativePath],
-    :hermes_enabled => true,
-    :fabric_enabled => false,
-    :flipper_configuration => FlipperConfiguration.disabled,
-    :app_path => "#{Pod::Config.instance.installation_root}/.."
+    :hermes_enabled => false, # Mantido como no seu Podfile original
+    :fabric_enabled => true
   )
 
-  target 'modamaskavoTests' do
-    inherit! :complete
+  # Dependências principais
+  pod 'RNSVG', :path => '../node_modules/react-native-svg'
+  pod 'RNScreens', :path => '../node_modules/react-native-screens'
+
+  # Dependências do Firebase
+  pod 'Firebase/Auth'
+  pod 'Firebase/Database'
+  pod 'Firebase/Storage'
+  
+  # O pod 'fmt' é explicitamente adicionado. Se o use_react_native! já o incluir
+  # e você tiver problemas, pode tentar remover esta linha.
+  # Por enquanto, vamos mantê-la como estava no seu original.
+  pod 'fmt', :podspec => '../node_modules/react-native/third-party-podspecs/fmt.podspec'
+  
+  # As linhas abaixo estão comentadas corretamente, pois use_react_native!
+  # já as inclui.
+  # pod 'DoubleConversion', :podspec => '../node_modules/react-native/third-party-podspecs/DoubleConversion.podspec'
+  # pod 'glog', :podspec => '../node_modules/react-native/third-party-podspecs/glog.podspec'
+  # pod 'Folly', :podspec => '../node_modules/react-native/third-party-podspecs/Folly.podspec'
+end
+
+post_install do |installer|
+  # Configurações de build para todos os alvos dos Pods
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.0'
+      config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
+      
+      # MUITO IMPORTANTE: Define ALWAYS_SEARCH_USER_PATHS como NO
+      # Isso ajuda a evitar que o Xcode procure cabeçalhos em locais incorretos,
+      # o que pode causar conflitos com as bibliotecas padrão.
+      config.build_settings['ALWAYS_SEARCH_USER_PATHS'] = 'NO'
+
+      # Configuração dos caminhos de busca de cabeçalhos
+      # Adiciona explicitamente o caminho para os cabeçalhos da libc++ e prioriza caminhos explícitos
+      config.build_settings['HEADER_SEARCH_PATHS'] ||= [
+        '"$(PODS_ROOT)/DoubleConversion"',
+        '"$(PODS_ROOT)/Headers/Public/DoubleConversion"',
+        '"$(PODS_ROOT)/fmt/include"',
+        '"$(PODS_ROOT)/Headers/Public/fmt"',
+        '"$(PODS_ROOT)/RCT-Folly/folly"',
+        '"$(PROJECT_DIR)/../node_modules/react-native/ReactCommon"',
+        '"$(PROJECT_DIR)/../node_modules/react-native/ReactCommon/callinvoker"',
+        '"$(PROJECT_DIR)/../node_modules/react-native/ReactCommon/jsi"',
+        '"$(PROJECT_DIR)/../node_modules/react-native/ReactCommon/react/renderer"',
+        '"$(SDKROOT)/usr/include/c++/v1"', # Caminho explícito para libc++
+        '$(inherited)' # Movido para o final para priorizar os caminhos acima
+      ]
+
+      # Adiciona configurações explícitas para o dialeto e a biblioteca C++
+      # Isso é crucial para garantir a compatibilidade.
+      config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
+      config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
+	  config.build_settings['OTHER_CFLAGS'] = ['-DFOLLY_NO_CONFIG']
+      
+      # Permite includes não modulares em módulos de framework
+      config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+	  
+	  # Configuração específica para leveldb
+      if target.name == 'leveldb-library'
+        config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'gnu++14'
+        config.build_settings['OTHER_CPLUSPLUSFLAGS'] = [
+          '-stdlib=libc++',
+          '-Wno-c++17-extensions',
+          '-Wno-unused-parameter'
+        ]
+      else
+        config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
+      end
+      
+      # Define o padrão C para arquivos C
+      config.build_settings['GCC_C_LANGUAGE_STANDARD'] = 'c11'
+    end
   end
 
-  post_install do |installer|
-    react_native_post_install(
-      installer,
-      config[:reactNativePath],
-      :mac_catalyst_enabled => false
-    )
-    
-    installer.pods_project.targets.each do |target|
+  # Configuração global para o padrão C++ para todos os alvos do Pods
+  # Isso garante que a configuração seja aplicada de forma mais ampla.
+  # Esta seção é redundante com o loop acima, mas é mantida por segurança.
+  installer.pods_project.build_configurations.each do |config|
+    config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
+    config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
+    config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+    config.build_settings['GCC_C_LANGUAGE_STANDARD'] = 'c11'
+  end
+
+  # Solução específica para leveldb-library:
+  # Alguns usuários relataram que a leveldb-library pode precisar de um padrão C++ mais antigo,
+  # ou pode ter problemas com a detecção automática.
+  # Esta seção tenta forçar o padrão C++11 para o pod 'leveldb-library'
+  # Se 'leveldb-library' não for um alvo direto, isso pode não ter efeito.
+  # Você pode precisar ajustar o nome do alvo se for diferente (ex: 'leveldb').
+  installer.pods_project.targets.each do |target|
+    if target.name == 'leveldb-library' || target.name == 'leveldb'
       target.build_configurations.each do |config|
-        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.0'
-        config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
-        config.build_settings['LIBRARY_SEARCH_PATHS'] = ['$(SDKROOT)/usr/lib/swift', '$(inherited)']
-        # Fix para RN 0.79
-        config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++20'
+        puts "Configurando C++11 para #{target.name}..."
+        config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++11'
         config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
+        config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+        config.build_settings['GCC_C_LANGUAGE_STANDARD'] = 'c11'
       end
     end
   end

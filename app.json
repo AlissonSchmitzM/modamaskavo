@@ -1,4 +1,10 @@
 {
   "name": "modamaskavo",
-  "displayName": "Moda Maskavo"
+  "displayName": "Moda Maskavo",
+  "owner": "alissonschmitz",
+  "extra": {
+    "eas": {
+      "projectId": "a85e0031-0096-4178-8dac-87056104e09c"
+    }
+  }
 }

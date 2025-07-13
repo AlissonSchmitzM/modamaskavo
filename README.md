@@ -16,6 +16,15 @@ Um app desenvolvido em **React Native** para pedidos de peças exclusívas e uni
 
 ---
 
+## 📥 Download Oficial
+
+<div align="center" style="display: flex; justify-content: center; gap: 20px; margin: 20px 0;">
+
+[<img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" width="150" style="margin-right: 20px;">](LINK_PLAYSTORE)
+[<img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg" width="150">](LINK_APPSTORE)
+
+</div>
+
 ## 🛠️ Tecnologias Usadas
 
 - **Framework**: React Native
