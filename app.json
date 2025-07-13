@@ -1,10 +1,38 @@
 {
-  "name": "modamaskavo",
-  "displayName": "Moda Maskavo",
-  "owner": "alissonschmitz",
-  "extra": {
-    "eas": {
-      "projectId": "a85e0031-0096-4178-8dac-87056104e09c"
+  "expo": {
+    "name": "Moda Maskavo",
+    "slug": "modamaskavo",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "owner": "alissonschmitz",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "org.reactjs.native.example.modamaskavo",
+      "buildNumber": "1"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "org.reactjs.native.example.modamaskavo",
+      "versionCode": 1
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "a85e0031-0096-4178-8dac-87056104e09c"
+      }
     }
   }
 }
