@@ -1,3 +1,6 @@
-module.exports = {
-  presets: ['module:@react-native/babel-preset'],
+module.exports = function (api) {
+  api.cache(true); // Boa prática para caching
+  return {
+    presets: ['babel-preset-expo'], // <<< Mude para este preset
+  };
 };
