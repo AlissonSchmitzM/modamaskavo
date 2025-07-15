@@ -1,12 +1,14 @@
 {
+  "name": "modamaskavo",
+  "displayName": "Moda Maskavo",
   "expo": {
     "name": "Moda Maskavo",
     "slug": "modamaskavo",
-    "version": "1.0.0",
+    "version": "1.0.7",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "owner": "alissonschmitz",
+    "owner": "alissonschmitzm",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -14,24 +16,92 @@
     },
     "assetBundlePatterns": ["**/*"],
     "ios": {
+      "deploymentTarget": "15.1",
       "supportsTablet": true,
-      "bundleIdentifier": "org.reactjs.native.example.modamaskavo",
-      "buildNumber": "1"
+      "bundleIdentifier": "com.modamaskavo",
+      "buildNumber": "1.0.7",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSPhotoLibraryUsageDescription": "Permite selecionar fotos para o aplicativo",
+        "NSCameraUsageDescription": "Permite tirar fotos para o aplicativo",
+        "NSMicrophoneUsageDescription": "Permite gravar áudio quando tirar vídeos",
+        "UIUserInterfaceStyle": "Automatic"
+      },
+      "config": {
+        "usesNonExemptEncryption": false,
+        "googleSignIn": {
+          "reservedClientId": "582893482320-35hmr955sm4fm3dudgu1dg7ouvge3d44.apps.googleusercontent.com"
+        }
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "org.reactjs.native.example.modamaskavo",
-      "versionCode": 1
+      "package": "com.modamaskavo",
+      "versionCode": 7,
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static",
+            "deploymentTarget": "15.1",
+            "codegenConfig": {
+              "name": "RNCodegen",
+              "type": "all",
+              "jsSrcsDir": "./src",
+              "android": {
+                "javaPackageName": "com.modamaskavo.codegen"
+              }
+            },
+            "extraPods": [
+              {
+                "name": "Libc++",
+                "path": "${PODS_ROOT}/../node_modules/react-native/third-party-podspecs/libc++.podspec",
+                "configurations": ["Release"],
+                "modular_headers": false
+              },
+              {
+                "name": "Firebase",
+                "versions": "10.0.0",
+                "configurations": ["Release"],
+                "modular_headers": true
+              }
+            ],
+            "podProperties": {
+              "HEADER_SEARCH_PATHS": [
+                "\"$(PODS_ROOT)/Headers/Public\"",
+                "\"$(PODS_ROOT)/Headers/Public/React-Core\""
+              ]
+            }
+          },
+          "android": {
+            "extraMavenRepos": ["https://maven.google.com"],
+            "compileSdkVersion": 34,
+            "targetSdkVersion": 34,
+            "buildToolsVersion": "34.0.0"
+          }
+        }
+      ],
+      "@react-native-firebase/app"
+    ],
+    "ios": {
+      "jsEngine": "hermes"
+    },
     "extra": {
       "eas": {
-        "projectId": "a85e0031-0096-4178-8dac-87056104e09c"
+        "projectId": "9019c2d9-4c6a-4a27-b7f2-5b572a205501"
       }
     }
   }

@@ -1,27 +1,44 @@
 {
+  "cli": {
+    "version": ">= 16.15.0",
+    "appVersionSource": "remote"
+  },
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "ios": {
+        "simulator": true,
+        "cocoapods": "1.15.2"
+      }
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "ios": {
+        "image": "macos-sonoma-14.4-xcode-15.3",
+        "cocoapods": "1.15.2"
+      }
     },
     "production": {
+      "env": {
+        "CLANG_CXX_LANGUAGE_STANDARD": "c++20",
+        "CLANG_CXX_LIBRARY": "libc++",
+        "GCC_PREPROCESSOR_DEFINITIONS": "_LIBCPP_DISABLE_AVAILABILITY=1"
+      },
       "ios": {
-        "resourceClass": "m-medium"
+        "image": "macos-sonoma-14.4-xcode-15.3",
+        "cocoapods": "1.15.2",
+        "env": {
+          "OTHER_LDFLAGS": "-ObjC -lc++",
+          "HEADER_SEARCH_PATHS": "\"$(PODS_ROOT)/Headers/Public\" \"$(PODS_ROOT)/Headers/Public/React-Core\""
+        }
       },
       "android": {
-        "resourceClass": "medium"
+        "buildType": "apk"
       }
     }
   },
   "submit": {
-    "production": {
-      "ios": {
-        "ascAppId": "6748318452",
-        "appleId": "alissonschmitz40@gmail.com"
-      }
-    }
+    "production": {}
   }
 }
