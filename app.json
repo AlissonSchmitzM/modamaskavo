@@ -4,11 +4,11 @@
   "expo": {
     "name": "Moda Maskavo",
     "slug": "modamaskavo",
-    "version": "1.0.7",
+    "version": "1.0.9",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "owner": "alissonschmitzm",
+    "owner": "alissonschmitz3",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -19,7 +19,7 @@
       "deploymentTarget": "15.1",
       "supportsTablet": true,
       "bundleIdentifier": "com.modamaskavo",
-      "buildNumber": "1.0.7",
+      "buildNumber": "1.0.9",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSPhotoLibraryUsageDescription": "Permite selecionar fotos para o aplicativo",
@@ -40,7 +40,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.modamaskavo",
-      "versionCode": 7,
+      "versionCode": 9,
       "permissions": [
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
@@ -101,7 +101,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "9019c2d9-4c6a-4a27-b7f2-5b572a205501"
+        "projectId": "a434fc2e-a61b-4347-bec8-33c6160b7a6c"
       }
     }
   }

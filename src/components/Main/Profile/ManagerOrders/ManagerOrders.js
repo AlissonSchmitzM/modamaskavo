@@ -29,7 +29,7 @@ import {
 import LottieView from 'lottie-react-native';
 import {without_orders} from '../../../../assets';
 import NavigatorService from '../../../../services/NavigatorService';
-import {styles} from './Styles';
+import {styles} from './styles';
 
 // Definindo um tema personalizado para garantir cores consistentes
 const theme = {
