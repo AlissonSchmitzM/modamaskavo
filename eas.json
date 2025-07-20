@@ -1,6 +1,6 @@
 {
   "cli": {
-    "version": ">= 16.15.0",
+    "version": ">= 3.0.0",
     "appVersionSource": "remote"
   },
   "build": {
@@ -15,26 +15,22 @@
     "preview": {
       "distribution": "internal",
       "ios": {
-        "image": "macos-sonoma-14.4-xcode-15.3",
+        "image": "macos-sonoma-14.5-xcode-15.4",
         "cocoapods": "1.15.2"
       }
     },
     "production": {
-      "env": {
-        "CLANG_CXX_LANGUAGE_STANDARD": "c++20",
-        "CLANG_CXX_LIBRARY": "libc++",
-        "GCC_PREPROCESSOR_DEFINITIONS": "_LIBCPP_DISABLE_AVAILABILITY=1"
-      },
       "ios": {
-        "image": "macos-sonoma-14.4-xcode-15.3",
+        "image": "macos-sonoma-14.5-xcode-15.4",
         "cocoapods": "1.15.2",
-        "env": {
-          "OTHER_LDFLAGS": "-ObjC -lc++",
-          "HEADER_SEARCH_PATHS": "\"$(PODS_ROOT)/Headers/Public\" \"$(PODS_ROOT)/Headers/Public/React-Core\""
-        }
+        "distribution": "store",
       },
-      "android": {
-        "buildType": "apk"
+      "env": {
+          "USE_FRAMEWORKS": "static",
+          "CLANG_CXX_LANGUAGE_STANDARD": "gnu++20",
+          "CLANG_CXX_LIBRARY": "libc++",
+          "GCC_PREPROCESSOR_DEFINITIONS": "_LIBCPP_DISABLE_AVAILABILITY=1",
+          "OTHER_CFLAGS": "-fno-omit-frame-pointer -fexceptions -frtti"
       }
     }
   },

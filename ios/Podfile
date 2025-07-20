@@ -1,118 +1,158 @@
 require_relative '../node_modules/react-native/scripts/react_native_pods'
 
-platform :ios, '16.0'
+platform :ios, '17.0'
 use_frameworks! :linkage => :static
+use_modular_headers!
 
-target 'modamaskavo' do
-  config = use_native_modules!
-  
-  # Configuração do React Native (já inclui DoubleConversion automaticamente)
-  use_react_native!(
-    :path => config[:reactNativePath],
-    :hermes_enabled => false, # Mantido como no seu Podfile original
-    :fabric_enabled => true
-  )
+require 'pathname'
 
-  # Dependências principais
-  pod 'RNSVG', :path => '../node_modules/react-native-svg'
-  pod 'RNScreens', :path => '../node_modules/react-native-screens'
-
-  # Dependências do Firebase
-  pod 'Firebase/Auth'
-  pod 'Firebase/Database'
-  pod 'Firebase/Storage'
-  
-  # O pod 'fmt' é explicitamente adicionado. Se o use_react_native! já o incluir
-  # e você tiver problemas, pode tentar remover esta linha.
-  # Por enquanto, vamos mantê-la como estava no seu original.
-  pod 'fmt', :podspec => '../node_modules/react-native/third-party-podspecs/fmt.podspec'
-  
-  # As linhas abaixo estão comentadas corretamente, pois use_react_native!
-  # já as inclui.
-  # pod 'DoubleConversion', :podspec => '../node_modules/react-native/third-party-podspecs/DoubleConversion.podspec'
-  # pod 'glog', :podspec => '../node_modules/react-native/third-party-podspecs/glog.podspec'
-  # pod 'Folly', :podspec => '../node_modules/react-native/third-party-podspecs/Folly.podspec'
+# 🛠 Corrige build_type para libs específicas
+pre_install do |installer|
+  installer.pod_targets.each do |pod|
+    if ['GTMAppAuth', 'GoogleUtilities'].include?(pod.name)
+      def pod.build_type;
+        Pod::BuildType.static_library
+      end
+    end
+  end
 end
 
+# 🩹 Corrige a versão do GTMAppAuth usada pelo Google SignIn
 post_install do |installer|
-  # Configurações de build para todos os alvos dos Pods
-  installer.pods_project.targets.each do |target|
-    target.build_configurations.each do |config|
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.0'
-      config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
-      
-      # MUITO IMPORTANTE: Define ALWAYS_SEARCH_USER_PATHS como NO
-      # Isso ajuda a evitar que o Xcode procure cabeçalhos em locais incorretos,
-      # o que pode causar conflitos com as bibliotecas padrão.
-      config.build_settings['ALWAYS_SEARCH_USER_PATHS'] = 'NO'
-
-      # Configuração dos caminhos de busca de cabeçalhos
-      # Adiciona explicitamente o caminho para os cabeçalhos da libc++ e prioriza caminhos explícitos
-      config.build_settings['HEADER_SEARCH_PATHS'] ||= [
-        '"$(PODS_ROOT)/DoubleConversion"',
-        '"$(PODS_ROOT)/Headers/Public/DoubleConversion"',
-        '"$(PODS_ROOT)/fmt/include"',
-        '"$(PODS_ROOT)/Headers/Public/fmt"',
-        '"$(PODS_ROOT)/RCT-Folly/folly"',
-        '"$(PROJECT_DIR)/../node_modules/react-native/ReactCommon"',
-        '"$(PROJECT_DIR)/../node_modules/react-native/ReactCommon/callinvoker"',
-        '"$(PROJECT_DIR)/../node_modules/react-native/ReactCommon/jsi"',
-        '"$(PROJECT_DIR)/../node_modules/react-native/ReactCommon/react/renderer"',
-        '"$(SDKROOT)/usr/include/c++/v1"', # Caminho explícito para libc++
-        '$(inherited)' # Movido para o final para priorizar os caminhos acima
-      ]
-
-      # Adiciona configurações explícitas para o dialeto e a biblioteca C++
-      # Isso é crucial para garantir a compatibilidade.
-      config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
-      config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
-	  config.build_settings['OTHER_CFLAGS'] = ['-DFOLLY_NO_CONFIG']
-      
-      # Permite includes não modulares em módulos de framework
-      config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
-	  
-	  # Configuração específica para leveldb
-      if target.name == 'leveldb-library'
-        config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'gnu++14'
-        config.build_settings['OTHER_CPLUSPLUSFLAGS'] = [
-          '-stdlib=libc++',
-          '-Wno-c++17-extensions',
-          '-Wno-unused-parameter'
-        ]
-      else
-        config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
-      end
-      
-      # Define o padrão C para arquivos C
-      config.build_settings['GCC_C_LANGUAGE_STANDARD'] = 'c11'
+  rn_google_signin_spec = Pathname.new(__dir__) + '../node_modules/@react-native-google-signin/google-signin/RNGoogleSignin.podspec'
+  if rn_google_signin_spec.exist?
+    content = rn_google_signin_spec.read
+    if content.include?("s.dependency 'GTMAppAuth', '~> 1.1.0'")
+      content = content.gsub("s.dependency 'GTMAppAuth', '~> 1.1.0'", "s.dependency 'GTMAppAuth', '>= 4.1.1'")
+      rn_google_signin_spec.write(content)
     end
   end
 
-  # Configuração global para o padrão C++ para todos os alvos do Pods
-  # Isso garante que a configuração seja aplicada de forma mais ampla.
-  # Esta seção é redundante com o loop acima, mas é mantida por segurança.
+  installer.pods_project.targets.each do |target|
+    # Ajustes específicos para DoubleConversion
+    if target.name == 'DoubleConversion' || target.name.include?('React-')
+      target.build_configurations.each do |config|
+        config.build_settings['HEADER_SEARCH_PATHS'] = [
+          '$(inherited)',
+          '"$(PODS_ROOT)/DoubleConversion"',
+          '"$(PODS_ROOT)/Headers/Public/DoubleConversion"',
+          '"$(PODS_ROOT)/boost"',
+          '"$(PODS_ROOT)/RCT-Folly"',
+          '"$(PODS_ROOT)/fmt/include"'
+        ].join(' ')
+        
+        config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'gnu++20'
+        config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
+      end
+    end
+
+    # Configurações para todos os módulos Firebase
+    if target.name.start_with?('Firebase')
+      target.build_configurations.each do |config|
+        config.build_settings['DEFINES_MODULE'] = 'YES'
+        config.build_settings['CLANG_ENABLE_MODULES'] = 'YES'
+        config.build_settings['OTHER_CFLAGS'] = '$(inherited) -DFIREBASE_BUILD_CORE_INTERNAL'
+      end
+    end
+
+    # Configuração específica para FirebaseCoreInternal
+    if target.name == 'FirebaseCoreInternal'
+      target.build_configurations.each do |config|
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = '$(inherited) FIRBUILD_CORE_INTERNAL=1'
+        config.build_settings['HEADER_SEARCH_PATHS'] = [
+          '$(inherited)',
+          '"$(PODS_ROOT)/FirebaseCoreInternal/Sources"',
+          '"$(PODS_ROOT)/Headers/Public/FirebaseCoreInternal"'
+        ].join(' ')
+      end
+    end
+	
+	if target.name == 'Yoga'
+		phase = target.build_phases.find { |p| p.display_name == 'Copy Headers' }
+		if phase
+		  phase.files.delete_if do |file|
+			file.file_ref.path.include?('yoga/enums/Align.h') ||
+			file.file_ref.path.include?('yoga/enums/FlexDirection.h')
+		  end
+		end
+	  end
+
+    # Configurações globais para todos os targets
+    target.build_configurations.each do |config|
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '17.0'
+      config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
+      config.build_settings['ALWAYS_SEARCH_USER_PATHS'] = 'NO'
+      config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'gnu++20'
+      config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
+      config.build_settings['GCC_C_LANGUAGE_STANDARD'] = 'gnu11'
+      config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+      config.build_settings['OTHER_CFLAGS'] ||= ['$(inherited)']
+      config.build_settings['OTHER_CFLAGS'] << '-DFIREBASE_BUILD_CORE_INTERNAL'
+    end
+  end
+
   installer.pods_project.build_configurations.each do |config|
     config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
     config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
-    config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
     config.build_settings['GCC_C_LANGUAGE_STANDARD'] = 'c11'
+    config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
   end
 
-  # Solução específica para leveldb-library:
-  # Alguns usuários relataram que a leveldb-library pode precisar de um padrão C++ mais antigo,
-  # ou pode ter problemas com a detecção automática.
-  # Esta seção tenta forçar o padrão C++11 para o pod 'leveldb-library'
-  # Se 'leveldb-library' não for um alvo direto, isso pode não ter efeito.
-  # Você pode precisar ajustar o nome do alvo se for diferente (ex: 'leveldb').
-  installer.pods_project.targets.each do |target|
-    if target.name == 'leveldb-library' || target.name == 'leveldb'
-      target.build_configurations.each do |config|
-        puts "Configurando C++11 para #{target.name}..."
-        config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++11'
-        config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
-        config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
-        config.build_settings['GCC_C_LANGUAGE_STANDARD'] = 'c11'
+  # 🔁 REMOVE arquivos duplicados do React-Codegen
+  codegen_target = installer.pods_project.targets.find { |t| t.name == 'React-Codegen' }
+  if codegen_target
+    phase = codegen_target.build_phases.find { |p| p.display_name == 'Compile Sources' }
+    if phase
+      phase.files.each do |file|
+        if file.file_ref.path.include?("States.cpp")
+          phase.remove_file_reference(file.file_ref)
+        end
       end
     end
   end
+end
+
+$FirebaseSDKVersion = '10.24.0'
+
+target 'modamaskavo' do
+  config = use_native_modules!
+
+  use_react_native!(
+    :path => config[:reactNativePath],
+    :hermes_enabled => false,
+    :fabric_enabled => false
+  )
+
+  # Dependências manuais
+  pod 'RNSVG', :path => '../node_modules/react-native-svg'
+  pod 'RNScreens', :path => '../node_modules/react-native-screens'
+
+  # Firebase - Configuração especial para v22.1.0
+  pod 'Firebase', $FirebaseSDKVersion
+  pod 'FirebaseCore', $FirebaseSDKVersion
+  pod 'FirebaseCoreInternal', $FirebaseSDKVersion do |s|
+    s.source_files = 'FirebaseCoreInternal/Sources/**/*.{h,m}'
+    s.pod_target_xcconfig = {
+      'DEFINES_MODULE' => 'YES',
+      'OTHER_CFLAGS' => '-DFIREBASE_BUILD_CORE_INTERNAL'
+    }
+  end
+  pod 'FirebaseAuth', $FirebaseSDKVersion
+  pod 'FirebaseDatabase', $FirebaseSDKVersion
+  pod 'FirebaseStorage', $FirebaseSDKVersion
+  pod 'FirebaseInstallations', $FirebaseSDKVersion
+  
+  pod 'GoogleDataTransport'
+  pod 'nanopb'
+  pod 'PromisesObjC'
+
+  # HEADERS corrigidos
+  pod 'GoogleUtilities'
+  pod 'GTMAppAuth'
+
+  # Outros pods nativos
+  pod 'DoubleConversion', :podspec => '../node_modules/react-native/third-party-podspecs/DoubleConversion.podspec'
+  pod 'RCT-Folly', :podspec => '../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec'
+  pod 'boost', :podspec => '../node_modules/react-native/third-party-podspecs/boost.podspec'
+  pod 'fmt', :podspec => '../node_modules/react-native/third-party-podspecs/fmt.podspec'
 end

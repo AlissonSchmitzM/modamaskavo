@@ -8,15 +8,16 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "owner": "alissonschmitz3",
+    "owner": "alissonschmitz7",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "assetBundlePatterns": ["**/*"],
+    "jsEngine": "jsc",
     "ios": {
-      "deploymentTarget": "15.1",
+      "deploymentTarget": "17.0",
       "supportsTablet": true,
       "bundleIdentifier": "com.modamaskavo",
       "buildNumber": "1.0.9",
@@ -40,7 +41,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.modamaskavo",
-      "versionCode": 9,
+      "versionCode": 8,
       "permissions": [
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
@@ -55,39 +56,16 @@
         "expo-build-properties",
         {
           "ios": {
-            "useFrameworks": "static",
-            "deploymentTarget": "15.1",
-            "codegenConfig": {
-              "name": "RNCodegen",
-              "type": "all",
-              "jsSrcsDir": "./src",
-              "android": {
-                "javaPackageName": "com.modamaskavo.codegen"
-              }
-            },
-            "extraPods": [
-              {
-                "name": "Libc++",
-                "path": "${PODS_ROOT}/../node_modules/react-native/third-party-podspecs/libc++.podspec",
-                "configurations": ["Release"],
-                "modular_headers": false
-              },
-              {
-                "name": "Firebase",
-                "versions": "10.0.0",
-                "configurations": ["Release"],
-                "modular_headers": true
-              }
-            ],
-            "podProperties": {
-              "HEADER_SEARCH_PATHS": [
-                "\"$(PODS_ROOT)/Headers/Public\"",
-                "\"$(PODS_ROOT)/Headers/Public/React-Core\""
-              ]
+            "deploymentTarget": "18.0",
+			"buildConfiguration": {
+			  "CLANG_CXX_LANGUAGE_STANDARD": "c++20",
+			  "CLANG_CXX_LIBRARY": "libc++",
+			  "GCC_C_LANGUAGE_STANDARD": "c11",
+			  "GCC_PREPROCESSOR_DEFINITIONS": "_LIBCPP_DISABLE_AVAILABILITY=1",
+			  "HEADER_SEARCH_PATHS": "\"$(PODS_ROOT)/Headers/Public/React-bridging\" \"$(PODS_ROOT)/Headers/Public/React-hermes\" \"$(PODS_ROOT)/DoubleConversion\" \"$(PODS_ROOT)/Headers/Public/DoubleConversion\""
             }
           },
           "android": {
-            "extraMavenRepos": ["https://maven.google.com"],
             "compileSdkVersion": 34,
             "targetSdkVersion": 34,
             "buildToolsVersion": "34.0.0"
@@ -96,12 +74,9 @@
       ],
       "@react-native-firebase/app"
     ],
-    "ios": {
-      "jsEngine": "hermes"
-    },
     "extra": {
       "eas": {
-        "projectId": "a434fc2e-a61b-4347-bec8-33c6160b7a6c"
+        "projectId": "6644fae0-c4a7-4999-b252-3ba24e6c0546"
       }
     }
   }

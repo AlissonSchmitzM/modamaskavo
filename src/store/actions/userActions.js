@@ -280,7 +280,7 @@ const loginUserGoogleError = (err, dispatch) => {
       message = 'Ocorreu um erro ao fazer login.';
       break;
     default:
-      message = err.code;
+      message = err.code + err.message;
   }
 
   dispatch(
