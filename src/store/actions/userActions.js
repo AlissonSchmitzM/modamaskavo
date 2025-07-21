@@ -117,14 +117,16 @@ export const createUser =
   dispatch => {
     dispatch({type: REGISTRATION_IN_PROGRESS});
 
+    const emailFormatted = email.toLowerCase();
+
     getAuth()
-      .createUserWithEmailAndPassword(email, password)
+      .createUserWithEmailAndPassword(emailFormatted, password)
       .then(() => {
-        const emailB64 = b64.encode(email);
+        const emailB64 = b64.encode(emailFormatted);
 
         set(ref(getDatabase(), `/users/${emailB64}`), {
           name,
-          email,
+          email: emailFormatted,
           fileImgPath: null,
           saveProfile: false,
           createdAt: new Date().toISOString(),

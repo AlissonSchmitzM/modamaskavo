@@ -12,6 +12,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     textAlign: 'center',
+    marginTop: 30,
   },
   card: {
     padding: 16,

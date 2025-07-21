@@ -389,7 +389,6 @@ class Store extends Component {
     const {showShippingModal, shippingLoading, shippingError, shippingOptions} =
       this.state;
 
-    console.log('erroraaa ', error);
     if (error) {
       return (
         <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
@@ -429,7 +428,8 @@ class Store extends Component {
           maxToRenderPerBatch={5}
           windowSize={5}
           renderItem={({item}) => (
-            <View style={styles.product}>
+            <View
+              style={[styles.product, {marginTop: item.key === '1' ? 0 : 10}]}>
               <View style={styles.carouselContainer}>
                 {item.images && item.images.length > 0 && (
                   <>
@@ -570,11 +570,18 @@ class Store extends Component {
                       </Text>
                       <Icon name="chevron-down" size={20} color="#000000" />
                     </TouchableOpacity>
-                    <TouchableOpacity
+
+                    <Button
+                      mode="contained"
+                      textColor="#FFF"
                       style={[
-                        styles.button,
+                        {
+                          marginTop: 10,
+                          backgroundColor: '#000000',
+                        },
                         !selectedVariations[item.id] && styles.buttonDisabled,
                       ]}
+                      icon="cart-outline"
                       onPress={() => {
                         if (selectedVariations[item.id]) {
                           const productWithVariation = {
@@ -589,8 +596,8 @@ class Store extends Component {
                         updatingProductId === item.id ||
                         !selectedVariations[item.id]
                       }>
-                      <Text style={styles.buttonText}>Comprar</Text>
-                    </TouchableOpacity>
+                      Comprar
+                    </Button>
                   </View>
                 )}
               </View>
@@ -727,7 +734,7 @@ class Store extends Component {
                   <Text style={modalStyles.errorText}>
                     Erro: {shippingError}
                   </Text>
-                  <Button onPress={this.handleCalculateShipping}>
+                  <Button onPress={this.handleCalculateShipping} icon="refresh">
                     Tentar Novamente
                   </Button>
                 </View>
@@ -773,6 +780,7 @@ class Store extends Component {
                 mode="outlined"
                 onPress={this.handleCloseShippingModal}
                 style={modalStyles.closeButton}
+                icon="close"
                 disabled={shippingLoading}
                 theme={{colors: {primary: '#000000'}}}>
                 Cancelar

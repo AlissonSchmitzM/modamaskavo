@@ -61,6 +61,7 @@ class FormLogin extends Component {
         ref={this.btnLoginRef}
         mode="contained"
         style={styles.button}
+        icon="login"
         textColor="#FFF"
         onPress={this.handleSubmit}>
         Login

@@ -93,6 +93,7 @@ class Orders extends Component {
         ref={this.btnRegisterRef}
         mode="contained"
         style={styles.button}
+        icon="send"
         onPress={this.handleOpenShippingModal}>
         Enviar
       </Button>
@@ -393,7 +394,7 @@ class Orders extends Component {
 
     return (
       <SafeAreaView
-        style={{flex: 1, backgroundColor: '#f5f5f5', marginTop: 30}}
+        style={{flex: 1, backgroundColor: '#f5f5f5'}}
         edges={['left', 'right']}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -431,6 +432,7 @@ class Orders extends Component {
                   label="Segmento"
                   ref={this.segmentRef}
                   returnKeyType="next"
+                  maxLength={100}
                   onSubmitEditing={() => {
                     if (selectedOption === 'exclusive') {
                       this.setShowDropdown(true);
@@ -533,6 +535,7 @@ class Orders extends Component {
                   onChangeText={text => this.props.onModifyDescription(text)}
                   theme={{colors: {primary: '#000000'}}}
                   multiline={true}
+                  maxLength={500}
                   numberOfLines={5}
                   textAlignVertical="top"
                   returnKeyType="done"

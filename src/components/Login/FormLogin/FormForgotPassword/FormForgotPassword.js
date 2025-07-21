@@ -63,7 +63,7 @@ class FormForgotPassword extends Component {
 
   render() {
     return (
-      <SafeAreaView style={{flex: 1}}>
+      <View style={{flex: 1}}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 80}
@@ -96,7 +96,7 @@ class FormForgotPassword extends Component {
           </View>
         </KeyboardAvoidingView>
         <Toast config={toastConfig} />
-      </SafeAreaView>
+      </View>
     );
   }
 }

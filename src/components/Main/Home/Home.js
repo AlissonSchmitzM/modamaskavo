@@ -16,6 +16,7 @@ import {
   readDataOrders,
   readDataOrdersFull,
 } from '../../../store/actions/orderActions';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import {readDataConfig} from '../../../store/actions/configActions';
 import {Card, Surface, Button} from 'react-native-paper';
 import Icon from 'react-native-vector-icons/Feather';
@@ -89,36 +90,37 @@ class Home extends Component {
   images = [
     {
       id: '1',
-      url: 'https://firebasestorage.googleapis.com/v0/b/modamaskavo-876a9.firebasestorage.app/o/photos_home%2Fhome_1.jpeg?alt=media&token=0fd1e082-e9a3-4107-8fc8-d5f7ffe17825',
+      url: 'https://firebasestorage.googleapis.com/v0/b/modamaskavo-876a9.firebasestorage.app/o/photos_home%2Fhome_1.jpeg?alt=media&token=8fba3ed3-e8fa-4179-9b50-4a6b15c88b92',
     },
     {
       id: '2',
-      url: 'https://firebasestorage.googleapis.com/v0/b/modamaskavo-876a9.firebasestorage.app/o/photos_home%2Fhome_2.jpg?alt=media&token=c7aa0091-bbd1-48c6-9f84-7e0e96111de4',
+      url: 'https://firebasestorage.googleapis.com/v0/b/modamaskavo-876a9.firebasestorage.app/o/photos_home%2Fhome_2.jpg?alt=media&token=7a25490b-425f-4d11-b836-52d4a0cda5ae',
     },
     {
       id: '3',
-      url: 'https://firebasestorage.googleapis.com/v0/b/modamaskavo-876a9.firebasestorage.app/o/photos_home%2Fhome_3.jpeg?alt=media&token=4412da46-a03e-47dc-9b7c-40b30077efcc',
+      url: 'https://firebasestorage.googleapis.com/v0/b/modamaskavo-876a9.firebasestorage.app/o/photos_home%2Fhome_3.jpeg?alt=media&token=d004cbd7-8c9c-4a7b-a113-c2e3dd5003c4',
     },
     {
       id: '4',
-      url: 'https://firebasestorage.googleapis.com/v0/b/modamaskavo-876a9.firebasestorage.app/o/photos_home%2Fhome_4.jpeg?alt=media&token=90b48c12-66e5-4b75-b601-8251195fd689',
+      url: 'https://firebasestorage.googleapis.com/v0/b/modamaskavo-876a9.firebasestorage.app/o/photos_home%2Fhome_4.jpeg?alt=media&token=7f0cdac0-a184-46fa-a5c9-40346d2da5a7',
     },
     {
       id: '5',
-      url: 'https://firebasestorage.googleapis.com/v0/b/modamaskavo-876a9.firebasestorage.app/o/photos_home%2Fhome_5.jpg?alt=media&token=db0c7fec-e82d-46b3-853b-1fed99cd1063',
+      url: 'https://firebasestorage.googleapis.com/v0/b/modamaskavo-876a9.firebasestorage.app/o/photos_home%2Fhome_5.jpg?alt=media&token=4cfc6b32-142a-4fe3-ba64-2da307da2983',
     },
     {
       id: '6',
-      url: 'https://firebasestorage.googleapis.com/v0/b/modamaskavo-876a9.firebasestorage.app/o/photos_home%2Fhome_6.jpeg?alt=media&token=d3d0997d-6440-47ce-b9e5-a447e9fb91d3',
+      url: 'https://firebasestorage.googleapis.com/v0/b/modamaskavo-876a9.firebasestorage.app/o/photos_home%2Fhome_6.jpeg?alt=media&token=bd80b34c-3a86-4b8f-9a11-88e8ed39f92a',
     },
     {
       id: '7',
-      url: 'https://firebasestorage.googleapis.com/v0/b/modamaskavo-876a9.firebasestorage.app/o/photos_home%2Fhome_7.jpeg?alt=media&token=61964351-f675-4de6-8631-6453c0d7fb8a',
+      url: 'https://firebasestorage.googleapis.com/v0/b/modamaskavo-876a9.firebasestorage.app/o/photos_home%2Fhome_7.jpeg?alt=media&token=9c415b95-5a69-457f-93a1-c1ecb47a3ab8',
     },
   ];
 
   // Função para passar para a próxima imagem
   goToNextSlide = () => {
+    this.intervalId = clearInterval(this.intervalId);
     const {activeIndex} = this.state;
     if (activeIndex === this.images.length - 1) {
       this.flatListRef.current.scrollToIndex({index: 0, animated: true});
@@ -132,6 +134,7 @@ class Home extends Component {
 
   // Função para voltar para a imagem anterior
   goToPrevSlide = () => {
+    this.intervalId = clearInterval(this.intervalId);
     const {activeIndex} = this.state;
     if (activeIndex === 0) {
       this.flatListRef.current.scrollToIndex({
@@ -294,12 +297,18 @@ class Home extends Component {
           <Button
             mode="contained"
             onPress={() => NavigatorService.navigate('Orders')}
+            icon={({size, color}) => (
+              <Ionicons name="shirt" size={size} color={color} />
+            )}
             style={styles.button}>
             Faça seu pedido
           </Button>
           <Button
             mode="contained"
             onPress={() => NavigatorService.navigate('Store')}
+            icon={({size, color}) => (
+              <Ionicons name="storefront" size={size} color={color} />
+            )}
             style={styles.button}>
             Comprar na loja
           </Button>

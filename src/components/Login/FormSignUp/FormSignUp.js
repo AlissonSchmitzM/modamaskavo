@@ -51,6 +51,7 @@ class FormSignUp extends Component {
       <Button
         ref={this.btnRegisterRef}
         mode="contained"
+        icon="account-plus"
         style={styles.button}
         onPress={this.handleSubmit}>
         Cadastrar

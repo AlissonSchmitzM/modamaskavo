@@ -65,7 +65,7 @@ export default class SplashScreen extends Component {
             () => {
               setTimeout(() => {
                 this.navigateBasedOnLogin();
-              }, 3000);
+              }, 2000);
             },
           );
         } catch (error) {
@@ -78,7 +78,7 @@ export default class SplashScreen extends Component {
         this.setState({checkCompleted: true}, () => {
           setTimeout(() => {
             this.navigateBasedOnLogin();
-          }, 3000);
+          }, 2000);
         });
       }
     } catch (error) {
@@ -86,7 +86,7 @@ export default class SplashScreen extends Component {
       this.setState({checkCompleted: true}, () => {
         setTimeout(() => {
           this.navigateBasedOnLogin();
-        }, 3000);
+        }, 2000);
       });
     }
   }

@@ -88,7 +88,6 @@ const styles = StyleSheet.create({
   },
   payButtonText: {
     color: 'white',
-    fontSize: 18,
     fontWeight: 'bold',
   },
   cancelButton: {

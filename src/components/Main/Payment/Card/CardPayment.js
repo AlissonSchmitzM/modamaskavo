@@ -604,11 +604,13 @@ const CardPayment = ({valor, descricao, onSuccess, onCancel, dadosCliente}) => {
             Pagar
           </Button>
 
-          <TouchableOpacity
+          <Button
+            mode="outlined"
             onPress={() => NavigatorService.goBack()}
-            style={styles.cancelButton}>
-            <Text style={styles.cancelButtonText}>Cancelar</Text>
-          </TouchableOpacity>
+            textColor="#000000"
+            icon="close">
+            Cancelar
+          </Button>
         </ScrollView>
       </KeyboardAwareScrollView>
       <Toast config={toastConfig} />

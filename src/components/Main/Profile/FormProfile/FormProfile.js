@@ -44,6 +44,7 @@ import {
   modifyPhoto,
   modifyUf,
   deleteAccount,
+  signOut,
 } from '../../../../store/actions/userActions';
 import toastr, {ERROR, toastConfig} from '../../../../services/toastr';
 import Toast from 'react-native-toast-message';
@@ -60,6 +61,8 @@ import {request, PERMISSIONS, RESULTS} from 'react-native-permissions';
 import {DeleteAccountModal} from './DeleteAccountModal';
 import store from '../../../../services/AsyncStorage';
 import NavigatorService from '../../../../services/NavigatorService';
+import b64 from 'base-64';
+import {get, ref, getDatabase} from '@react-native-firebase/database';
 
 class FormProfile extends Component {
   constructor(props) {
@@ -72,6 +75,7 @@ class FormProfile extends Component {
       imageLoading: true,
       deleteAccountModalVisible: false,
       processingDeleteAccount: false,
+      saveProfile: null,
     };
 
     this.btnRegisterRef = React.createRef();
@@ -91,6 +95,7 @@ class FormProfile extends Component {
     if (this.state.processingDeleteAccount === false) {
       this.props.onReadDataUser();
     }
+    this.checkUserLogin();
   }
 
   isGoogleUser = () => {
@@ -102,6 +107,27 @@ class FormProfile extends Component {
       provider => provider.providerId === 'google.com',
     );
   };
+
+  async checkUserLogin() {
+    const emailUserLogged = await store.get('emailUserLogged');
+    if (emailUserLogged) {
+      const emailB64 = b64.encode(emailUserLogged);
+
+      try {
+        // Usando a API modular do Firebase
+        const snapshot = await get(
+          ref(getDatabase(), `/users/${emailB64}/saveProfile`),
+        );
+
+        const saveProfile = snapshot.val();
+
+        this.setState({saveProfile});
+      } catch (error) {
+        toastr.showToast(`Erro ao buscar perfil: ${error}`, ERROR);
+        this.setState({saveProfile: null});
+      }
+    }
+  }
 
   handleCompleteCep = cep => {
     if (cep && cep.length >= 8) {
@@ -296,6 +322,7 @@ class FormProfile extends Component {
         mode="contained"
         style={styles.button}
         textColor="#FFF"
+        icon="content-save"
         onPress={this.handleSubmit}>
         Salvar
       </Button>
@@ -317,6 +344,7 @@ class FormProfile extends Component {
         mode="contained"
         style={[styles.button, {backgroundColor: '#D32F2F'}]}
         textColor="#FFF"
+        icon="delete"
         onPress={() => this.setState({deleteAccountModalVisible: true})}>
         Excluir conta
       </Button>
@@ -615,6 +643,22 @@ class FormProfile extends Component {
                   />
                   {this.renderBtnRegister()}
                   {this.renderBtnDeleteAccount()}
+                  <Button
+                    mode="contained"
+                    style={[
+                      styles.button,
+                      {
+                        backgroundColor: '#FFF',
+                        borderWidth: 1,
+                        borderColor: '#AAA',
+                        display: this.state.saveProfile ? 'none' : 'flex',
+                      },
+                    ]}
+                    textColor="#000"
+                    icon="logout"
+                    onPress={() => this.props.onSignOut()}>
+                    Sair
+                  </Button>
                 </View>
               </ScrollView>
 
@@ -716,6 +760,7 @@ const mapDispatchToProps = dispatch => ({
   onModifyPhoto: (fileImgPath, fileImgType) =>
     dispatch(modifyPhoto(fileImgPath, fileImgType)),
   onDeleteAccount: () => dispatch(deleteAccount()),
+  onSignOut: () => dispatch(signOut()),
 });
 
 const mapStateToProps = state => ({

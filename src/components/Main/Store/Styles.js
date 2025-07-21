@@ -6,7 +6,7 @@ const CARD_WIDTH = width - 20;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 10,
+    paddingHorizontal: 10,
     backgroundColor: '#f5f5f5',
   },
   product: {
@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
     borderRadius: 50,
   },
   buttonDisabled: {
-    backgroundColor: '#a0a0a0',
+    backgroundColor: '#CCC',
   },
   buttonText: {
     color: '#fff',

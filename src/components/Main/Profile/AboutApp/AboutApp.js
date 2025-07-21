@@ -12,7 +12,9 @@ import {Card} from 'react-native-paper';
 
 const AboutApp = () => {
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: '#f5f5f5'}}>
+    <SafeAreaView
+      style={{flex: 1, backgroundColor: '#f5f5f5'}}
+      edges={['left', 'right', 'bottom']}>
       <ScrollView>
         <Image
           source={logo}

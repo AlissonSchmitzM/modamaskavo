@@ -50,6 +50,7 @@ class FormConfig extends Component {
       <Button
         ref={this.btnSaveRef}
         mode="contained"
+        icon="content-save"
         style={styles.button}
         textColor="#FFF"
         onPress={this.handleSubmit}>
@@ -75,7 +76,7 @@ class FormConfig extends Component {
 
   render() {
     return (
-      <SafeAreaView style={{flex: 1}}>
+      <SafeAreaView style={{flex: 1}} edges={['left', 'right', 'bottom']}>
         <KeyboardAwareScrollView
           style={{flex: 1}}
           extraScrollHeight={100}

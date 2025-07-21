@@ -244,6 +244,7 @@ const PixPayment = ({valor, descricao, onSuccess, onCancel, dadosCliente}) => {
         mode="contained"
         style={styles.button}
         textColor="#FFF"
+        icon="content-copy"
         onPress={copiarPix}>
         Copiar código PIX
       </Button>
@@ -252,6 +253,7 @@ const PixPayment = ({valor, descricao, onSuccess, onCancel, dadosCliente}) => {
         mode="contained"
         style={[styles.button, {marginBottom: 30}]}
         textColor="#FFF"
+        icon="share"
         onPress={compartilharPix}>
         Compartilhar PIX
       </Button>

@@ -933,7 +933,13 @@ class ManagerOrdersDetails extends Component {
               <View style={styles.dialogActions}>
                 <Button
                   onPress={() => this.setState({cancelDialogVisible: false})}
-                  style={{marginRight: 10}}
+                  style={{
+                    marginRight: 10,
+                    borderColor: '#000000',
+                    borderWidth: 1,
+                    backgroundColor: '#FFF',
+                    width: '50%',
+                  }}
                   labelStyle={{color: '#000'}}>
                   Voltar
                 </Button>
@@ -1005,7 +1011,13 @@ class ManagerOrdersDetails extends Component {
               <View style={styles.dialogActions}>
                 <Button
                   onPress={() => this.setState({priceDialogVisible: false})}
-                  style={{marginRight: 10}}
+                  style={{
+                    marginRight: 10,
+                    borderColor: '#000000',
+                    borderWidth: 1,
+                    backgroundColor: '#FFF',
+                    width: '50%',
+                  }}
                   labelStyle={{color: '#000'}}>
                   Cancelar
                 </Button>
@@ -1109,7 +1121,13 @@ class ManagerOrdersDetails extends Component {
                   onPress={() =>
                     this.setState({productionDialogVisible: false})
                   }
-                  style={{marginRight: 10}}
+                  style={{
+                    marginRight: 10,
+                    borderColor: '#000000',
+                    borderWidth: 1,
+                    backgroundColor: '#FFF',
+                    width: '50%',
+                  }}
                   labelStyle={{color: '#000'}}>
                   Cancelar
                 </Button>
@@ -1154,13 +1172,22 @@ class ManagerOrdersDetails extends Component {
               <View style={styles.dialogActions}>
                 <Button
                   onPress={() => this.setState({completeDialogVisible: false})}
-                  style={{marginRight: 10}}
+                  style={{
+                    marginRight: 10,
+                    borderColor: '#000000',
+                    borderWidth: 1,
+                    backgroundColor: '#FFF',
+                    width: '50%',
+                  }}
                   labelStyle={{color: '#000'}}>
                   Cancelar
                 </Button>
                 <Button
                   mode="contained"
                   onPress={() => this.handleConfirmComplete(userData, orderId)}
+                  style={{
+                    width: '45%',
+                  }}
                   buttonColor="#4CAF50">
                   Finalizar
                 </Button>
