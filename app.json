@@ -8,13 +8,15 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "owner": "alissonschmitz7",
+    "owner": "alissonschmitz10",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "jsEngine": "jsc",
     "ios": {
       "deploymentTarget": "17.0",
@@ -57,12 +59,19 @@
         {
           "ios": {
             "deploymentTarget": "18.0",
-			"buildConfiguration": {
-			  "CLANG_CXX_LANGUAGE_STANDARD": "c++20",
-			  "CLANG_CXX_LIBRARY": "libc++",
-			  "GCC_C_LANGUAGE_STANDARD": "c11",
-			  "GCC_PREPROCESSOR_DEFINITIONS": "_LIBCPP_DISABLE_AVAILABILITY=1",
-			  "HEADER_SEARCH_PATHS": "\"$(PODS_ROOT)/Headers/Public/React-bridging\" \"$(PODS_ROOT)/Headers/Public/React-hermes\" \"$(PODS_ROOT)/DoubleConversion\" \"$(PODS_ROOT)/Headers/Public/DoubleConversion\""
+            "buildConfiguration": {
+              "CLANG_CXX_LANGUAGE_STANDARD": "c++20",
+              "CLANG_CXX_LIBRARY": "libc++",
+              "GCC_C_LANGUAGE_STANDARD": "c11",
+              "GCC_PREPROCESSOR_DEFINITIONS": "_LIBCPP_DISABLE_AVAILABILITY=1",
+              "HEADER_SEARCH_PATHS": [
+                "\"$(PODS_ROOT)/Headers/Public/React-hermes\"",
+                "\"$(PODS_ROOT)/../node_modules/react-native/ReactCommon\"",
+                "\"$(PODS_ROOT)/DoubleConversion\"",
+                "\"$(PODS_ROOT)/Headers/Public/DoubleConversion\"",
+                "\"$(PODS_ROOT)/boost\"",
+                "\"$(PODS_ROOT)/RCT-Folly\""
+              ]
             }
           },
           "android": {
@@ -76,7 +85,7 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "6644fae0-c4a7-4999-b252-3ba24e6c0546"
+        "projectId": "f0195100-a5db-4c12-9f72-29b1b1d506c9"
       }
     }
   }

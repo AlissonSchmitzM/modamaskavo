@@ -17,8 +17,85 @@ pre_install do |installer|
   end
 end
 
-# 🩹 Corrige a versão do GTMAppAuth usada pelo Google SignIn
 post_install do |installer|
+  # 1. Configurações de build para todos os targets
+  installer.pods_project.targets.each do |target|
+  
+      # Caminhos originais no node_modules
+	  react_native_path = File.expand_path("../node_modules/react-native", __dir__)
+	  bridging_src = "#{react_native_path}/ReactCommon/react/bridging"
+	  react_common_src = "#{react_native_path}/ReactCommon"
+
+		# bridging headers
+		bridging_pod_headers = "#{installer.sandbox.root}/Headers/Public/ReactCommon/react/bridging"
+
+		# react common headers
+		react_common_pod_headers = "#{installer.sandbox.root}/Headers/Public/ReactCommon"
+
+	  if Dir.exist?(bridging_src)
+		FileUtils.mkdir_p(bridging_pod_headers)
+
+		Dir.glob(File.join(bridging_src, '*.h')).each do |src|
+		  filename = File.basename(src)
+		  dst = File.join(bridging_pod_headers, filename)
+
+		  unless File.exist?(dst)
+			FileUtils.cp(src, dst)
+			puts "✅ Copiado #{filename}"
+		  else
+			puts "🔁 Já existe: #{filename}, pulando"
+		  end
+		end
+	  else
+		abort("❌ Diretório de bridging não encontrado em #{bridging_src}")
+	  end
+	  
+	    # Copiando os headers TurboModule diretamente para onde o include espera
+		turbo_module_core = "#{react_native_path}/ReactCommon/react/nativemodule/core"
+		turbo_module_headers = "#{installer.sandbox.root}/Headers/Public/ReactCommon"
+
+		if Dir.exist?(turbo_module_core)
+		  FileUtils.mkdir_p(turbo_module_headers)
+
+		  Dir.glob(File.join(turbo_module_core, '*.h')).each do |src|
+			filename = File.basename(src)
+			dst = File.join(turbo_module_headers, filename)
+
+			unless File.exist?(dst)
+			  FileUtils.cp(src, dst)
+			  puts "✅ Copiado TurboModule: #{filename} => ReactCommon/"
+			else
+			  puts "🔁 Já existe: #{filename}, pulando"
+			end
+		  end
+		else
+		  puts "❌ turbo_module_core não encontrado: #{turbo_module_core}"
+		end
+  
+    target.build_configurations.each do |config|
+      # Configurações básicas
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '17.0'
+      config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'gnu++20'
+      config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
+
+      # Header Search Paths sem o React-bridging
+      header_search_paths = [
+		'$(inherited)',
+		'"$(PODS_ROOT)/Headers/Public"',
+		'"$(PODS_ROOT)/Headers/Public/ReactCommon"',
+		'"$(PODS_ROOT)/Headers/Public/ReactCommon/react/bridging"',
+		'"$(PODS_ROOT)/DoubleConversion"',
+		'"$(PODS_ROOT)/boost"',
+		'"$(PODS_ROOT)/RCT-Folly"',
+		'"$(PODS_ROOT)/fmt/include"',
+		'"$(PODS_CONFIGURATION_BUILD_DIR)/React-Core/React-Core.framework/Headers"'
+      ].uniq
+
+      config.build_settings['HEADER_SEARCH_PATHS'] = header_search_paths
+    end
+  end
+
+  # 🩹 Corrige a versão do GTMAppAuth usada pelo Google SignIn
   rn_google_signin_spec = Pathname.new(__dir__) + '../node_modules/@react-native-google-signin/google-signin/RNGoogleSignin.podspec'
   if rn_google_signin_spec.exist?
     content = rn_google_signin_spec.read
@@ -29,7 +106,7 @@ post_install do |installer|
   end
 
   installer.pods_project.targets.each do |target|
-    # Ajustes específicos para DoubleConversion
+    # Ajustes específicos para DoubleConversion e React
     if target.name == 'DoubleConversion' || target.name.include?('React-')
       target.build_configurations.each do |config|
         config.build_settings['HEADER_SEARCH_PATHS'] = [
@@ -38,9 +115,10 @@ post_install do |installer|
           '"$(PODS_ROOT)/Headers/Public/DoubleConversion"',
           '"$(PODS_ROOT)/boost"',
           '"$(PODS_ROOT)/RCT-Folly"',
+		  '"$(PODS_ROOT)/Headers/Public/ReactCommon"',
           '"$(PODS_ROOT)/fmt/include"'
         ].join(' ')
-        
+
         config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'gnu++20'
         config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
       end
@@ -66,16 +144,17 @@ post_install do |installer|
         ].join(' ')
       end
     end
-	
-	if target.name == 'Yoga'
-		phase = target.build_phases.find { |p| p.display_name == 'Copy Headers' }
-		if phase
-		  phase.files.delete_if do |file|
-			file.file_ref.path.include?('yoga/enums/Align.h') ||
-			file.file_ref.path.include?('yoga/enums/FlexDirection.h')
-		  end
-		end
-	  end
+
+    # Ajustes Yoga
+    if target.name == 'Yoga'
+      phase = target.build_phases.find { |p| p.display_name == 'Copy Headers' }
+      if phase
+        phase.files.delete_if do |file|
+          file.file_ref.path.include?('yoga/enums/Align.h') ||
+          file.file_ref.path.include?('yoga/enums/FlexDirection.h')
+        end
+      end
+    end
 
     # Configurações globais para todos os targets
     target.build_configurations.each do |config|
@@ -120,7 +199,7 @@ target 'modamaskavo' do
   use_react_native!(
     :path => config[:reactNativePath],
     :hermes_enabled => false,
-    :fabric_enabled => false
+    :fabric_enabled => true
   )
 
   # Dependências manuais
@@ -141,7 +220,7 @@ target 'modamaskavo' do
   pod 'FirebaseDatabase', $FirebaseSDKVersion
   pod 'FirebaseStorage', $FirebaseSDKVersion
   pod 'FirebaseInstallations', $FirebaseSDKVersion
-  
+
   pod 'GoogleDataTransport'
   pod 'nanopb'
   pod 'PromisesObjC'
