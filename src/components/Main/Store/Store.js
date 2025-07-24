@@ -543,12 +543,15 @@ class Store extends Component {
                 )}
 
                 {item.type === 'simple' ? (
-                  <TouchableOpacity
-                    style={styles.button}
-                    onPress={() => this.handleOpenShippingModal(item)}
-                    disabled={updatingProductId === item.id}>
-                    <Text style={styles.buttonText}>Comprar</Text>
-                  </TouchableOpacity>
+                  <Button
+                    mode="contained"
+                    textColor="#FFF"
+                    style={{marginTop: 10, backgroundColor: '#000000'}}
+                    disabled={updatingProductId === item.id}
+                    icon="cart-outline"
+                    onPress={() => this.handleOpenShippingModal(item)}>
+                    Comprar
+                  </Button>
                 ) : (
                   <View style={styles.dropdownContainer}>
                     <Text style={styles.dropdownLabel}>Tamanho</Text>
@@ -575,10 +578,7 @@ class Store extends Component {
                       mode="contained"
                       textColor="#FFF"
                       style={[
-                        {
-                          marginTop: 10,
-                          backgroundColor: '#000000',
-                        },
+                        {marginTop: 10, backgroundColor: '#000000'},
                         !selectedVariations[item.id] && styles.buttonDisabled,
                       ]}
                       icon="cart-outline"
@@ -588,7 +588,6 @@ class Store extends Component {
                             ...item,
                             variation: selectedVariations[item.id],
                           };
-
                           this.handleOpenShippingModal(productWithVariation);
                         }
                       }}

@@ -48,10 +48,10 @@ const AboutApp = () => {
         <Image
           source={logo_techmitz}
           style={{
-            width: '100%',
-            height: 120,
-            resizeMode: 'contain',
-            marginVertical: 20,
+            width: '60%',
+            height: 150,
+            resizeMode: 'cover',
+            alignSelf: 'center',
           }}
         />
 
@@ -81,14 +81,13 @@ const AboutApp = () => {
                 fontSize: 14,
                 lineHeight: 20,
                 color: '#333',
-                marginBottom: 8,
               }}>
               <Text style={{fontWeight: 'bold'}}>Desenvolvedor:</Text> Alisson
               Schmitz de Medeiros
             </Text>
             <Text style={{fontSize: 14, lineHeight: 20, color: '#333'}}>
               <Text style={{fontWeight: 'bold'}}>Contato:</Text>{' '}
-              alissonschmitz2@hotmail.com
+              contato@techmitz.com.br
             </Text>
           </Card.Content>
         </Card>

@@ -4,25 +4,19 @@
   "expo": {
     "name": "Moda Maskavo",
     "slug": "modamaskavo",
-    "version": "1.0.9",
+    "version": "1.0.10",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "owner": "alissonschmitz10",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
+    "owner": "alissonschmitz12",
     "assetBundlePatterns": [
       "**/*"
     ],
     "jsEngine": "jsc",
     "ios": {
-      "deploymentTarget": "17.0",
+      "deploymentTarget": "16.0",
       "supportsTablet": true,
       "bundleIdentifier": "com.modamaskavo",
-      "buildNumber": "1.0.9",
+      "buildNumber": "1.0.10",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSPhotoLibraryUsageDescription": "Permite selecionar fotos para o aplicativo",
@@ -43,7 +37,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.modamaskavo",
-      "versionCode": 8,
+      "versionCode": 10,
       "permissions": [
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
@@ -58,7 +52,7 @@
         "expo-build-properties",
         {
           "ios": {
-            "deploymentTarget": "18.0",
+            "deploymentTarget": "16.0",
             "buildConfiguration": {
               "CLANG_CXX_LANGUAGE_STANDARD": "c++20",
               "CLANG_CXX_LIBRARY": "libc++",
@@ -72,7 +66,18 @@
                 "\"$(PODS_ROOT)/boost\"",
                 "\"$(PODS_ROOT)/RCT-Folly\""
               ]
-            }
+            },
+            "extraPods": [
+              {
+                "name": "ReactCommon",
+                "configurations": [
+                  "Debug",
+                  "Release"
+                ],
+                "path": "../node_modules/react-native/ReactCommon",
+                "modular_headers": true
+              }
+            ]
           },
           "android": {
             "compileSdkVersion": 34,
@@ -81,11 +86,12 @@
           }
         }
       ],
-      "@react-native-firebase/app"
+      "@react-native-firebase/app",
+      "@react-native-firebase/auth"
     ],
     "extra": {
       "eas": {
-        "projectId": "f0195100-a5db-4c12-9f72-29b1b1d506c9"
+        "projectId": "0d36d74b-059e-4a07-bd9b-048c53e61eae"
       }
     }
   }

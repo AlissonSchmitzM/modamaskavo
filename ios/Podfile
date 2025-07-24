@@ -1,12 +1,17 @@
 require_relative '../node_modules/react-native/scripts/react_native_pods'
 
-platform :ios, '17.0'
+platform :ios, '16.0' # Mantido em 16.0 para compatibilidade
 use_frameworks! :linkage => :static
 use_modular_headers!
 
+ENV['RCT_NEW_ARCH_ENABLED'] = '0' # Mantido para desabilitar explicitamente a Nova Arquitetura
+
 require 'pathname'
 
-# 🛠 Corrige build_type para libs específicas
+# FUNÇÃO AUXILIAR config_get_react_native_path REMOVIDA
+# Pois o caminho será especificado diretamente abaixo, simplificando.
+
+# 🛠 Corrige build_type para libs específicas (MANTER - Isso é importante para Firebase)
 pre_install do |installer|
   installer.pod_targets.each do |pod|
     if ['GTMAppAuth', 'GoogleUtilities'].include?(pod.name)
@@ -18,113 +23,154 @@ pre_install do |installer|
 end
 
 post_install do |installer|
-  # 1. Configurações de build para todos os targets
+  # Ações de post_install reativadas para corrigir "file not found" para headers React Native.
+  # As seções de cópia de arquivos foram removidas, mas os ajustes de HEADER_SEARCH_PATHS são essenciais.
+
   installer.pods_project.targets.each do |target|
   
-      # Caminhos originais no node_modules
-	  react_native_path = File.expand_path("../node_modules/react-native", __dir__)
-	  bridging_src = "#{react_native_path}/ReactCommon/react/bridging"
-	  react_common_src = "#{react_native_path}/ReactCommon"
+	# Caminhos originais no node_modules
+    react_native_path = File.expand_path("../node_modules/react-native", __dir__)
+    react_common_path = "#{react_native_path}/ReactCommon"
+    turbo_module_path = "#{react_common_path}/react/nativemodule/core"
+    bridging_path = "#{react_common_path}/react/bridging"
 
-		# bridging headers
-		bridging_pod_headers = "#{installer.sandbox.root}/Headers/Public/ReactCommon/react/bridging"
+    # Cria diretórios e copia headers se necessário
+    [turbo_module_path, bridging_path].each do |src_path|
+      if Dir.exist?(src_path)
+        dst_path = "#{installer.sandbox.root}/Headers/Public/ReactCommon/#{File.basename(File.dirname(src_path))}/#{File.basename(src_path)}"
+        FileUtils.mkdir_p(dst_path)
 
-		# react common headers
-		react_common_pod_headers = "#{installer.sandbox.root}/Headers/Public/ReactCommon"
+        Dir.glob(File.join(src_path, '*.h')).each do |src|
+          filename = File.basename(src)
+          dst = File.join(dst_path, filename)
 
-	  if Dir.exist?(bridging_src)
-		FileUtils.mkdir_p(bridging_pod_headers)
+          unless File.exist?(dst)
+            FileUtils.cp(src, dst)
+            puts "✅ Copiado #{filename} para #{dst_path}"
+          else
+            puts "🔁 Já existe: #{filename}, pulando"
+          end
+        end
+      else
+        puts "⚠️ Diretório não encontrado: #{src_path}"
+      end
+    end
+	
+	  # 1. Configuração dos paths do TurboModule
+	  # 1. Caminhos dos arquivos TurboModule
+	  turbo_files = {
+		'TurboModule.h' => "#{react_native_path}/ReactCommon/react/nativemodule/core/ReactCommon/TurboModule.h",
+		'TurboModuleBinding.h' => "#{react_native_path}/ReactCommon/react/nativemodule/core/ReactCommon/TurboModuleBinding.h",
+		'TurboModuleUtils.h' => "#{react_native_path}/ReactCommon/react/nativemodule/core/ReactCommon/TurboModuleUtils.h",
+	  }
 
-		Dir.glob(File.join(bridging_src, '*.h')).each do |src|
-		  filename = File.basename(src)
-		  dst = File.join(bridging_pod_headers, filename)
+	  # 2. Diretórios de destino
+	  headers_dest_dir = "#{installer.sandbox.root}/Headers/Public/ReactCommon"
+	  react_common_dest_dir = "#{react_native_path}/ReactCommon"
 
-		  unless File.exist?(dst)
-			FileUtils.cp(src, dst)
-			puts "✅ Copiado #{filename}"
-		  else
-			puts "🔁 Já existe: #{filename}, pulando"
-		  end
+	  # 3. Cópia dos arquivos para ambos os locais necessários
+	  turbo_files.each do |filename, src_path|
+		if File.exist?(src_path)
+		  # Cópia para Headers do CocoaPods
+		  FileUtils.mkdir_p(headers_dest_dir)
+		  FileUtils.cp(src_path, "#{headers_dest_dir}/#{filename}")
+		  puts "✅ #{filename} copiado para #{headers_dest_dir}"
+
+		  # Cópia para ReactCommon (caso necessário)
+		  FileUtils.mkdir_p(react_common_dest_dir)
+		  FileUtils.cp(src_path, "#{react_common_dest_dir}/#{filename}")
+		  puts "✅ #{filename} copiado para #{react_common_dest_dir}"
+		else
+		  puts "⚠️ ATENÇÃO: Arquivo não encontrado em #{src_path}"
 		end
-	  else
-		abort("❌ Diretório de bridging não encontrado em #{bridging_src}")
 	  end
 	  
-	    # Copiando os headers TurboModule diretamente para onde o include espera
-		turbo_module_core = "#{react_native_path}/ReactCommon/react/nativemodule/core"
-		turbo_module_headers = "#{installer.sandbox.root}/Headers/Public/ReactCommon"
+  headers_to_copy = {
+    'CxxTurboModuleUtils.h' => "#{react_native_path}/ReactCommon/react/nativemodule/core/ReactCommon",
+    'TurboModulePerfLogger.h' => "#{react_native_path}/ReactCommon/react/nativemodule/core/ReactCommon"
+  }
 
-		if Dir.exist?(turbo_module_core)
-		  FileUtils.mkdir_p(turbo_module_headers)
-
-		  Dir.glob(File.join(turbo_module_core, '*.h')).each do |src|
-			filename = File.basename(src)
-			dst = File.join(turbo_module_headers, filename)
-
-			unless File.exist?(dst)
-			  FileUtils.cp(src, dst)
-			  puts "✅ Copiado TurboModule: #{filename} => ReactCommon/"
-			else
-			  puts "🔁 Já existe: #{filename}, pulando"
-			end
-		  end
-		else
-		  puts "❌ turbo_module_core não encontrado: #{turbo_module_core}"
-		end
+  # 2. Cópia dos headers necessários
+  headers_to_copy.each do |header, src_dir|
+    src_path = "#{src_dir}/#{header}"
+    dest_dir = "#{installer.sandbox.root}/Headers/Public/ReactCommon"
+    
+    if File.exist?(src_path)
+      FileUtils.mkdir_p(dest_dir)
+      FileUtils.cp(src_path, "#{dest_dir}/#{header}")
+      puts "✅ #{header} copiado para #{dest_dir}"
+    else
+      puts "⚠️ ATENÇÃO: Arquivo não encontrado em #{src_path}"
+      # Fallback: Verifica em locais alternativos
+      alternative_path = "#{react_native_path}/ReactCommon/#{header}"
+      if File.exist?(alternative_path)
+        FileUtils.cp(alternative_path, "#{dest_dir}/#{header}")
+        puts "✅ #{header} encontrado em local alternativo e copiado"
+      end
+    end
+  end
   
+    react_native_path = File.expand_path("../node_modules/react-native", __dir__)
+  headers_to_fix = {
+    'RCTTurboModuleWithJSIBindings.h' => "#{react_native_path}/ReactCommon/react/nativemodule/core/platform/ios/ReactCommon",
+    'TurboCxxModule.h' => "#{react_native_path}/ReactCommon/react/nativemodule/core/ReactCommon"
+  }
+
+  # 2. Cópia dos headers necessários
+  headers_to_fix.each do |header, src_dir|
+    src_path = "#{src_dir}/#{header}"
+    dest_dir = "#{installer.sandbox.root}/Headers/Public/ReactCommon"
+    
+    if File.exist?(src_path)
+      FileUtils.mkdir_p(dest_dir)
+      FileUtils.cp(src_path, "#{dest_dir}/#{header}")
+      puts "✅ #{header} copiado para #{dest_dir}"
+    else
+      puts "⚠️ ATENÇÃO: Arquivo não encontrado em #{src_path}"
+      # Fallback: Verifica em locais alternativos
+      alternative_path = "#{react_native_path}/ReactCommon/#{header}"
+      if File.exist?(alternative_path)
+        FileUtils.cp(alternative_path, "#{dest_dir}/#{header}")
+        puts "✅ #{header} encontrado em local alternativo"
+      else
+        # Cria header mínimo se não existir
+        abort("❌ ERRO: Header #{header} não encontrado! Isso vai quebrar a build.")
+        # puts "⚠️ Criado header mínimo em #{dest_dir}/#{header}"
+      end
+    end
+  end
+  
+    # Configurações básicas de build (essenciais para compatibilidade)
     target.build_configurations.each do |config|
-      # Configurações básicas
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '17.0'
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.0'
       config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'gnu++20'
       config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
 
-      # Header Search Paths sem o React-bridging
+      # Header Search Paths atualizados - REATIVADO para garantir que React Native e suas dependências encontrem seus headers
       header_search_paths = [
-		'$(inherited)',
-		'"$(PODS_ROOT)/Headers/Public"',
-		'"$(PODS_ROOT)/Headers/Public/ReactCommon"',
-		'"$(PODS_ROOT)/Headers/Public/ReactCommon/react/bridging"',
-		'"$(PODS_ROOT)/DoubleConversion"',
-		'"$(PODS_ROOT)/boost"',
-		'"$(PODS_ROOT)/RCT-Folly"',
-		'"$(PODS_ROOT)/fmt/include"',
-		'"$(PODS_CONFIGURATION_BUILD_DIR)/React-Core/React-Core.framework/Headers"'
+        '$(inherited)',
+        '"$(PODS_ROOT)/Headers/Public"',
+        '"$(PODS_ROOT)/Headers/Public/ReactCommon"',
+        '"$(PODS_ROOT)/Headers/Public/ReactCommon/react/nativemodule/core"',
+        '"$(PODS_ROOT)/Headers/Public/ReactCommon/react/bridging"',
+        '"$(PODS_ROOT)/Headers/Public/DoubleConversion"',
+        '"$(PODS_ROOT)/DoubleConversion"', # Inclui o próprio pod
+        '"$(PODS_ROOT)/boost"',
+        '"$(PODS_ROOT)/RCT-Folly"',
+        '"$(PODS_ROOT)/fmt/include"',
+        '"$(PODS_CONFIGURATION_BUILD_DIR)/React-Core/React-Core.framework/Headers"',
+        '"${PODS_ROOT}/Headers/Private/React-Fabric"',
+        '"${PODS_ROOT}/Headers/Public/React-hermes"',
+        '"${PODS_ROOT}/Headers/Public/React-RCTFabric"'
       ].uniq
 
-      config.build_settings['HEADER_SEARCH_PATHS'] = header_search_paths
+      config.build_settings['HEADER_SEARCH_PATHS'] = header_search_paths.join(' ')
+      config.build_settings['FRAMEWORK_SEARCH_PATHS'] = ['$(inherited)', '"$(PODS_CONFIGURATION_BUILD_DIR)"']
     end
   end
 
-  # 🩹 Corrige a versão do GTMAppAuth usada pelo Google SignIn
-  rn_google_signin_spec = Pathname.new(__dir__) + '../node_modules/@react-native-google-signin/google-signin/RNGoogleSignin.podspec'
-  if rn_google_signin_spec.exist?
-    content = rn_google_signin_spec.read
-    if content.include?("s.dependency 'GTMAppAuth', '~> 1.1.0'")
-      content = content.gsub("s.dependency 'GTMAppAuth', '~> 1.1.0'", "s.dependency 'GTMAppAuth', '>= 4.1.1'")
-      rn_google_signin_spec.write(content)
-    end
-  end
-
+  # Configurações para todos os módulos Firebase (MANTER - ESSAS SÃO IMPORTANTES)
   installer.pods_project.targets.each do |target|
-    # Ajustes específicos para DoubleConversion e React
-    if target.name == 'DoubleConversion' || target.name.include?('React-')
-      target.build_configurations.each do |config|
-        config.build_settings['HEADER_SEARCH_PATHS'] = [
-          '$(inherited)',
-          '"$(PODS_ROOT)/DoubleConversion"',
-          '"$(PODS_ROOT)/Headers/Public/DoubleConversion"',
-          '"$(PODS_ROOT)/boost"',
-          '"$(PODS_ROOT)/RCT-Folly"',
-		  '"$(PODS_ROOT)/Headers/Public/ReactCommon"',
-          '"$(PODS_ROOT)/fmt/include"'
-        ].join(' ')
-
-        config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'gnu++20'
-        config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
-      end
-    end
-
-    # Configurações para todos os módulos Firebase
     if target.name.start_with?('Firebase')
       target.build_configurations.each do |config|
         config.build_settings['DEFINES_MODULE'] = 'YES'
@@ -132,20 +178,15 @@ post_install do |installer|
         config.build_settings['OTHER_CFLAGS'] = '$(inherited) -DFIREBASE_BUILD_CORE_INTERNAL'
       end
     end
-
-    # Configuração específica para FirebaseCoreInternal
-    if target.name == 'FirebaseCoreInternal'
+    
+    if target.name == 'RNFBAuth'
       target.build_configurations.each do |config|
-        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = '$(inherited) FIRBUILD_CORE_INTERNAL=1'
-        config.build_settings['HEADER_SEARCH_PATHS'] = [
-          '$(inherited)',
-          '"$(PODS_ROOT)/FirebaseCoreInternal/Sources"',
-          '"$(PODS_ROOT)/Headers/Public/FirebaseCoreInternal"'
-        ].join(' ')
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)']
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'DISABLE_FIREBASE_LINK_DOMAIN=1'
       end
     end
 
-    # Ajustes Yoga
+    # Ajustes Yoga (MANTER - ISSO GERALMENTE É UMA CORREÇÃO VÁLIDA)
     if target.name == 'Yoga'
       phase = target.build_phases.find { |p| p.display_name == 'Copy Headers' }
       if phase
@@ -156,9 +197,9 @@ post_install do |installer|
       end
     end
 
-    # Configurações globais para todos os targets
+    # Configurações globais adicionais para todos os targets
     target.build_configurations.each do |config|
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '17.0'
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.0'
       config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
       config.build_settings['ALWAYS_SEARCH_USER_PATHS'] = 'NO'
       config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'gnu++20'
@@ -177,7 +218,7 @@ post_install do |installer|
     config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
   end
 
-  # 🔁 REMOVE arquivos duplicados do React-Codegen
+  # 🔁 REMOVE arquivos duplicados do React-Codegen (MANTER - ISSO É UMA CORREÇÃO VÁLIDA)
   codegen_target = installer.pods_project.targets.find { |t| t.name == 'React-Codegen' }
   if codegen_target
     phase = codegen_target.build_phases.find { |p| p.display_name == 'Compile Sources' }
@@ -191,22 +232,24 @@ post_install do |installer|
   end
 end
 
-$FirebaseSDKVersion = '10.24.0'
+$FirebaseSDKVersion = '10.29.0'
 
 target 'modamaskavo' do
-  config = use_native_modules!
-
+  # REATIVADO e SIMPLIFICADO: use_react_native!
+  # O caminho agora é direto, sem a função auxiliar.
   use_react_native!(
-    :path => config[:reactNativePath],
+    :path => '../node_modules/react-native', # Caminho relativo direto para react-native
     :hermes_enabled => false,
-    :fabric_enabled => true
+    :fabric_enabled => false
   )
 
-  # Dependências manuais
+  # Dependências manuais (TODAS REATIVADAS)
   pod 'RNSVG', :path => '../node_modules/react-native-svg'
   pod 'RNScreens', :path => '../node_modules/react-native-screens'
+  pod 'RNFBAuth', :path => '../node_modules/@react-native-firebase/auth'
+  pod 'RNFBApp', :path => '../node_modules/@react-native-firebase/app'
 
-  # Firebase - Configuração especial para v22.1.0
+  # Firebase - Configuração especial para v22.1.0 (MANTER)
   pod 'Firebase', $FirebaseSDKVersion
   pod 'FirebaseCore', $FirebaseSDKVersion
   pod 'FirebaseCoreInternal', $FirebaseSDKVersion do |s|
@@ -217,6 +260,10 @@ target 'modamaskavo' do
     }
   end
   pod 'FirebaseAuth', $FirebaseSDKVersion
+  
+  pod 'FirebaseAuthInterop', $FirebaseSDKVersion
+  pod 'FirebaseAppCheckInterop', $FirebaseSDKVersion
+  
   pod 'FirebaseDatabase', $FirebaseSDKVersion
   pod 'FirebaseStorage', $FirebaseSDKVersion
   pod 'FirebaseInstallations', $FirebaseSDKVersion
@@ -225,11 +272,11 @@ target 'modamaskavo' do
   pod 'nanopb'
   pod 'PromisesObjC'
 
-  # HEADERS corrigidos
+  # HEADERS corrigidos (MANTER)
   pod 'GoogleUtilities'
   pod 'GTMAppAuth'
 
-  # Outros pods nativos
+  # Outros pods nativos (TODAS REATIVADAS)
   pod 'DoubleConversion', :podspec => '../node_modules/react-native/third-party-podspecs/DoubleConversion.podspec'
   pod 'RCT-Folly', :podspec => '../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec'
   pod 'boost', :podspec => '../node_modules/react-native/third-party-podspecs/boost.podspec'

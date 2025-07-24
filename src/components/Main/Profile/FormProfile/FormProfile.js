@@ -437,7 +437,6 @@ class FormProfile extends Component {
         <PaperProvider>
           <KeyboardAwareScrollView
             style={{flex: 1}}
-            extraScrollHeight={100}
             enableOnAndroid={true}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}>

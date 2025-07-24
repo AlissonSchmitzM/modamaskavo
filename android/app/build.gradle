@@ -84,8 +84,8 @@ android {
         applicationId "com.modamaskavo"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 8
-        versionName "1.0.8"
+        versionCode 10
+        versionName "1.0.10"
         resValue "string", "server_client_id", "582893482320-35hmr955sm4fm3dudgu1dg7ouvge3d44.apps.googleusercontent.com"
         multiDexEnabled true
     }

@@ -39,6 +39,7 @@ class FormForgotPassword extends Component {
       <Button
         mode="contained"
         style={styles.button}
+        icon="email"
         onPress={this.handleSubmit}>
         Enviar Instruções de Redefinição
       </Button>
@@ -46,8 +47,13 @@ class FormForgotPassword extends Component {
   }
 
   validateFields() {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
     if (!this.props.email) {
       toastr.showToast('Email inválido!', ERROR);
+      return false;
+    } else if (!regex.test(this.props.email)) {
+      toastr.showToast('Formato de email inválido!', ERROR);
       return false;
     }
 

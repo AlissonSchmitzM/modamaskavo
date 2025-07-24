@@ -5,6 +5,7 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
 } from 'react-native';
 import {TextInput, Button, ActivityIndicator} from 'react-native-paper';
 import {signup} from '../../../imgs';
@@ -60,11 +61,16 @@ class FormSignUp extends Component {
   }
 
   validateFields() {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
     if (!this.props.name) {
       toastr.showToast('Nome é obrigatório!', ERROR);
       return false;
     } else if (!this.props.email) {
       toastr.showToast('Email inválido!', ERROR);
+      return false;
+    } else if (!regex.test(this.props.email)) {
+      toastr.showToast('Formato de email inválido!', ERROR);
       return false;
     } else if (!this.props.password) {
       toastr.showToast('Senha inválida!', ERROR);
@@ -82,13 +88,17 @@ class FormSignUp extends Component {
 
   render() {
     return (
-      <SafeAreaView style={{flex: 1}}>
+      <SafeAreaView style={{flex: 1}} edges={['left', 'right']}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 80}
           style={{flex: 1}}>
-          <View
-            style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+          <ScrollView
+            contentContainerStyle={{
+              flex: 1,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
             <View style={styles.container}>
               <Image source={signup} style={styles.signup} />
               <TextInput
@@ -144,7 +154,7 @@ class FormSignUp extends Component {
               />
               {this.renderBtnRegister()}
             </View>
-          </View>
+          </ScrollView>
         </KeyboardAvoidingView>
         <Toast config={toastConfig} />
       </SafeAreaView>
