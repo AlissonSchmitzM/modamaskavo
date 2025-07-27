@@ -12,18 +12,32 @@ Um app desenvolvido em **React Native** para pedidos de peças exclusívas e uni
   <img src=".github/screenshot5.jpeg" width="200" />
   <img src=".github/screenshot6.jpeg" width="200" />
   <img src=".github/screenshot7.jpeg" width="200" />
+  <img src=".github/screenshot8.jpeg" width="200" />
 </p>
 
 ---
 
 ## 📥 Download Oficial
 
-<div align="center" style="display: flex; justify-content: center; gap: 20px; margin: 20px 0;">
-
-[<img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" width="150" style="margin-right: 20px;">](LINK_PLAYSTORE)
-[<img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg" width="150">](LINK_APPSTORE)
-
-</div>
+<p align="center">
+  <table align="center">
+    <tr>
+      <!-- Google Play -->
+      <td align="center" style="padding: 0 10px;">
+        <a href="https://play.google.com/store/apps/details?id=com.modamaskavo">
+          <img src=".github/google-play-badge.png" alt="Disponível no Google Play" height="80">
+        </a>
+      </td>
+      <!-- App Store
+      <td align="center" style="padding: 0 10px;">
+        <a href="LINK_APPSTORE">
+          <img src=".github/app-store-badge.png" alt="Disponível na App Store" height="60">
+        </a>
+      </td>
+       -->
+    </tr>
+  </table>
+</p>
 
 ## 🛠️ Tecnologias Usadas
 
