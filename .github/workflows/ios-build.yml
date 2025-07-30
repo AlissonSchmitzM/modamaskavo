@@ -55,7 +55,7 @@ jobs:
       run: |
         cd ios
         xcodebuild archive \
-                  -workspace ios/modamaskavo.xcworkspace \
+                  -workspace modamaskavo.xcworkspace \
                   -scheme modamaskavo \
                   -configuration Release \
                   -destination 'generic/platform=iOS' \
