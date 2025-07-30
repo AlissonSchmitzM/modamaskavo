@@ -9,29 +9,21 @@
       "distribution": "internal",
       "ios": {
         "simulator": true,
-        "cocoapods": "1.15.2"
+        "cocoapods": "1.16.1"
       }
     },
     "preview": {
       "distribution": "internal",
       "ios": {
         "image": "macos-sonoma-14.4-xcode-15.3",
-        "cocoapods": "1.15.2"
+        "cocoapods": "1.16.1"
       }
     },
     "production": {
-      "env": {
-        "CLANG_CXX_LANGUAGE_STANDARD": "c++20",
-        "CLANG_CXX_LIBRARY": "libc++",
-        "GCC_PREPROCESSOR_DEFINITIONS": "_LIBCPP_DISABLE_AVAILABILITY=1"
-      },
+      
       "ios": {
-        "image": "macos-sonoma-14.4-xcode-15.3",
-        "cocoapods": "1.15.2",
-        "env": {
-          "OTHER_LDFLAGS": "-ObjC -lc++",
-          "HEADER_SEARCH_PATHS": "\"$(PODS_ROOT)/Headers/Public\" \"$(PODS_ROOT)/Headers/Public/React-Core\""
-        }
+        "cocoapods": "1.16.1"
+        
       },
       "android": {
         "buildType": "apk"

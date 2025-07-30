@@ -5,19 +5,17 @@
     "name": "Moda Maskavo",
     "slug": "modamaskavo",
     "version": "1.0.10",
-    "orientation": "portrait",
-    "userInterfaceStyle": "automatic",
-    "owner": "alissonschmitz12",
+    "owner": "alissonschmitz15",
     "assetBundlePatterns": [
       "**/*"
     ],
     "jsEngine": "jsc",
     "ios": {
-      "deploymentTarget": "16.0",
       "supportsTablet": true,
       "bundleIdentifier": "com.modamaskavo",
       "buildNumber": "1.0.10",
       "infoPlist": {
+	    "CFBundleDisplayName": "Moda Maskavo",
         "ITSAppUsesNonExemptEncryption": false,
         "NSPhotoLibraryUsageDescription": "Permite selecionar fotos para o aplicativo",
         "NSCameraUsageDescription": "Permite tirar fotos para o aplicativo",
@@ -25,17 +23,10 @@
         "UIUserInterfaceStyle": "Automatic"
       },
       "config": {
-        "usesNonExemptEncryption": false,
-        "googleSignIn": {
-          "reservedClientId": "582893482320-35hmr955sm4fm3dudgu1dg7ouvge3d44.apps.googleusercontent.com"
-        }
+        "usesNonExemptEncryption": false
       }
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
       "package": "com.modamaskavo",
       "versionCode": 10,
       "permissions": [
@@ -47,51 +38,9 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [
-      [
-        "expo-build-properties",
-        {
-          "ios": {
-            "deploymentTarget": "16.0",
-            "buildConfiguration": {
-              "CLANG_CXX_LANGUAGE_STANDARD": "c++20",
-              "CLANG_CXX_LIBRARY": "libc++",
-              "GCC_C_LANGUAGE_STANDARD": "c11",
-              "GCC_PREPROCESSOR_DEFINITIONS": "_LIBCPP_DISABLE_AVAILABILITY=1",
-              "HEADER_SEARCH_PATHS": [
-                "\"$(PODS_ROOT)/Headers/Public/React-hermes\"",
-                "\"$(PODS_ROOT)/../node_modules/react-native/ReactCommon\"",
-                "\"$(PODS_ROOT)/DoubleConversion\"",
-                "\"$(PODS_ROOT)/Headers/Public/DoubleConversion\"",
-                "\"$(PODS_ROOT)/boost\"",
-                "\"$(PODS_ROOT)/RCT-Folly\""
-              ]
-            },
-            "extraPods": [
-              {
-                "name": "ReactCommon",
-                "configurations": [
-                  "Debug",
-                  "Release"
-                ],
-                "path": "../node_modules/react-native/ReactCommon",
-                "modular_headers": true
-              }
-            ]
-          },
-          "android": {
-            "compileSdkVersion": 34,
-            "targetSdkVersion": 34,
-            "buildToolsVersion": "34.0.0"
-          }
-        }
-      ],
-      "@react-native-firebase/app",
-      "@react-native-firebase/auth"
-    ],
     "extra": {
       "eas": {
-        "projectId": "0d36d74b-059e-4a07-bd9b-048c53e61eae"
+        "projectId": "578f99b8-74af-454b-a8eb-b37645879daa"
       }
     }
   }

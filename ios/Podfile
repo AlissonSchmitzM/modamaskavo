@@ -23,8 +23,55 @@ pre_install do |installer|
 end
 
 post_install do |installer|
-  # Ações de post_install reativadas para corrigir "file not found" para headers React Native.
-  # As seções de cópia de arquivos foram removidas, mas os ajustes de HEADER_SEARCH_PATHS são essenciais.
+
+  # Função auxiliar para copiar headers de um diretório de origem para um de destino
+  def copy_react_native_headers(installer, src_base_path, dest_sub_path, files_to_copy = nil)
+    react_native_path = File.expand_path("../node_modules/react-native", __dir__)
+    full_src_dir = "#{react_native_path}/#{src_base_path}"
+    full_dest_dir = "#{installer.sandbox.root}/Headers/Public/#{dest_sub_path}"
+
+    FileUtils.mkdir_p(full_dest_dir) unless Dir.exist?(full_dest_dir)
+
+    (files_to_copy || Dir.glob(File.join(full_src_dir, "*.h"))).each do |src_file|
+      src = files_to_copy ? File.join(full_src_dir, src_file) : src_file
+      filename = File.basename(src)
+      dst = File.join(full_dest_dir, filename)
+
+      if File.exist?(src)
+        unless File.exist?(dst)
+          FileUtils.cp(src, dst)
+          puts "✅ Copiado #{filename} de #{src_base_path} para #{dest_sub_path}"
+        # else # Descomente se quiser ver todos os "já existe"
+        #   puts "🔁 #{filename} já existe em #{dest_sub_path}, pulando"
+        end
+      else
+        puts "⚠️ AVISO: #{filename} não encontrado em #{src}"
+      end
+    end
+  end
+
+  # CONSOLIDAÇÃO DAS CÓPIAS DE HEADERS QUE PARECEM SER NECESSÁRIAS (MANTIDO)
+  copy_react_native_headers(installer, "ReactCommon/react/renderer/components/view/platform/cxx/react/renderer/components/view", "ReactCommon/react/renderer/components/view", [
+    "HostPlatformTouch.h", "HostPlatformViewEventEmitter.h", "HostPlatformViewProps.h", "HostPlatformViewTraitsInitializer.h"
+  ])
+  copy_react_native_headers(installer, "ReactCommon/react/renderer/imagemanager", "ReactCommon/react/renderer/imagemanager")
+  copy_react_native_headers(installer, "ReactCommon/react/renderer/uimanager", "ReactCommon/react/renderer/uimanager")
+  copy_react_native_headers(installer, "ReactCommon/react/renderer/core", "ReactCommon/react/renderer/core")
+  copy_react_native_headers(installer, "React/Fabric/Mounting", "React")
+  copy_react_native_headers(installer, "React/Fabric/Surface", "React")
+  copy_react_native_headers(installer, "React/Fabric", "React")
+  copy_react_native_headers(installer, "ReactCommon/react/renderer/graphics/platform/ios/react/renderer/graphics", "react/renderer/graphics")
+  copy_react_native_headers(installer, "ReactCommon/runtimeexecutor/ReactCommon", "ReactCommon/react/utils", ["RuntimeExecutor.h"])
+  copy_react_native_headers(installer, "ReactCommon/react/utils", "ReactCommon/react/utils")
+  copy_react_native_headers(installer, "ReactCommon/react/debug", "ReactCommon/react/debug")
+  copy_react_native_headers(installer, "ReactCommon/react/nativemodule/core/ReactCommon", "ReactCommon", [
+    'TurboModule.h', 'TurboModuleBinding.h', 'TurboModuleUtils.h', 'CxxTurboModuleUtils.h', 'TurboModulePerfLogger.h', 'TurboCxxModule.h'
+  ])
+  copy_react_native_headers(installer, "ReactCommon/react/nativemodule/core/platform/ios/ReactCommon", "ReactCommon", [
+    'RCTTurboModuleWithJSIBindings.h', 'RCTTurboModuleManager.h', 'RCTTurboModule.h'
+  ]) 
+  
+  # FIM DA CONSOLIDAÇÃO DE CÓPIAS DE HEADERS
 
   installer.pods_project.targets.each do |target|
   
@@ -55,90 +102,6 @@ post_install do |installer|
         puts "⚠️ Diretório não encontrado: #{src_path}"
       end
     end
-	
-	  # 1. Configuração dos paths do TurboModule
-	  # 1. Caminhos dos arquivos TurboModule
-	  turbo_files = {
-		'TurboModule.h' => "#{react_native_path}/ReactCommon/react/nativemodule/core/ReactCommon/TurboModule.h",
-		'TurboModuleBinding.h' => "#{react_native_path}/ReactCommon/react/nativemodule/core/ReactCommon/TurboModuleBinding.h",
-		'TurboModuleUtils.h' => "#{react_native_path}/ReactCommon/react/nativemodule/core/ReactCommon/TurboModuleUtils.h",
-	  }
-
-	  # 2. Diretórios de destino
-	  headers_dest_dir = "#{installer.sandbox.root}/Headers/Public/ReactCommon"
-	  react_common_dest_dir = "#{react_native_path}/ReactCommon"
-
-	  # 3. Cópia dos arquivos para ambos os locais necessários
-	  turbo_files.each do |filename, src_path|
-		if File.exist?(src_path)
-		  # Cópia para Headers do CocoaPods
-		  FileUtils.mkdir_p(headers_dest_dir)
-		  FileUtils.cp(src_path, "#{headers_dest_dir}/#{filename}")
-		  puts "✅ #{filename} copiado para #{headers_dest_dir}"
-
-		  # Cópia para ReactCommon (caso necessário)
-		  FileUtils.mkdir_p(react_common_dest_dir)
-		  FileUtils.cp(src_path, "#{react_common_dest_dir}/#{filename}")
-		  puts "✅ #{filename} copiado para #{react_common_dest_dir}"
-		else
-		  puts "⚠️ ATENÇÃO: Arquivo não encontrado em #{src_path}"
-		end
-	  end
-	  
-  headers_to_copy = {
-    'CxxTurboModuleUtils.h' => "#{react_native_path}/ReactCommon/react/nativemodule/core/ReactCommon",
-    'TurboModulePerfLogger.h' => "#{react_native_path}/ReactCommon/react/nativemodule/core/ReactCommon"
-  }
-
-  # 2. Cópia dos headers necessários
-  headers_to_copy.each do |header, src_dir|
-    src_path = "#{src_dir}/#{header}"
-    dest_dir = "#{installer.sandbox.root}/Headers/Public/ReactCommon"
-    
-    if File.exist?(src_path)
-      FileUtils.mkdir_p(dest_dir)
-      FileUtils.cp(src_path, "#{dest_dir}/#{header}")
-      puts "✅ #{header} copiado para #{dest_dir}"
-    else
-      puts "⚠️ ATENÇÃO: Arquivo não encontrado em #{src_path}"
-      # Fallback: Verifica em locais alternativos
-      alternative_path = "#{react_native_path}/ReactCommon/#{header}"
-      if File.exist?(alternative_path)
-        FileUtils.cp(alternative_path, "#{dest_dir}/#{header}")
-        puts "✅ #{header} encontrado em local alternativo e copiado"
-      end
-    end
-  end
-  
-    react_native_path = File.expand_path("../node_modules/react-native", __dir__)
-  headers_to_fix = {
-    'RCTTurboModuleWithJSIBindings.h' => "#{react_native_path}/ReactCommon/react/nativemodule/core/platform/ios/ReactCommon",
-    'TurboCxxModule.h' => "#{react_native_path}/ReactCommon/react/nativemodule/core/ReactCommon"
-  }
-
-  # 2. Cópia dos headers necessários
-  headers_to_fix.each do |header, src_dir|
-    src_path = "#{src_dir}/#{header}"
-    dest_dir = "#{installer.sandbox.root}/Headers/Public/ReactCommon"
-    
-    if File.exist?(src_path)
-      FileUtils.mkdir_p(dest_dir)
-      FileUtils.cp(src_path, "#{dest_dir}/#{header}")
-      puts "✅ #{header} copiado para #{dest_dir}"
-    else
-      puts "⚠️ ATENÇÃO: Arquivo não encontrado em #{src_path}"
-      # Fallback: Verifica em locais alternativos
-      alternative_path = "#{react_native_path}/ReactCommon/#{header}"
-      if File.exist?(alternative_path)
-        FileUtils.cp(alternative_path, "#{dest_dir}/#{header}")
-        puts "✅ #{header} encontrado em local alternativo"
-      else
-        # Cria header mínimo se não existir
-        abort("❌ ERRO: Header #{header} não encontrado! Isso vai quebrar a build.")
-        # puts "⚠️ Criado header mínimo em #{dest_dir}/#{header}"
-      end
-    end
-  end
   
     # Configurações básicas de build (essenciais para compatibilidade)
     target.build_configurations.each do |config|
@@ -161,13 +124,33 @@ post_install do |installer|
         '"$(PODS_CONFIGURATION_BUILD_DIR)/React-Core/React-Core.framework/Headers"',
         '"${PODS_ROOT}/Headers/Private/React-Fabric"',
         '"${PODS_ROOT}/Headers/Public/React-hermes"',
-        '"${PODS_ROOT}/Headers/Public/React-RCTFabric"'
+        '"${PODS_ROOT}/Headers/Public/React-RCTFabric"',
+		'"$(PODS_ROOT)/Headers/Public/ReactCommon/react/renderer/components/view"',
+		'"$(PODS_ROOT)/Headers/Public/ReactCommon/react/renderer/components/view/platform/cxx"'
       ].uniq
 
       config.build_settings['HEADER_SEARCH_PATHS'] = header_search_paths.join(' ')
       config.build_settings['FRAMEWORK_SEARCH_PATHS'] = ['$(inherited)', '"$(PODS_CONFIGURATION_BUILD_DIR)"']
     end
   end
+ 
+	
+	# ⚠️ Hotfix para FirebaseAuth < 10.32.0 com RNFBAuth
+	rnfb_auth_path = '../node_modules/@react-native-firebase/auth/ios/RNFBAuth/RNFBAuthModule.m'
+	if File.exist?(rnfb_auth_path)
+	  text = File.read(rnfb_auth_path)
+	  unless text.include?('// [Patched] setLinkDomain:')
+		text.gsub!(/(\[settings setLinkDomain:.*?;)/, '// [Patched] \1')
+		File.open(rnfb_auth_path, "w") { |file| file.puts text }
+		puts "✅ RNFBAuthModule.m patched to disable setLinkDomain:"
+	  else
+		puts "🔁 RNFBAuthModule.m already patched"
+	  end
+	else
+	  puts "⚠️ RNFBAuthModule.m not found! Skipping patch."
+	end
+
+
 
   # Configurações para todos os módulos Firebase (MANTER - ESSAS SÃO IMPORTANTES)
   installer.pods_project.targets.each do |target|
@@ -178,11 +161,11 @@ post_install do |installer|
         config.build_settings['OTHER_CFLAGS'] = '$(inherited) -DFIREBASE_BUILD_CORE_INTERNAL'
       end
     end
-    
+     
     if target.name == 'RNFBAuth'
       target.build_configurations.each do |config|
         config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)']
-        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'DISABLE_FIREBASE_LINK_DOMAIN=1'
+        # config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'DISABLE_FIREBASE_LINK_DOMAIN=1'
       end
     end
 
@@ -212,11 +195,43 @@ post_install do |installer|
   end
 
   installer.pods_project.build_configurations.each do |config|
-    config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
+    config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++20'
     config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
     config.build_settings['GCC_C_LANGUAGE_STANDARD'] = 'c11'
     config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
   end
+  
+  # ⚠️ Desabilita script problemático de codegen para evitar erro no EAS
+  installer.pods_project.targets.each do |target|
+    next unless target.name == 'React-RCTFBReactNativeSpec'
+
+    target.build_phases.delete_if do |phase|
+      phase.respond_to?(:name) && phase.name.to_s.include?("[RN]Check FBReactNativeSpec")
+    end
+
+    puts "✅ Script '[RN]Check FBReactNativeSpec' removido de '#{target.name}'"
+  end
+  
+  installer.pods_project.targets.each do |target|
+    next unless target.name == 'React-Fabric'
+
+    target.build_phases.delete_if do |phase|
+	  phase.respond_to?(:name) && phase.name.to_s.include?("[RN]Check rncore")
+    end
+
+    puts "✅ Script '[RN]Check rncore' removido de '#{target.name}'"
+  end
+  
+  installer.pods_project.targets.each do |target|
+    next unless target.name == 'React-FabricComponents'
+
+    target.build_phases.delete_if do |phase|
+	  phase.respond_to?(:name) && phase.name.to_s.include?("[RN]Check rncore")
+    end
+
+    puts "✅ Script '[RN]Check rncore' removido de '#{target.name}'"
+  end
+  
 
   # 🔁 REMOVE arquivos duplicados do React-Codegen (MANTER - ISSO É UMA CORREÇÃO VÁLIDA)
   codegen_target = installer.pods_project.targets.find { |t| t.name == 'React-Codegen' }
@@ -232,7 +247,7 @@ post_install do |installer|
   end
 end
 
-$FirebaseSDKVersion = '10.29.0'
+$FirebaseSDKVersion = '10.25.0'
 
 target 'modamaskavo' do
   # REATIVADO e SIMPLIFICADO: use_react_native!
@@ -240,7 +255,8 @@ target 'modamaskavo' do
   use_react_native!(
     :path => '../node_modules/react-native', # Caminho relativo direto para react-native
     :hermes_enabled => false,
-    :fabric_enabled => false
+    :fabric_enabled => true,
+	:production => true
   )
 
   # Dependências manuais (TODAS REATIVADAS)

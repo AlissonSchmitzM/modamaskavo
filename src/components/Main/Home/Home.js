@@ -120,7 +120,6 @@ class Home extends Component {
 
   // Função para passar para a próxima imagem
   goToNextSlide = () => {
-    this.intervalId = clearInterval(this.intervalId);
     const {activeIndex} = this.state;
     if (activeIndex === this.images.length - 1) {
       this.flatListRef.current.scrollToIndex({index: 0, animated: true});
@@ -257,7 +256,10 @@ class Home extends Component {
             {/* Botão de navegação próximo */}
             <TouchableOpacity
               style={[styles.navButton, styles.rightButton]}
-              onPress={this.goToNextSlide}
+              onPress={() => {
+                this.goToNextSlide();
+                this.intervalId = clearInterval(this.intervalId);
+              }}
               activeOpacity={0.7}>
               <Icon name="chevron-right" size={24} color="#FFFFFFFF" />
             </TouchableOpacity>
