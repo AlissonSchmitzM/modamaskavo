@@ -3,23 +3,14 @@
 <plist version="1.0">
 <dict>
     <key>method</key>
-    <string>ad-hoc</string>
+    <string>app-store</string>
     <key>teamID</key>
-    <string>c2fddb00-7914-4c86-aed9-dbc0c242dad8</string>
-    <key>compileBitcode</key>
-    <false/>
-    <key>stripSwiftSymbols</key>
-    <true/>
+    <string>4XW8DF3J82</string>
     <key>uploadBitcode</key>
-    <false/>
+    <true/>
     <key>uploadSymbols</key>
     <true/>
     <key>signingStyle</key>
-    <string>manual</string>
-    <key>provisioningProfiles</key>
-    <dict>
-        <key>com.modamaskavo</key>
-        <string>modamaskavo App Store</string>
-    </dict>
+    <string>automatic</string>
 </dict>
 </plist>

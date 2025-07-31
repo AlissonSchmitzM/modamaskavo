@@ -1,4 +1,4 @@
-name: Build iOS RN 0.79 FINAL
+name: Build iOS Automático
 
 on:
   push:
@@ -31,57 +31,46 @@ jobs:
       with:
         ruby-version: '3.2'
     
-    - name: Install latest CocoaPods
+    - name: Install CocoaPods
       run: |
         sudo gem install cocoapods -v 1.15.2
-        pod --version
+        pod setup
     
-    - name: Complete clean install
+    - name: Pod Install
       run: |
         cd ios
-        rm -rf Pods Podfile.lock build
-        rm -rf ~/Library/Caches/CocoaPods
-        rm -rf ~/.cocoapods
-        pod cache clean --all
-        pod repo update
-        pod install --repo-update --verbose --clean-install
+        pod install --repo-update
     
-    - name: Create API Key file
+    - name: Configure App Store Connect API
       run: |
         mkdir -p ~/.appstoreconnect/private_keys
-        echo "${{ secrets.APPSTORE_PRIVATE_KEY }}" | base64 -d > ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8
+        echo "${{ secrets.APPSTORE_PRIVATE_KEY }}" > ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8
+        chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8
     
-    - name: Build archive
+    - name: Build and Export IPA (Automático)
       run: |
         cd ios
         xcodebuild archive \
-                  -workspace modamaskavo.xcworkspace \
-                  -scheme modamaskavo \
-                  -configuration Release \
-                  -destination 'generic/platform=iOS' \
-                  -archivePath ./build/modamaskavo.xcarchive \
-                  -allowProvisioningUpdates \
-                  -CODE_SIGN_IDENTITY="" \
-                  -CODE_SIGN_STYLE=Automatic \
-                  -DEVELOPMENT_TEAM=4XW8DF3J82 \
-                  -derivedDataPath ./DerivedData \
-                  -hideShellScriptEnvironment
-    
-    - name: Export IPA
-      run: |
-        cd ios
-        xcodebuild -exportArchive \
-                   -archivePath $PWD/build/modamaskavo.xcarchive \
-                   -exportOptionsPlist exportOptions.plist \
-                   -exportPath $PWD/build \
-                   -allowProvisioningUpdates \
-                   -authenticationKeyPath ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8 \
-                   -authenticationKeyID ${{ secrets.APPSTORE_KEY_ID }} \
-                   -authenticationKeyIssuerID ${{ secrets.APPSTORE_ISSUER_ID }}
-                   
+          -workspace modamaskavo.xcworkspace \
+          -scheme modamaskavo \
+          -configuration Release \
+          -archivePath ./build/modamaskavo.xcarchive \
+          -allowProvisioningUpdates \
+          CODE_SIGN_STYLE="Automatic" \
+          DEVELOPMENT_TEAM="4XW8DF3J82" \
+          -quiet
+
+        /usr/bin/xcrun xcodebuild -exportArchive \
+          -archivePath ./build/modamaskavo.xcarchive \
+          -exportPath ./build \
+          -exportOptionsPlist ./exportOptions.plist \
+          -allowProvisioningUpdates \
+          -authenticationKeyPath ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8 \
+          -authenticationKeyID ${{ secrets.APPSTORE_KEY_ID }} \
+          -authenticationKeyIssuerID ${{ secrets.APPSTORE_ISSUER_ID }}
     
     - name: Upload IPA
       uses: actions/upload-artifact@v4
       with:
-        name: modamaskavo-ios
+        name: modamaskavo-ipa
         path: ios/build/*.ipa
