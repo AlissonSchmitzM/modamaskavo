@@ -232,6 +232,14 @@ post_install do |installer|
     puts "✅ Script '[RN]Check rncore' removido de '#{target.name}'"
   end
   
+  target.build_phases.each do |phase|
+      if phase.display_name == 'Create Symlinks to Header Folders'
+        # Configura para rodar sempre e silencia warnings
+        phase.input_file_list_paths = []
+        phase.output_file_list_paths = []
+      end
+    end
+  
 
   # 🔁 REMOVE arquivos duplicados do React-Codegen (MANTER - ISSO É UMA CORREÇÃO VÁLIDA)
   codegen_target = installer.pods_project.targets.find { |t| t.name == 'React-Codegen' }

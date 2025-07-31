@@ -7,7 +7,7 @@
     <key>teamID</key>
     <string>4XW8DF3J82</string>
     <key>uploadBitcode</key>
-    <true/>
+    <false/>
     <key>uploadSymbols</key>
     <true/>
     <key>signingStyle</key>
