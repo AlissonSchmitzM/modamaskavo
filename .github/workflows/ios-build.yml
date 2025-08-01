@@ -1,3 +1,6 @@
+Fluxo de Trabalho Corrigido
+Este ajuste força o Xcode a usar o certificado e o perfil de distribuição durante a fase de arquivamento (archive), eliminando a necessidade de um certificado de desenvolvimento.
+
 name: Build iOS Automático
 
 on:
@@ -41,7 +44,8 @@ jobs:
         cd ios
         rm -rf build
         
-        # O comando 'archive' agora especifica o perfil de distribuição
+        # Este comando foi ajustado para usar a identidade de assinatura de App Store
+        # Isso permite que o build funcione sem um certificado de desenvolvimento, usando apenas os de distribuição.
         xcodebuild archive \
           -workspace modamaskavo.xcworkspace \
           -scheme modamaskavo \
@@ -51,6 +55,7 @@ jobs:
           CODE_SIGN_STYLE="Manual" \
           DEVELOPMENT_TEAM="4XW8DF3J82" \
           PROVISIONING_PROFILE_SPECIFIER="Distribuição" \
+          CODE_SIGN_IDENTITY="Apple Distribution: Alisson Schmitz de Medeiros (4XW8DF3J82)" \
           GCC_WARN_INHIBIT_ALL_WARNINGS=YES \
           -authenticationKeyPath ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8 \
           -authenticationKeyID ${{ secrets.APPSTORE_KEY_ID }} \
