@@ -32,7 +32,6 @@ jobs:
     - name: Configure App Store Connect API
       run: |
         mkdir -p ~/.appstoreconnect/private_keys
-        # O comando abaixo foi corrigido para não decodificar a chave, pois ela já está em texto
         echo "${{ secrets.APPSTORE_PRIVATE_KEY }}" > ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8
         chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8
     
@@ -41,18 +40,16 @@ jobs:
         cd ios
         rm -rf build
         
-        # Este comando foi ajustado para usar a identidade de assinatura de App Store
-        # Isso permite que o build funcione sem um certificado de desenvolvimento, usando apenas os de distribuição.
+        # O comando 'archive' agora usa o estilo de assinatura automática
+        # Para que funcione, é necessário ter um perfil de "iOS App Development" na sua conta
         xcodebuild archive \
           -workspace modamaskavo.xcworkspace \
           -scheme modamaskavo \
           -configuration Release \
           -archivePath ./build/modamaskavo.xcarchive \
           -allowProvisioningUpdates \
-          CODE_SIGN_STYLE="Manual" \
+          CODE_SIGN_STYLE="Automatic" \
           DEVELOPMENT_TEAM="4XW8DF3J82" \
-          PROVISIONING_PROFILE_SPECIFIER="Distribuição" \
-          CODE_SIGN_IDENTITY="Apple Distribution: Alisson Schmitz de Medeiros (4XW8DF3J82)" \
           GCC_WARN_INHIBIT_ALL_WARNINGS=YES \
           -authenticationKeyPath ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8 \
           -authenticationKeyID ${{ secrets.APPSTORE_KEY_ID }} \
