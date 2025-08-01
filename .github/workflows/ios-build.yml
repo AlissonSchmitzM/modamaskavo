@@ -1,6 +1,3 @@
-Fluxo de Trabalho Corrigido
-Este ajuste força o Xcode a usar o certificado e o perfil de distribuição durante a fase de arquivamento (archive), eliminando a necessidade de um certificado de desenvolvimento.
-
 name: Build iOS Automático
 
 on:
