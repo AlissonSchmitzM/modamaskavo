@@ -41,7 +41,9 @@ jobs:
         bundle install
     
     - name: Construir e Assinar o App com Fastlane
-      run: bundle exec fastlane build_and_sign
+      run: |
+        cd ios
+        bundle exec fastlane build_and_sign
     
     - name: Upload IPA
       uses: actions/upload-artifact@v4
