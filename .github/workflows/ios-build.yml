@@ -48,7 +48,7 @@ jobs:
           -configuration Release \
           -archivePath ./build/modamaskavo.xcarchive \
           -allowProvisioningUpdates \
-          CODE_SIGN_STYLE="Automatic" \
+          CODE_SIGN_STYLE="Manual" \
           DEVELOPMENT_TEAM="4XW8DF3J82" \
           PROVISIONING_PROFILE_SPECIFIER="Distribuição" \
           GCC_WARN_INHIBIT_ALL_WARNINGS=YES \
