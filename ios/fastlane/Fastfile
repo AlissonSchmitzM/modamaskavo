@@ -3,7 +3,6 @@ default_platform(:ios)
 platform :ios do
   desc "Build e assina o app para distribuição"
   lane :build_and_sign do
-    # Ajuste o nome do scheme e export_method conforme seu projeto
     build_app(
       scheme: "modamaskavo",               
       export_method: "app-store",        
