@@ -32,7 +32,8 @@ jobs:
     - name: Instalar Dependências Node e Pods
       run: |
         npm install
-        sudo gem install cocoapods -v 1.13.0 # ou a versão que quiser
+        sudo gem install cocoapods -v 1.13.0
+        cd ios
         pod install --repo-update
 
     - name: Instalar Fastlane globalmente
