@@ -8,7 +8,7 @@ platform :ios do
       export_method: "app-store",
       output_directory: "./",
       output_name: "modamaskavo.ipa",
-      export_team_id: ENV["DEVELOPER_TEAM_ID"] # usa o segredo do GitHub
+      export_team_id: "4XW8DF3J82"
     )
   end
 end
