@@ -310,6 +310,7 @@
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
+				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 4XW8DF3J82;
 			};
 			name = Debug;
@@ -337,6 +338,7 @@
 				PRODUCT_NAME = modamaskavo;
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
+				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 4XW8DF3J82;
 			};
 			name = Release;
@@ -505,4 +507,5 @@
 	};
 	rootObject = 83CBB9F71A601CBA00E9B192 /* Project object */;
 }
+
 
