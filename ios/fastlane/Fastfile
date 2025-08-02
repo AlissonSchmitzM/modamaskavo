@@ -4,10 +4,11 @@ platform :ios do
   desc "Build e assina o app para distribuição"
   lane :build_and_sign do
     build_app(
-      scheme: "modamaskavo",               
-      export_method: "app-store",        
-      output_directory: "./",           
-      output_name: "modamaskavo.ipa"      
+      scheme: "modamaskavo",
+      export_method: "app-store",
+      output_directory: "./",
+      output_name: "modamaskavo.ipa",
+      export_team_id: ENV["DEVELOPER_TEAM_ID"] # usa o segredo do GitHub
     )
   end
 end
