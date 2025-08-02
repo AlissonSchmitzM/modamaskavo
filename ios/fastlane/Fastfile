@@ -6,6 +6,7 @@ platform :ios do
     build_app(
       scheme: "modamaskavo",
       export_method: "app-store",
+      configuration: "Release",
       output_directory: "./",
       output_name: "modamaskavo.ipa",
       export_team_id: "4XW8DF3J82"
